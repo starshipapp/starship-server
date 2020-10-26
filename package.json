@@ -1,0 +1,41 @@
+{
+  "name": "starship-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "prebuild": "del dist",
+    "build": "tsc",
+    "postbuild": "cpy src/starship-schema dist/starship-schema",
+    "start": "npm run build && node dist/index.js",
+    "tsc": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/starshipapp/starship-server.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "proprietary",
+  "bugs": {
+    "url": "https://github.com/starshipapp/starship-server/issues"
+  },
+  "homepage": "https://github.com/starshipapp/starship-server#readme",
+  "devDependencies": {
+    "concurrently": "^5.3.0",
+    "cpy-cli": "^2.0.0",
+    "del-cli": "^3.0.0",
+    "npm-run-all": "^4.1.5",
+    "tslint": "^6.1.3",
+    "typescript": "^4.0.3"
+  },
+  "dependencies": {
+    "apollo-server-express": "^2.18.2",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "graphql": "^15.3.0",
+    "log4js": "^6.3.0",
+    "mongoose": "^5.10.10",
+    "mongoose-hook-custom-id": "^0.1.4"
+  }
+}

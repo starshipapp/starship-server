@@ -1,0 +1,13 @@
+const mongoose = require('mongoose');
+const customId = require('mongoose-hook-custom-id');
+
+const filesSchema = new mongoose.Schema({
+  owner: String,
+  updatedAt: Date,
+  planet: String,
+  createdAt: Date,
+})
+
+filesSchema.plugin(customId, mongoose);
+
+export const Files = mongoose.model('files', filesSchema);
