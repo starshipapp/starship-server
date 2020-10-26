@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const customId = require('mongoose-hook-custom-id');
 
 const reportSchema = mongoose.Schema({
+  _id: String,
   owner: String,
   createdAt: Date,
   objectType: Number,

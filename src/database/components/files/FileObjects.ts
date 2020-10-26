@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const customId = require('mongoose-hook-custom-id');
 
 const fileObjectsSchema = new mongoose.Schema({
+  _id: String,
   path: [String],
   parent: String,
   name: String,

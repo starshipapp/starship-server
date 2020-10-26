@@ -2,7 +2,8 @@ require('dotenv').config()
 const { ApolloServer, gql } = require('apollo-server-express');
 const { readFileSync } = require('fs')
 const express = require('express');
-const logger = require('./logging')
+const logger = require('./logging');
+const jwt = require('jsonwebtoken');
 
 logger.mainLogger.info("Starting starship-server");
 logger.mainLogger.warn("PRE-ALPHA BUILD; DO NOT USE IN PRODUCTION");
@@ -25,10 +26,23 @@ mongoose.connect(process.env.MONGO_URL, {
     require('./database/database');
     logger.apolloLogger.info("Starting Apollo");
     const app = express();
+    if(!process.env.REDIS_URL) {
+      logger.mainLogger.warn("RUNNING IN DEVELOPMENT MODE, NOT USING REDIS")
+    }
     const typeDefs = gql`${readFileSync('dist/starship-schema/schema.graphql')}`;
     const server = new ApolloServer({
       typeDefs, 
       resolvers,
+      context: ({req}) => {
+        let user = null;
+
+        if (req.headers.authorization !== undefined) {
+          const token = req.headers.authorization.replace('Bearer ', '')
+          user = jwt.verify(token, process.env.SECRET)
+        };
+        
+        return {user};
+      },
       resolverValidationOptions: {
         requireResolversForResolveType: false,
       }, 

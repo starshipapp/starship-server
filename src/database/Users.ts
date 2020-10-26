@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const customId = require('mongoose-hook-custom-id');
 
 const userSchema = mongoose.Schema({
+  _id: String,
   services: Object,
   username: String,
   createdAt: Date,

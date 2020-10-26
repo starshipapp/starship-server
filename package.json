@@ -31,9 +31,12 @@
   },
   "dependencies": {
     "apollo-server-express": "^2.18.2",
+    "axios": "^0.21.0",
+    "bcrypt": "^5.0.0",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "graphql": "^15.3.0",
+    "jsonwebtoken": "^8.5.1",
     "log4js": "^6.3.0",
     "mongoose": "^5.10.10",
     "mongoose-hook-custom-id": "^0.1.4"

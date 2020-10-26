@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const customId = require('mongoose-hook-custom-id');
 
 const planetSchema = mongoose.Schema({
+  _id: String,
   name: String,
   createdAt: String,
   owner: String,

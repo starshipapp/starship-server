@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const customId = require('mongoose-hook-custom-id');
 
 const pageSchema = mongoose.Schema({
+  _id: String,
   createdAt: Date,
   owner: String,
   updatedAt: Date,

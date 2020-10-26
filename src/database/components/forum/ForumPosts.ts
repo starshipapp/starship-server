@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const customId = require('mongoose-hook-custom-id');
 
 const forumPostSchema = mongoose.Schema({
+  _id: String,
   name: String,
   componentId: String,
   content: String,
