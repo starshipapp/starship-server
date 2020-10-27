@@ -13,7 +13,8 @@ const planetSchema = mongoose.Schema({
   featured: Boolean,
   verified: Boolean,
   partnered: Boolean,
-  featuredDescription: String
+  featuredDescription: String,
+  banned: [String]
 })
 
 planetSchema.plugin(customId, {mongoose: mongoose});
