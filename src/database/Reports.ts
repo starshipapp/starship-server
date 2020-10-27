@@ -13,6 +13,6 @@ const reportSchema = mongoose.Schema({
   solved: Boolean
 })
 
-reportSchema.plugin(customId, mongoose);
+reportSchema.plugin(customId, {mongoose: mongoose});
 
 export const Reports = mongoose.model('reports', reportSchema);

@@ -16,6 +16,6 @@ const planetSchema = mongoose.Schema({
   featuredDescription: String
 })
 
-planetSchema.plugin(customId, mongoose);
+planetSchema.plugin(customId, {mongoose: mongoose});
 
 export const Planets = mongoose.model('planets', planetSchema);

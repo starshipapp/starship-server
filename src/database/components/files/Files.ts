@@ -9,6 +9,6 @@ const filesSchema = new mongoose.Schema({
   createdAt: Date,
 })
 
-filesSchema.plugin(customId, mongoose);
+filesSchema.plugin(customId, {mongoose: mongoose});
 
 export const Files = mongoose.model('files', filesSchema);

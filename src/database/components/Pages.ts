@@ -10,6 +10,6 @@ const pageSchema = mongoose.Schema({
   content: String,
 })
 
-pageSchema.plugin(customId, mongoose);
+pageSchema.plugin(customId, {mongoose: mongoose});
 
 export const Pages = mongoose.model('pages', pageSchema);

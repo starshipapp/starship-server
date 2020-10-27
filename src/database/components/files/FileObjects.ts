@@ -15,6 +15,6 @@ const fileObjectsSchema = new mongoose.Schema({
   finishedUploading: Boolean
 })
 
-fileObjectsSchema.plugin(customId, mongoose);
+fileObjectsSchema.plugin(customId, {mongoose: mongoose});
 
 export const FileObjects = mongoose.model('fileobjects', fileObjectsSchema);

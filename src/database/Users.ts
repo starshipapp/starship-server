@@ -13,6 +13,6 @@ const userSchema = mongoose.Schema({
   admin: Boolean
 })
 
-userSchema.plugin(customId, mongoose);
+userSchema.plugin(customId, {mongoose: mongoose});
 
 export const Users = mongoose.model('users', userSchema);

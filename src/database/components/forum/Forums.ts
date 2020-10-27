@@ -9,6 +9,6 @@ const forumSchema = mongoose.Schema({
   createdAt: Date,
 })
 
-forumSchema.plugin(customId, mongoose);
+forumSchema.plugin(customId, {mongoose: mongoose});
 
 export const Forum = mongoose.model('forums', forumSchema);

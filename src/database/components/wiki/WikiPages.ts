@@ -9,6 +9,6 @@ const wikiPageSchema = mongoose.Schema({
   createdAt: Date,
 })
 
-wikiPageSchema.plugin(customId, mongoose);
+wikiPageSchema.plugin(customId, {mongoose: mongoose});
 
 export const WikiPages = mongoose.model('wikipages', wikiPageSchema);

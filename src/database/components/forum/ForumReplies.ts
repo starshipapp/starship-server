@@ -15,6 +15,6 @@ const forumRepliesSchema = new mongoose.Schema({
   updatedAt: Date
 })
 
-forumRepliesSchema.plugin(customId, mongoose);
+forumRepliesSchema.plugin(customId, {mongoose: mongoose});
 
 export const ForumReplies = mongoose.model('forumreplies', forumRepliesSchema);

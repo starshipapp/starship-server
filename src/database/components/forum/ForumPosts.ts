@@ -17,6 +17,6 @@ const forumPostSchema = mongoose.Schema({
   updatedAt: Date
 })
 
-forumPostSchema.plugin(customId, mongoose);
+forumPostSchema.plugin(customId, {mongoose: mongoose});
 
 export const ForumPosts = mongoose.model('forumposts', forumPostSchema);

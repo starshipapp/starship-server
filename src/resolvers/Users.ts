@@ -1,5 +1,3 @@
-import { NoUnusedVariablesRule } from "graphql";
-
 const Users = require('../database/Users');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
@@ -39,9 +37,8 @@ async function insertUser(root, args, context) {
     admin: false,
     following: []
   });
-  user.save();
 
-  return user;
+  return await user.save().catch((e) => {console.error(e)});
 }
 
 async function loginUser(root, args, context) {
@@ -55,7 +52,7 @@ async function loginUser(root, args, context) {
 }
 
 async function banUser(root, args, context) {
-  const userCheck = await permissions.checkAdminPermission(context.user.id)
+  const userCheck = context.user && await permissions.checkAdminPermission(context.user.id)
 
   if(userCheck) {
     let user = await Users.Users.findOne({_id: args.userId})
@@ -97,7 +94,7 @@ async function user(root, args, context) {
 }
 
 async function adminUser(root, args, context) {
-  const userCheck = await permissions.checkAdminPermission(context.user.id)
+  const userCheck = context.user && await permissions.checkAdminPermission(context.user.id)
 
   if(userCheck) {
     const user = await Users.Users.findOne({_id: args.id})
@@ -120,7 +117,7 @@ async function adminUser(root, args, context) {
 }
 
 async function adminUsersRecent(root, args, context) {
-  const userCheck = await permissions.checkAdminPermission(context.user.id)
+  const userCheck = context.user && await permissions.checkAdminPermission(context.user.id)
 
   if(userCheck) {
 

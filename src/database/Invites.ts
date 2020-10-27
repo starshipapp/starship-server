@@ -8,6 +8,6 @@ const inviteSchema = mongoose.Schema({
   createdAt: Date,
 })
 
-inviteSchema.plugin(customId, mongoose);
+inviteSchema.plugin(customId, {mongoose: mongoose});
 
 export const Invites = mongoose.model('invites', inviteSchema);
