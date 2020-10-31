@@ -12,6 +12,21 @@ const resolvers = require('./resolvers/resolvers').default;
 
 const mongoose = require('mongoose');
 
+const sysInfo = {
+  serverName: "starship-server",
+  version: "prealpha",
+  production: !Boolean(process.env.DEVELOPMENT),
+  schemaVersion: "0.1c",
+  syncEnabled: process.env.REDIS_URL != undefined,
+  subscriptionsSupported: false,
+  supportedFeatures: ["users", "reports"],
+  supportedComponents: [],
+  recaptchaEnabled: process.env.RECAPTCHA_SECRET != undefined,
+  emailVerificationEnabled: false,
+  bucketConnected: process.env.BUCKET_ENDPOINT != undefined,
+  clientFlags: ["noproduction", "experimental"]
+}
+
 mongoose.connect(process.env.MONGO_URL, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -49,6 +64,10 @@ mongoose.connect(process.env.MONGO_URL, {
     });
 
     server.applyMiddleware({ app });
+
+    app.get('/', (req, res) => {
+      res.json(sysInfo)
+    })
 
     app.listen({ port: 4000 }, () =>
       logger.apolloLogger.info(`Server up at http://localhost:4000${server.graphqlPath}`)
