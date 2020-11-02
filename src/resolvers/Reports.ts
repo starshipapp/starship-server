@@ -1,48 +1,70 @@
-const Reports = require('../database/Reports');
-const permissions = require('../permissions');
+import Reports, { IReport } from '../database/Reports';
+import IContext from '../util/IContext';
+import permissions from '../util/permissions';
 
-async function report(root, args, context) {
-  const userCheck = context.user && await permissions.checkAdminPermission(context.user.id)
+interface IReportArgs {
+  id: string
+}
+
+async function report(root, args: IReportArgs, context: IContext): Promise<IReport> {
+  const userCheck = context.user && await permissions.checkAdminPermission(context.user.id);
 
   if(userCheck) {
-    return Reports.Reports.findOne({_id: args.id});
+    return Reports.findOne({_id: args.id});
   } else {
-    throw new Error('not-admin')
+    throw new Error('not-admin');
   }
 }
 
-async function allReports(root, args, context) {
-  const userCheck = context.user && await permissions.checkAdminPermission(context.user.id)
+interface IAllReportsArgs {
+  startNumber: number,
+  count: number,
+}
+
+async function allReports(root, args: IAllReportsArgs, context: IContext): Promise<IReport[]> {
+  const userCheck = context.user && await permissions.checkAdminPermission(context.user.id);
 
   if(userCheck) {
     if((args.count) < 101) {
-      return Reports.Reports.find({}).sort({createdAt: -1}).skip(args.startNumber).limit(args.count);
+      return Reports.find({}).sort({createdAt: -1}).skip(args.startNumber).limit(args.count);
     } else {
       throw new Error('page-too-large');
     }
   } else {
-    throw new Error('not-admin')
+    throw new Error('not-admin');
   }
 }
 
-async function reportsByUser(root, args, context) {
-  const userCheck = context.user && await permissions.checkAdminPermission(context.user.id)
+interface IReportsByUserArgs extends IAllReportsArgs {
+  userId: string
+}
+
+async function reportsByUser(root, args: IReportsByUserArgs, context: IContext): Promise<IReport[]> {
+  const userCheck = context.user && await permissions.checkAdminPermission(context.user.id);
 
   if(userCheck) {
     if((args.count) < 101) {
-      return Reports.Reports.find({userId: args.userId,}).sort({createdAt: -1}).skip(args.startNumber).limit(args.count);
+      return Reports.find({userId: args.userId,}).sort({createdAt: -1}).skip(args.startNumber).limit(args.count);
     } else {
       throw new Error('page-too-large');
     }
   } else {
-    throw new Error('not-admin')
+    throw new Error('not-admin');
   }
 }
 
-async function insertReport(root, args, context) {
+interface IInsertReportArgs {
+  objectType: number,
+  objectId: string,
+  reportType: number,
+  details: string,
+  userId: string
+}
+
+async function insertReport(root, args: IInsertReportArgs, context: IContext): Promise<IReport> {
   if(context.user && context.user.id) {
     console.log(args);
-    const newReport = new Reports.Reports({
+    const newReport = new Reports({
       owner: context.user.id,
       createdAt: new Date(),
       objectType: args.objectType,
@@ -51,23 +73,27 @@ async function insertReport(root, args, context) {
       details: args.details,
       userId: args.userId,
       solved: false
-    })
+    });
 
-    const result = await newReport.save().catch((e) => {console.error(e)});
+    const result = await newReport.save().catch((e) => {console.error(e);}) as unknown as IReport;
     return result;
   } else {
-    throw new Error("no-user")
+    throw new Error("no-user");
   }
 }
 
-async function solveReport(root, args, context) {
-  const userCheck = context.user && await permissions.checkAdminPermission(context.user.id)
+interface ISolveReportArgs {
+  reportId: string
+}
+
+async function solveReport(root, args: ISolveReportArgs, context:IContext) {
+  const userCheck = context.user && await permissions.checkAdminPermission(context.user.id);
 
   if(userCheck) {
-    return await Reports.Reports.findOneAndUpdate({_id: args.reportId}, {$set: {solved: true}}, {returnOriginal: false})
+    return await Reports.findOneAndUpdate({_id: args.reportId}, {$set: {solved: true}}, {new: true});
   } else {
-    throw new Error('not-admin')
+    throw new Error('not-admin');
   }
 }
 
-export {report, allReports, reportsByUser, insertReport, solveReport}
+export default {report, allReports, reportsByUser, insertReport, solveReport};

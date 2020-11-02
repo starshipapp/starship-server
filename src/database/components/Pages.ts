@@ -1,15 +1,25 @@
-const mongoose = require('mongoose');
-const customId = require('mongoose-hook-custom-id');
+import mongoose, {model, Schema, Document} from "mongoose";
+import customId from "mongoose-hook-custom-id";
+import nanoIdPlugin from "mongoose-nanoid";
 
-const pageSchema = mongoose.Schema({
+export interface IPage extends Document {
+  _id: string,
+  createdAt: Date,
+  owner: string,
+  updatedAt: Date,
+  planet: string,
+  content: string
+}
+
+const pageSchema: Schema = new Schema({
   _id: String,
   createdAt: Date,
   owner: String,
   updatedAt: Date,
   planet: String,
   content: String,
-})
+});
 
-pageSchema.plugin(customId, {mongoose: mongoose});
+pageSchema.plugin(nanoIdPlugin);
 
-export const Pages = mongoose.model('pages', pageSchema);
+export default model<IPage>('pages', pageSchema);

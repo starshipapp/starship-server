@@ -1,11 +1,10 @@
-import { PossibleFragmentSpreadsRule } from "graphql";
-import { Planets } from "./database/Planets";
-import { Users } from "./database/Users";
+import Planets from "../database/Planets";
+import Users, { IUser } from "../database/Users";
 
-async function checkReadPermission(userId: String, planetId: String) {
+async function checkReadPermission(userId: string, planetId: string): Promise<boolean> {
   if (userId && planetId) {
     const user = await Users.findOne({_id: userId});
-    
+
     if(user == undefined) {
       throw new Error("missing-user");
     }
@@ -35,17 +34,17 @@ async function checkReadPermission(userId: String, planetId: String) {
     if(planet.owner == userId) {
       return true;
     }
-    
+
     return false;
   } else {
     throw new Error("missing-id");
   }
 }
 
-async function checkPublicWritePermission(userId: String, planetId: String) {
+async function checkPublicWritePermission(userId: string, planetId: string): Promise<boolean> {
   if (userId && planetId) {
     const user = await Users.findOne({_id: userId});
-    
+
     if(user == undefined) {
       throw new Error("missing-user");
     }
@@ -79,17 +78,17 @@ async function checkPublicWritePermission(userId: String, planetId: String) {
     if(planet.owner == userId) {
       return true;
     }
-    
+
     return false;
   } else {
     throw new Error("missing-id");
   }
 }
 
-async function checkFullWritePermission(userId: String, planetId: String) {
+async function checkFullWritePermission(userId: string, planetId: string): Promise<boolean> {
   if (userId && planetId) {
     const user = await Users.findOne({_id: userId});
-    
+
     if(user == undefined) {
       throw new Error("missing-user");
     }
@@ -119,17 +118,17 @@ async function checkFullWritePermission(userId: String, planetId: String) {
     if(planet.owner == userId) {
       return true;
     }
-    
+
     return false;
   } else {
     throw new Error("missing-id");
   }
 }
 
-async function checkAdminPermission(userId: String) {
-  let user = null;
+async function checkAdminPermission(userId: string): Promise<boolean> {
+  let user: IUser = null;
 
-  user = await Users.findOne({_id: userId})
+  user = await Users.findOne({_id: userId});
 
   if(user == undefined) {
     throw new Error("missing-user");
@@ -141,4 +140,4 @@ async function checkAdminPermission(userId: String) {
   return false;
 }
 
-export {checkAdminPermission, checkReadPermission, checkPublicWritePermission, checkFullWritePermission}
+export default {checkAdminPermission, checkReadPermission, checkPublicWritePermission, checkFullWritePermission};

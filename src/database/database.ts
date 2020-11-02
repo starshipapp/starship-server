@@ -11,8 +11,8 @@ require('./components/forum/Forums');
 require('./components/wiki/WikiPages');
 require('./components/wiki/Wikis');
 
-const logger = require('../logging');
+import Loggers from '../Loggers';
 
-logger.dbLogger.info("Database schemas loaded sucessfully")
+Loggers.dbLogger.info("Database schemas loaded sucessfully");
 
-export {}
+export {};

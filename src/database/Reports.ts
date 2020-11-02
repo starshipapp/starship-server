@@ -1,7 +1,20 @@
-const mongoose = require('mongoose');
-const customId = require('mongoose-hook-custom-id');
+import mongoose, {model, Schema, Document} from "mongoose";
+import customId from "mongoose-hook-custom-id";
+import nanoIdPlugin from "mongoose-nanoid";
 
-const reportSchema = mongoose.Schema({
+export interface IReport extends Document {
+  _id: string,
+  owner: string,
+  createdAt: Date,
+  objectType: number,
+  objectId: string,
+  reportType: number,
+  details: string,
+  userId: string,
+  solved: boolean
+}
+
+const reportSchema: Schema = new Schema({
   _id: String,
   owner: String,
   createdAt: Date,
@@ -11,8 +24,8 @@ const reportSchema = mongoose.Schema({
   details: String,
   userId: String,
   solved: Boolean
-})
+});
 
-reportSchema.plugin(customId, {mongoose: mongoose});
+reportSchema.plugin(nanoIdPlugin);
 
-export const Reports = mongoose.model('reports', reportSchema);
+export default model<IReport>('reports', reportSchema);

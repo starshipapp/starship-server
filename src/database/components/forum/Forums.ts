@@ -1,14 +1,23 @@
-const mongoose = require('mongoose');
-const customId = require('mongoose-hook-custom-id');
+import mongoose, {model, Schema, Document} from "mongoose";
+import customId from "mongoose-hook-custom-id";
+import nanoIdPlugin from "mongoose-nanoid";
 
-const forumSchema = mongoose.Schema({
+export interface IForum extends Document {
+  _id: string,
+  createdAt: Date,
+  owner: string,
+  updatedAt: Date,
+  planet: string
+}
+
+const forumSchema: Schema = new Schema({
   _id: String,
   owner: String,
   updatedAt: Date,
   planet: String,
   createdAt: Date,
-})
+});
 
-forumSchema.plugin(customId, {mongoose: mongoose});
+forumSchema.plugin(nanoIdPlugin);
 
-export const Forum = mongoose.model('forums', forumSchema);
+export default model<IForum>('forums', forumSchema);

@@ -1,7 +1,24 @@
-const mongoose = require('mongoose');
-const customId = require('mongoose-hook-custom-id');
+import mongoose, {model, Schema, Document} from "mongoose";
+import customId from "mongoose-hook-custom-id";
+import nanoIdPlugin from "mongoose-nanoid";
 
-const forumPostSchema = mongoose.Schema({
+export interface IForumPost extends Document {
+  _id: string,
+  name: string,
+  componentId: string,
+  content: string,
+  owner: string,
+  planet: string,
+  tags: [string],
+  reactions: [{emoji: string, reactors: string}],
+  replyCount: number,
+  stickied: boolean,
+  createdAt: Date,
+  updatedAt: Date,
+  locked: boolean,
+}
+
+const forumPostSchema: Schema = new Schema({
   _id: String,
   name: String,
   componentId: String,
@@ -15,8 +32,8 @@ const forumPostSchema = mongoose.Schema({
   locked: Boolean,
   createdAt: Date,
   updatedAt: Date
-})
+});
 
-forumPostSchema.plugin(customId, {mongoose: mongoose});
+forumPostSchema.plugin(nanoIdPlugin);
 
-export const ForumPosts = mongoose.model('forumposts', forumPostSchema);
+export default model('forumposts', forumPostSchema);

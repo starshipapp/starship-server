@@ -1,7 +1,21 @@
-const mongoose = require('mongoose');
-const customId = require('mongoose-hook-custom-id');
+import mongoose, {model, Schema, Document} from "mongoose";
+import customId from "mongoose-hook-custom-id";
+import nanoIdPlugin from "mongoose-nanoid";
 
-const forumRepliesSchema = new mongoose.Schema({
+export interface IForum extends Document {
+  _id: string,
+  postId: string,
+  componentId: string,
+  content: string,
+  owner: string,
+  planet: string,
+  reactions: [{emoji: string, reactors: string}],
+  stickied: boolean,
+  createdAt: Date,
+  updatedAt: Date
+}
+
+const forumRepliesSchema: Schema = new Schema({
   _id: String,
   postId: String,
   componentId: String,
@@ -9,12 +23,11 @@ const forumRepliesSchema = new mongoose.Schema({
   owner: String,
   planet: String,
   reactions: [{emoji: String, reactors: [String]}],
-  replyCount: Number,
   stickied: Boolean,
   createdAt: Date,
   updatedAt: Date
-})
+});
 
-forumRepliesSchema.plugin(customId, {mongoose: mongoose});
+forumRepliesSchema.plugin(nanoIdPlugin);
 
-export const ForumReplies = mongoose.model('forumreplies', forumRepliesSchema);
+export default model<IForum>('forumreplies', forumRepliesSchema);

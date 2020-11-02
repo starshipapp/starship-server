@@ -1,7 +1,22 @@
-const mongoose = require('mongoose');
-const customId = require('mongoose-hook-custom-id');
+import mongoose, {model, Schema, Document} from "mongoose";
+import customId from "mongoose-hook-custom-id";
+import nanoIdPlugin from "mongoose-nanoid";
 
-const fileObjectsSchema = new mongoose.Schema({
+export interface IFileObject extends Document {
+  _id: string,
+  path: [string],
+  parent: string,
+  name: string,
+  planet: string,
+  owner: string,
+  createdAt: Date,
+  componentId: string,
+  type: string,
+  fileType: string,
+  finishedUploading: boolean
+}
+
+const fileObjectsSchema: Schema = new Schema({
   _id: String,
   path: [String],
   parent: String,
@@ -13,8 +28,8 @@ const fileObjectsSchema = new mongoose.Schema({
   type: String,
   fileType: String,
   finishedUploading: Boolean
-})
+});
 
-fileObjectsSchema.plugin(customId, {mongoose: mongoose});
+fileObjectsSchema.plugin(nanoIdPlugin);
 
-export const FileObjects = mongoose.model('fileobjects', fileObjectsSchema);
+export default model<IFileObject>('fileobjects', fileObjectsSchema);

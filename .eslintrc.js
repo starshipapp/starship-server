@@ -6,7 +6,7 @@ It represents the closest reasonable ESLint configuration to this
 project's original TSLint configuration.
 
 We recommend eventually switching this configuration to extend from
-the recommended rulesets in typescript-eslint. 
+the recommended rulesets in typescript-eslint.
 https://github.com/typescript-eslint/tslint-to-eslint-config/blob/master/docs/FAQs.md
 
 Happy linting! 💖
@@ -89,10 +89,6 @@ module.exports = {
         "@typescript-eslint/unified-signatures": "error",
         "complexity": "off",
         "constructor-super": "error",
-        "eqeqeq": [
-            "error",
-            "smart"
-        ],
         "guard-for-in": "error",
         "id-blacklist": [
             "error",
@@ -123,18 +119,10 @@ module.exports = {
         "no-empty": "error",
         "no-eval": "error",
         "no-fallthrough": "off",
-        "no-invalid-this": "off",
         "no-new-wrappers": "error",
-        "no-shadow": [
-            "error",
-            {
-                "hoist": "all"
-            }
-        ],
         "no-throw-literal": "error",
         "no-trailing-spaces": "error",
         "no-undef-init": "error",
-        "no-underscore-dangle": "error",
         "no-unsafe-finally": "error",
         "no-unused-labels": "error",
         "no-var": "error",
@@ -143,7 +131,6 @@ module.exports = {
             "error",
             "never"
         ],
-        "prefer-arrow/prefer-arrow-functions": "error",
         "prefer-const": "error",
         "radix": "error",
         "spaced-comment": [
@@ -156,6 +143,37 @@ module.exports = {
             }
         ],
         "use-isnan": "error",
-        "valid-typeof": "off"
+        "valid-typeof": "off",
+        "jsx-quotes": [
+            "error",
+            "prefer-double"
+        ],
+        "curly": [
+            "error",
+            "multi-line"
+        ],
+        "no-invalid-this": [
+            "error"
+        ],
+        "array-bracket-spacing": [
+            "error",
+            "never"
+        ],
+        "block-spacing": [
+            "error",
+            "never"
+        ],
+        "brace-style": [
+            "error",
+            "1tbs",
+            {
+                "allowSingleLine": true
+            }
+        ],
+        "semi": [
+            "error",
+            "always"
+        ],
+        "no-var": "error"
     }
 };

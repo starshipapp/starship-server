@@ -1,14 +1,23 @@
-const mongoose = require('mongoose');
-const customId = require('mongoose-hook-custom-id');
+import mongoose, {model, Schema, Document} from "mongoose";
+import customId from "mongoose-hook-custom-id";
+import nanoIdPlugin from "mongoose-nanoid";
 
-const wikiSchema = mongoose.Schema({
+export interface IWiki extends Document {
+  _id: string,
+  createdAt: Date,
+  owner: string,
+  updatedAt: Date,
+  planet: string
+}
+
+const wikiSchema: Schema = new Schema({
   _id: String,
   owner: String,
   updatedAt: Date,
   planet: String,
   createdAt: Date,
-})
+});
 
-wikiSchema.plugin(customId, {mongoose: mongoose});
+wikiSchema.plugin(nanoIdPlugin);
 
-export const Wikis = mongoose.model('wikis', wikiSchema);
+export default model<IWiki>('wikis', wikiSchema);

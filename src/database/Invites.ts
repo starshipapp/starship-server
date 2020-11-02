@@ -1,13 +1,21 @@
-const mongoose = require('mongoose');
-const customId = require('mongoose-hook-custom-id');
+import mongoose, {model, Schema, Document} from "mongoose";
+import customId from "mongoose-hook-custom-id";
+import nanoIdPlugin from "mongoose-nanoid";
 
-const inviteSchema = mongoose.Schema({
+export interface IInvite extends Document {
+  _id: string,
+  planet: string,
+  owner: string,
+  createdAt: Date
+}
+
+const inviteSchema: Schema = new Schema({
   _id: String,
   planet: String,
   owner: String,
   createdAt: Date,
-})
+});
 
-inviteSchema.plugin(customId, {mongoose: mongoose});
+inviteSchema.plugin(nanoIdPlugin);
 
-export const Invites = mongoose.model('invites', inviteSchema);
+export default model<IInvite>('invites', inviteSchema);
