@@ -1,5 +1,5 @@
 import {model, Schema, Document} from "mongoose";
-import nanoIdPlugin from "mongoose-nanoid";
+import nanoIdPlugin from "@william341/mongoose-nanoid";
 
 export interface IWiki extends Document {
   _id: string,

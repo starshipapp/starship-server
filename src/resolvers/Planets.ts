@@ -3,6 +3,7 @@ import Planets, { IPlanet } from "../database/Planets";
 import permissions from "../util/permissions";
 import Context from "../util/Context";
 import Invites, { IInvite } from "../database/Invites";
+import ComponentIndex from "../util/ComponentIndex";
 
 const fieldResolvers = {
   owner: async (root: IPlanet, args: undefined, context: Context): Promise<IUser> => {
@@ -45,8 +46,27 @@ async function adminPlanets(root: undefined, args: IAdminPlanetsArgs, context: C
 }
 
 // MUTATIONS
-async function insertPlanet(root: undefined, args: undefined, context: Context) {
+interface IInsertPlanetArgs {
+  name: string
+}
 
+async function insertPlanet(root: undefined, args: IInsertPlanetArgs, context: Context): Promise<IPlanet> {
+  if(context.user && context.user.id) {
+    const planet = new Planets({
+      name: args.name,
+      createdAt: new Date(),
+      owner: context.user.id,
+      private: false,
+      followerCount: 0,
+      components: []
+    });
+    await planet.save();
+    const homeComponent = await ComponentIndex.createComponent("page", planet._id, context.user.id);
+    planet.homeComponent = {componentId: homeComponent._id, type: "page"};
+    return planet.save();
+  } else {
+    throw new Error("You need to login.");
+  }
 }
 
 async function addComponent(root: undefined, args: undefined, context: Context) {

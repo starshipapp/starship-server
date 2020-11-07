@@ -1,5 +1,5 @@
 import {model, Schema, Document} from "mongoose";
-import nanoIdPlugin from "mongoose-nanoid";
+import nanoIdPlugin from "@william341/mongoose-nanoid";
 
 export interface IPlanet extends Document {
   _id: string,
@@ -9,7 +9,7 @@ export interface IPlanet extends Document {
   private: boolean,
   followerCount: number,
   components: [{name: string, componentId: string, type: string}],
-  homeComponent: {name: string, componentId: string, type: string},
+  homeComponent: {componentId: string, type: string},
   featured: boolean,
   verified: boolean,
   partnered: boolean,

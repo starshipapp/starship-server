@@ -73,7 +73,6 @@ interface IInsertReportArgs {
 
 async function insertReport(root: undefined, args: IInsertReportArgs, context: Context): Promise<IReport> {
   if(context.user && context.user.id) {
-    console.log(args);
     const newReport = new Reports({
       owner: context.user.id,
       createdAt: new Date(),
