@@ -1,4 +1,3 @@
-import e from "express";
 import Files, { IFiles } from "../database/components/files/Files";
 import ForumPosts from "../database/components/forum/ForumPosts";
 import ForumReplies, { IForum } from "../database/components/forum/ForumReplies";

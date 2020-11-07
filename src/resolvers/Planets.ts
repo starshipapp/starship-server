@@ -61,7 +61,9 @@ async function insertPlanet(root: undefined, args: IInsertPlanetArgs, context: C
       components: []
     });
     await planet.save();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const homeComponent = await ComponentIndex.createComponent("page", planet._id, context.user.id);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     planet.homeComponent = {componentId: homeComponent._id, type: "page"};
     return planet.save();
   } else {
