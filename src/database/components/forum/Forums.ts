@@ -1,7 +1,8 @@
-import {model, Schema, Document} from "mongoose";
+import {model, Schema} from "mongoose";
 import nanoIdPlugin from "@william341/mongoose-nanoid";
+import { IComponent } from "../IComponent";
 
-export interface IForum extends Document {
+export interface IForum extends IComponent {
   _id: string,
   createdAt: Date,
   owner: string,

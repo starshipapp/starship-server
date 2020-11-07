@@ -2,6 +2,7 @@ import Files, { IFiles } from "../database/components/files/Files";
 import ForumPosts from "../database/components/forum/ForumPosts";
 import ForumReplies, { IForum } from "../database/components/forum/ForumReplies";
 import Forums from "../database/components/forum/Forums";
+import { IComponent } from "../database/components/IComponent";
 import Pages, { IPage } from "../database/components/Pages";
 import WikiPages from "../database/components/wiki/WikiPages";
 import Wikis, { IWiki } from "../database/components/wiki/Wikis";
@@ -75,11 +76,11 @@ export default class ComponentIndex {
     }
   }
 
-  public static createComponent(type: string, planetId: string, userId: string): Promise<any> {
+  public static createComponent(type: string, planetId: string, userId: string): Promise<IComponent> {
     if(this.availableComponents.includes(type)) {
       // we know what the type is even though compiler doesn't, disable no-unsafe-call
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-      return this.creationFunctions[type](planetId, userId) as Promise<any>;
+      return this.creationFunctions[type](planetId, userId) as Promise<IComponent>;
     } else {
       throw new Error("Type does not exist.");
     }
