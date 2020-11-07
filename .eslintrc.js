@@ -121,7 +121,6 @@ module.exports = {
         "no-fallthrough": "off",
         "no-new-wrappers": "error",
         "no-throw-literal": "error",
-        "no-trailing-spaces": "error",
         "no-undef-init": "error",
         "no-unsafe-finally": "error",
         "no-unused-labels": "error",

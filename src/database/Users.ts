@@ -1,7 +1,15 @@
-import mongoose, {model, Schema, Document} from "mongoose";
-import customId from "mongoose-hook-custom-id";
+import {model, Schema, Document} from "mongoose";
 // import idPlugin from "./idPlugin";
 import nanoIdPlugin from "mongoose-nanoid";
+
+export const safeUserFields = {
+  _id: true,
+  username: true,
+  createdAt: true,
+  profilePicture: true,
+  banned: true,
+  admin: true,
+};
 
 export interface IUser extends Document {
   _id: string,

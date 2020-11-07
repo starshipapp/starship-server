@@ -1,6 +1,5 @@
-// eslint-disable-next-line @typescript-eslint/no-unsafe-call
-// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-require('dotenv').config();
+import dotenv from "dotenv";
+dotenv.config();
 
 import { ApolloServer, gql } from "apollo-server-express";
 import { readFileSync } from "fs";
@@ -14,6 +13,8 @@ Loggers.mainLogger.warn("PRE-ALPHA BUILD; DO NOT USE IN PRODUCTION");
 import resolvers from "./resolvers/resolvers";
 import { connect } from "mongoose";
 import IUserToken from "./util/IUserToken";
+import Context from "./util/Context";
+import Loaders from "./util/Loaders";
 
 const sysInfo = {
   serverName: "starship-server",
@@ -56,8 +57,14 @@ connect(process.env.MONGO_URL, {
           user = jwt.verify(token, process.env.SECRET) as IUserToken;
         }
 
-        return {user};
-      }
+        const ctx = new Context();
+        
+        ctx.user = user;
+        ctx.loaders = new Loaders();
+
+        return ctx;
+      },
+      tracing: Boolean(process.env.DEVELOPMENT)
     });
 
     server.applyMiddleware({ app });

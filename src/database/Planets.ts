@@ -1,5 +1,4 @@
-import mongoose, {model, Schema, Document} from "mongoose";
-import customId from "mongoose-hook-custom-id";
+import {model, Schema, Document} from "mongoose";
 import nanoIdPlugin from "mongoose-nanoid";
 
 export interface IPlanet extends Document {
@@ -9,8 +8,8 @@ export interface IPlanet extends Document {
   owner: string,
   private: boolean,
   followerCount: number,
-  components: [{names: string, componentId: string, type: string}],
-  homeComponent: {names: string, componentId: string, type: string},
+  components: [{name: string, componentId: string, type: string}],
+  homeComponent: {name: string, componentId: string, type: string},
   featured: boolean,
   verified: boolean,
   partnered: boolean,
@@ -26,8 +25,8 @@ const planetSchema: Schema = new Schema({
   owner: String,
   private: Boolean,
   followerCount: Number,
-  components: [{name: String, componentId: String, type: String}],
-  homeComponent: {name: String, componentId: String, type: String},
+  components: [Object],
+  homeComponent: Object,
   featured: Boolean,
   verified: Boolean,
   partnered: Boolean,

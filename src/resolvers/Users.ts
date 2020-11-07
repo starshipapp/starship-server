@@ -2,7 +2,31 @@ import Users, { IUser } from "../database/Users";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import permissions from "../util/permissions";
-import IContext from "../util/IContext";
+import Context from "../util/Context";
+import Loggers from "../Loggers";
+import Planets, { IPlanet } from "../database/Planets";
+
+const fieldResolvers = {
+  following: async (root: IUser, args: undefined, context: Context): Promise<IPlanet[]> => {
+    if(root._id == context.user.id) {
+      const loaded = await context.loaders.planetLoader.loadMany(root.following);
+      return loaded as IPlanet[];
+    }
+    throw new Error("You can only get the followed planets on the active user.");
+  },
+  memberOf: async (root: IUser, args: undefined, context: Context): Promise<IPlanet[]> => {
+    if(root._id == context.user.id) {
+      const loaded = await Planets.find({
+        $or: [
+          {owner: context.user.id},
+          {members: context.user.id}
+        ]
+      });
+      return loaded;
+    }
+    throw new Error("You can only get the member planets of the active user.");
+  }
+};
 
 interface IInsertUserArgs {
   email: string,
@@ -11,7 +35,7 @@ interface IInsertUserArgs {
   recaptcha: string
 }
 
-async function insertUser(root, args: IInsertUserArgs, context): Promise<IUser> {
+async function insertUser(root: undefined, args: IInsertUserArgs): Promise<IUser> {
   const usernameCheck = await Users.findOne({username: args.username});
   const emailCheck = await Users.findOne({emails: {$elemMatch: {address: args.email}}});
 
@@ -28,7 +52,9 @@ async function insertUser(root, args: IInsertUserArgs, context): Promise<IUser> 
   }
 
   // don't do anything with RECAPTCHA yet, needs client
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const secret = process.env.RECAPTCHASECRET;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const response = args.recaptcha;
 
   const password = bcrypt.hashSync(args.password, 3) ;
@@ -54,8 +80,8 @@ interface ILoginUserArgs {
   password: string,
 }
 
-async function loginUser(root, args: ILoginUserArgs, context): Promise<{token: string}> {
-  const document = await Users.findOne({username: args.username}).catch((err) => {/* log the error*/}) as unknown as IUser;
+async function loginUser(root: undefined, args: ILoginUserArgs): Promise<{token: string}> {
+  const document = await Users.findOne({username: args.username}).catch((error) => {Loggers.mainLogger.error(error);}) as unknown as IUser;
   if(document == undefined) {
     throw new Error('missing-user');
   }
@@ -69,7 +95,7 @@ interface IBanUserArgs {
   userId: string
 }
 
-async function banUser(root, args: IBanUserArgs, context: IContext): Promise<IUser> {
+async function banUser(root: undefined, args: IBanUserArgs, context: Context): Promise<IUser> {
   const userCheck = context.user && await permissions.checkAdminPermission(context.user.id);
 
   if(userCheck) {
@@ -87,7 +113,7 @@ async function banUser(root, args: IBanUserArgs, context: IContext): Promise<IUs
   }
 }
 
-async function currentUser(root, args, context: IContext): Promise<IUser> {
+async function currentUser(root: undefined, args: undefined, context: Context): Promise<IUser> {
   if(context.user == null) {
     throw new Error('no-login');
   }
@@ -99,7 +125,7 @@ interface IUserArgs {
   id: string
 }
 
-async function user(root, args: IUserArgs, context): Promise<IUser> {
+async function user(root: undefined, args: IUserArgs): Promise<IUser> {
   const user = await Users.findOne({_id: args.id});
 
   if(user == undefined) {
@@ -116,7 +142,7 @@ async function user(root, args: IUserArgs, context): Promise<IUser> {
   } as IUser;
 }
 
-async function adminUser(root, args: IUserArgs, context: IContext): Promise<IUser> {
+async function adminUser(root: undefined, args: IUserArgs, context: Context): Promise<IUser> {
   const userCheck = context.user && await permissions.checkAdminPermission(context.user.id);
 
   if(userCheck) {
@@ -140,7 +166,7 @@ async function adminUser(root, args: IUserArgs, context: IContext): Promise<IUse
   }
 }
 
-async function adminUsersRecent(root, args, context: IContext) {
+async function adminUsersRecent(root: undefined, args: undefined, context: Context): Promise<IUser[]> {
   const userCheck = context.user && await permissions.checkAdminPermission(context.user.id);
 
   if(userCheck) {
@@ -155,4 +181,4 @@ async function adminUsersRecent(root, args, context: IContext) {
   }
 }
 
-export default {loginUser, currentUser, insertUser, user, adminUser, banUser, adminUsersRecent};
+export default {fieldResolvers, loginUser, currentUser, insertUser, user, adminUser, banUser, adminUsersRecent};

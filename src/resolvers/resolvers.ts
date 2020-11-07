@@ -1,9 +1,12 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import Users from "./Users";
 import Reports from "./Reports";
 import Planets from "./Planets";
 
 const resolvers = {
-  // eslint-disable-next-line @typescript-eslint/naming-convention
+  User: Users.fieldResolvers,
+  Report: Reports.fieldResolvers,
+  Planet: Planets.fieldResolvers,
   Query: {
     // Users
     user: Users.user,
@@ -15,14 +18,10 @@ const resolvers = {
     allReports: Reports.allReports,
     reportsByUser: Reports.reportsByUser,
     // Planets
-    memberPlanets: Planets.memberPlanets,
-    followedPlanets: Planets.followedPlanets,
     featuredPlanets: Planets.featuredPlanets,
     planet: Planets.planet,
     adminPlanets: Planets.adminPlanets,
-    planetFromInvite: Planets.planetFromInvite
   },
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   Mutation: {
     // Users
     insertUser: Users.insertUser,

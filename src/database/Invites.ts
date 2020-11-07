@@ -1,5 +1,4 @@
-import mongoose, {model, Schema, Document} from "mongoose";
-import customId from "mongoose-hook-custom-id";
+import {model, Schema, Document} from "mongoose";
 import nanoIdPlugin from "mongoose-nanoid";
 
 export interface IInvite extends Document {

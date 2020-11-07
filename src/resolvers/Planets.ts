@@ -1,28 +1,24 @@
 import Users, { IUser } from "../database/Users";
 import Planets, { IPlanet } from "../database/Planets";
 import permissions from "../util/permissions";
-import IContext from "../util/IContext";
-import Invites from "../database/Invites";
+import Context from "../util/Context";
+import Invites, { IInvite } from "../database/Invites";
+
+const fieldResolvers = {
+  owner: async (root: IPlanet, args: undefined, context: Context): Promise<IUser> => {
+    return context.loaders.userLoader.load(root.owner);
+  },
+  members: async (root: IPlanet, args: undefined, context: Context): Promise<IUser[]> => {
+    const loaded = await context.loaders.userLoader.loadMany(root.members);
+    return loaded as IUser[];
+  },
+  invites: async (root: IPlanet): Promise<IInvite[]> => {
+    const loaded = await Invites.find({planet: root._id});
+    return loaded;
+  }
+};
 
 // QUERIES
-async function memberPlanets(root, args, context: IContext): Promise<IPlanet[]> {
-  if(context.user.id) {
-    return Planets.find({
-      $or: [
-        {owner: context.user.id},
-        {members: context.user.id}
-      ]
-    });
-  }
-}
-
-async function followedPlanets(root, args, context: IContext): Promise<IPlanet[]> {
-  if(context.user.id) {
-    const user: IUser = await Users.findOne({_id: context.user.id});
-    return Planets.find({_id: {$in: user.following}});
-  }
-}
-
 async function featuredPlanets(): Promise<IPlanet[]> {
   return Planets.find({featured: true, private: false});
 }
@@ -31,7 +27,7 @@ interface IPlanetArgs {
   id: string
 }
 
-async function planet(root, args: IPlanetArgs, context: IContext): Promise<IPlanet> {
+async function planet(root: undefined, args: IPlanetArgs, context: Context): Promise<IPlanet> {
   if(await permissions.checkReadPermission(context.user.id, args.id)) {
     return Planets.findOne({_id: args.id});
   }
@@ -42,59 +38,47 @@ interface IAdminPlanetsArgs {
   count: number,
 }
 
-async function adminPlanets(root, args: IAdminPlanetsArgs, context: IContext): Promise<IPlanet[]> {
+async function adminPlanets(root: undefined, args: IAdminPlanetsArgs, context: Context): Promise<IPlanet[]> {
   if(await permissions.checkAdminPermission(context.user.id)) {
     return Planets.find({}).sort({createdAt: -1}).skip(args.startNumber).limit(args.count);
   }
 }
 
-interface IPlanetFromInviteArgs {
-  inviteId: string
-}
-
-async function planetFromInvite(root, args: IPlanetFromInviteArgs, context: IContext): Promise<IPlanet> {
-  const invite = await Invites.findOne({_id: args.inviteId});
-
-  if(invite) {
-    return Planets.findOne({_id: invite.planet});
-  }
-}
-
 // MUTATIONS
-async function insertPlanet(root, args, context: IContext) {
+async function insertPlanet(root: undefined, args: undefined, context: Context) {
 
 }
 
-async function addComponent(root, args, context: IContext) {
+async function addComponent(root: undefined, args: undefined, context: Context) {
 
 }
 
-async function followPlanet(root, args, context: IContext) {
+async function followPlanet(root: undefined, args: undefined, context: Context) {
 
 }
 
-async function removeComponent(root, args, context: IContext) {
+async function removeComponent(root: undefined, args: undefined, context: Context) {
 
 }
 
-async function updateName(root, args, context: IContext) {
+async function updateName(root: undefined, args: undefined, context: Context) {
 
 }
 
-async function togglePrivate(root, args, context: IContext) {
+async function togglePrivate(root: undefined, args: undefined, context: Context) {
 
 }
 
-async function renameComponent(root, args, context: IContext) {
+async function renameComponent(root: undefined, args: undefined, context: Context) {
 
 }
 
-async function applyModTools(root, args, context: IContext) {
+async function applyModTools(root: undefined, args: undefined, context: Context) {
 
 }
 
-async function toggleBan(root, args, context: IContext) {
+async function toggleBan(root: undefined, args: undefined, context: Context) {
 
 }
 
-export default {memberPlanets, followedPlanets, featuredPlanets, planet, adminPlanets, planetFromInvite, insertPlanet, addComponent, followPlanet, removeComponent, updateName, togglePrivate, renameComponent, applyModTools, toggleBan};
+export default {fieldResolvers, featuredPlanets, planet, adminPlanets, insertPlanet, addComponent, followPlanet, removeComponent, updateName, togglePrivate, renameComponent, applyModTools, toggleBan};

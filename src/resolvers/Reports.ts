@@ -1,12 +1,22 @@
 import Reports, { IReport } from '../database/Reports';
-import IContext from '../util/IContext';
+import { IUser } from '../database/Users';
+import Context from '../util/Context';
 import permissions from '../util/permissions';
+
+const fieldResolvers = {
+  owner: async (root: IReport, args: undefined, context: Context): Promise<IUser> => {
+    return context.loaders.userLoader.load(root.owner);
+  },
+  user: async (root: IReport, args: undefined, context: Context): Promise<IUser> => {
+    return context.loaders.userLoader.load(root.userId);
+  }
+};
 
 interface IReportArgs {
   id: string
 }
 
-async function report(root, args: IReportArgs, context: IContext): Promise<IReport> {
+async function report(root: undefined, args: IReportArgs, context: Context): Promise<IReport> {
   const userCheck = context.user && await permissions.checkAdminPermission(context.user.id);
 
   if(userCheck) {
@@ -21,7 +31,7 @@ interface IAllReportsArgs {
   count: number,
 }
 
-async function allReports(root, args: IAllReportsArgs, context: IContext): Promise<IReport[]> {
+async function allReports(root: undefined, args: IAllReportsArgs, context: Context): Promise<IReport[]> {
   const userCheck = context.user && await permissions.checkAdminPermission(context.user.id);
 
   if(userCheck) {
@@ -39,7 +49,7 @@ interface IReportsByUserArgs extends IAllReportsArgs {
   userId: string
 }
 
-async function reportsByUser(root, args: IReportsByUserArgs, context: IContext): Promise<IReport[]> {
+async function reportsByUser(root: undefined, args: IReportsByUserArgs, context: Context): Promise<IReport[]> {
   const userCheck = context.user && await permissions.checkAdminPermission(context.user.id);
 
   if(userCheck) {
@@ -61,7 +71,7 @@ interface IInsertReportArgs {
   userId: string
 }
 
-async function insertReport(root, args: IInsertReportArgs, context: IContext): Promise<IReport> {
+async function insertReport(root: undefined, args: IInsertReportArgs, context: Context): Promise<IReport> {
   if(context.user && context.user.id) {
     console.log(args);
     const newReport = new Reports({
@@ -86,7 +96,7 @@ interface ISolveReportArgs {
   reportId: string
 }
 
-async function solveReport(root, args: ISolveReportArgs, context:IContext) {
+async function solveReport(root: undefined, args: ISolveReportArgs, context:Context): Promise<IReport> {
   const userCheck = context.user && await permissions.checkAdminPermission(context.user.id);
 
   if(userCheck) {
@@ -96,4 +106,4 @@ async function solveReport(root, args: ISolveReportArgs, context:IContext) {
   }
 }
 
-export default {report, allReports, reportsByUser, insertReport, solveReport};
+export default {fieldResolvers, report, allReports, reportsByUser, insertReport, solveReport};
