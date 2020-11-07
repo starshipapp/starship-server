@@ -69,8 +69,17 @@ async function insertPlanet(root: undefined, args: IInsertPlanetArgs, context: C
   }
 }
 
-async function addComponent(root: undefined, args: undefined, context: Context) {
+interface IAddComponentArgs {
+  planetId: string,
+  name: string,
+  type: string
+}
 
+async function addComponent(root: undefined, args: IAddComponentArgs, context: Context): Promise<IPlanet> {
+  if(context.user && await permissions.checkFullWritePermission(context.user.id, args.planetId)) {
+    const component = await ComponentIndex.createComponent(args.type, args.planetId, context.user.id);
+    return Planets.findOneAndUpdate({_id: args.planetId}, {$push: {components: {name: args.name, componentId: component._id, type: args.type}}}, {new: true});
+  }
 }
 
 async function followPlanet(root: undefined, args: undefined, context: Context) {
@@ -81,16 +90,31 @@ async function removeComponent(root: undefined, args: undefined, context: Contex
 
 }
 
-async function updateName(root: undefined, args: undefined, context: Context) {
+interface IUpdateNameArgs {
+  planetId: string,
+  name: string
+}
 
+async function updateName(root: undefined, args: IUpdateNameArgs, context: Context): Promise<IPlanet> {
+  if(context.user && await permissions.checkFullWritePermission(context.user.id, args.planetId)) {
+    return Planets.findOneAndUpdate({_id: args.planetId}, {$set: {name: args.name}}, {new: true});
+  }
 }
 
 async function togglePrivate(root: undefined, args: undefined, context: Context) {
 
 }
 
-async function renameComponent(root: undefined, args: undefined, context: Context) {
+interface IRenameComponentArgs {
+  planetId: string,
+  name: string,
+  componentId: string
+}
 
+async function renameComponent(root: undefined, args: IRenameComponentArgs, context: Context): Promise<IPlanet> {
+  if(context.user && await permissions.checkFullWritePermission(context.user.id, args.planetId)) {
+    return Planets.findOneAndUpdate({_id: args.planetId, "components.componentId": args.componentId}, {$set: {"components.$.name": args.name}}, {new: true});
+  }
 }
 
 async function applyModTools(root: undefined, args: undefined, context: Context) {
