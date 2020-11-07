@@ -20,7 +20,7 @@ const sysInfo = {
   serverName: "starship-server",
   version: "prealpha",
   production: !Boolean(process.env.DEVELOPMENT),
-  schemaVersion: "0.1c",
+  schemaVersion: "0.2",
   syncEnabled: process.env.REDIS_URL !== undefined,
   subscriptionsSupported: false,
   supportedFeatures: ["users", "reports"],
