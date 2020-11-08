@@ -23,7 +23,7 @@ const sysInfo = {
   schemaVersion: "0.2",
   syncEnabled: process.env.REDIS_URL !== undefined,
   subscriptionsSupported: false,
-  supportedFeatures: ["users", "reports"],
+  supportedFeatures: ["users", "reports", "planets"],
   supportedComponents: [],
   recaptchaEnabled: process.env.RECAPTCHA_SECRET !== undefined,
   emailVerificationEnabled: false,
