@@ -2,11 +2,13 @@
 import Users from "./Users";
 import Reports from "./Reports";
 import Planets from "./Planets";
+import Pages from "./components/Pages";
 
 const resolvers = {
   User: Users.fieldResolvers,
   Report: Reports.fieldResolvers,
   Planet: Planets.fieldResolvers,
+  Page: Pages.fieldResolvers,
   Query: {
     // Users
     user: Users.user,
@@ -21,6 +23,8 @@ const resolvers = {
     featuredPlanets: Planets.featuredPlanets,
     planet: Planets.planet,
     adminPlanets: Planets.adminPlanets,
+    // Pages
+    page: Pages.page
   },
   Mutation: {
     // Users
@@ -39,7 +43,9 @@ const resolvers = {
     togglePrivate: Planets.togglePrivate,
     renameComponent: Planets.renameComponent,
     applyModTools: Planets.applyModTools,
-    toggleBan: Planets.toggleBan
+    toggleBan: Planets.toggleBan,
+    // Pages
+    updatePage: Pages.updatePage
   }
 };
 
