@@ -9,7 +9,8 @@
     "postbuild": "cpy src/starship-schema dist/starship-schema",
     "start": "npm run build && node dist/index.js",
     "tsc": "tsc",
-    "eslint": "eslint"
+    "eslint": "eslint",
+    "run": "node dist/index.js"
   },
   "repository": {
     "type": "git",
