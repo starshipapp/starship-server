@@ -40,15 +40,15 @@ async function insertUser(root: undefined, args: IInsertUserArgs): Promise<IUser
   const emailCheck = await Users.findOne({emails: {$elemMatch: {address: args.email}}});
 
   if(usernameCheck != undefined) {
-    throw new Error('username-used');
+    throw new Error('That username is taken.');
   }
 
   if(emailCheck != undefined) {
-    throw new Error('email-used');
+    throw new Error('That email is taken.');
   }
 
   if(args.password.length < 8) {
-    throw new Error('password-length');
+    throw new Error('Your password needs to be at least 8 characters long.');
   }
 
   // don't do anything with RECAPTCHA yet, needs client
@@ -83,11 +83,13 @@ interface ILoginUserArgs {
 async function loginUser(root: undefined, args: ILoginUserArgs): Promise<{token: string}> {
   const document = await Users.findOne({username: args.username}).catch((error) => {Loggers.mainLogger.error(error);}) as unknown as IUser;
   if(document == undefined) {
-    throw new Error('missing-user');
+    throw new Error('Incorrect username or password.');
   }
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
   if(bcrypt.compareSync(args.password, document.services.password.bcrypt)) {
     return {token: jwt.sign({id: document._id, username: document.username, admin: document.admin}, process.env.SECRET)};
+  } else {
+    throw new Error('Incorrect username or password.');
   }
 }
 
@@ -102,20 +104,20 @@ async function banUser(root: undefined, args: IBanUserArgs, context: Context): P
     let user = await Users.findOne({_id: args.userId});
 
     if(user == undefined) {
-      throw new Error('no-user');
+      throw new Error('That user does not exist.');
     }
 
     user = await Users.findOneAndUpdate({_id: args.userId}, {$set: {banned: user.banned == true ? false : true}}, {new: false});
 
     return user;
   } else {
-    throw new Error('not-admin');
+    throw new Error('You don\'t have permission to do that.');
   }
 }
 
 async function currentUser(root: undefined, args: undefined, context: Context): Promise<IUser> {
   if(context.user == null) {
-    throw new Error('no-login');
+    throw new Error('You aren\'t logged in.');
   }
 
   return Users.findOne({_id: context.user.id});
@@ -129,7 +131,7 @@ async function user(root: undefined, args: IUserArgs): Promise<IUser> {
   const user = await Users.findOne({_id: args.id});
 
   if(user == undefined) {
-    throw new Error('no-user');
+    throw new Error('That user does not exist.');
   }
 
   return {
@@ -149,7 +151,7 @@ async function adminUser(root: undefined, args: IUserArgs, context: Context): Pr
     const user = await Users.findOne({_id: args.id});
 
     if(user == undefined) {
-      throw new Error('no-user');
+      throw new Error('That user does not exist.');
     }
 
     return {
@@ -162,7 +164,7 @@ async function adminUser(root: undefined, args: IUserArgs, context: Context): Pr
       following: user.following
     } as IUser;
   } else {
-    throw new Error('not-admin');
+    throw new Error('You don\'t have permission to do that.');
   }
 }
 
@@ -172,12 +174,12 @@ async function adminUsersRecent(root: undefined, args: undefined, context: Conte
   if(userCheck) {
 
     if(user == undefined) {
-      throw new Error('no-user');
+      throw new Error('That user does not exist.');
     }
 
     return Users.find({}, {sort: { createdAt: -1 }, limit: 15});
   } else {
-    throw new Error('not-admin');
+    throw new Error('You don\'t have permission to do that.');
   }
 }
 
