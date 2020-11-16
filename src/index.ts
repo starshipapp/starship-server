@@ -52,9 +52,13 @@ connect(process.env.MONGO_URL, {
       context: ({req}) => {
         let user: IUserToken = null;
 
-        if (req.headers.authorization !== undefined) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        if (req.headers.authorization !== undefined && req.headers.authorization.includes("Bearer")) {
           const token = req.headers.authorization.replace('Bearer ', '');
           user = jwt.verify(token, process.env.SECRET) as IUserToken;
+          if(user.id == undefined) {
+            user = null;
+          }
         }
 
         const ctx = new Context();
