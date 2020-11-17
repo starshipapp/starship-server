@@ -91,10 +91,10 @@ async function followPlanet(root: undefined, args: IFollowPlanetArgs, context: C
     const planet = await Planets.findOne({_id: args.planetId});
     const user = await Users.findOne({_id: context.user.id});
     if(user.following && user.following.includes(planet._id)) {
-      await Users.findOneAndUpdate({_id: planet._id}, {$pull: {following: planet._id}});
+      await Users.findOneAndUpdate({_id: user._id}, {$pull: {following: planet._id}});
       return Planets.findByIdAndUpdate({_id: planet._id}, {$inc: {followerCount: -1}}, {new: true});
     } else {
-      await Users.findOneAndUpdate({_id: planet._id}, {$push: {following: planet._id}});
+      await Users.findOneAndUpdate({_id: user._id}, {$push: {following: planet._id}});
       return Planets.findByIdAndUpdate({_id: planet._id}, {$inc: {followerCount: 1}}, {new: true});
     }
   } else {
