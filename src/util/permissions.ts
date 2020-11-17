@@ -9,15 +9,12 @@ async function checkReadPermission(userId: string, planetId: string): Promise<bo
       throw new Error("missing-user");
     }
 
-    if(user && user.banned) {
-      return false;
-    }
 
     if(user && user.admin) {
       return true;
     }
 
-    const planet = await Planets.findOne({_id: userId});
+    const planet = await Planets.findOne({_id: planetId});
 
     if(planet == undefined) {
       throw new Error("missing-planet");
@@ -57,7 +54,7 @@ async function checkPublicWritePermission(userId: string, planetId: string): Pro
       return true;
     }
 
-    const planet = await Planets.findOne({_id: userId});
+    const planet = await Planets.findOne({_id: planetId});
 
     if(planet == undefined) {
       throw new Error("missing-planet");
@@ -87,7 +84,7 @@ async function checkPublicWritePermission(userId: string, planetId: string): Pro
 
 async function checkFullWritePermission(userId: string, planetId: string): Promise<boolean> {
   if (userId && planetId) {
-    const user = await Users.findOne({_id: userId});
+    const user = await Users.findOne({_id: planetId});
 
     if(user == undefined) {
       throw new Error("missing-user");
@@ -101,7 +98,7 @@ async function checkFullWritePermission(userId: string, planetId: string): Promi
       return true;
     }
 
-    const planet = await Planets.findOne({_id: userId});
+    const planet = await Planets.findOne({_id: planetId});
 
     if(planet == undefined) {
       throw new Error("missing-planet");
