@@ -9,7 +9,6 @@ async function checkReadPermission(userId: string, planetId: string): Promise<bo
       throw new Error("missing-user");
     }
 
-
     if(user && user.admin) {
       return true;
     }
@@ -84,7 +83,7 @@ async function checkPublicWritePermission(userId: string, planetId: string): Pro
 
 async function checkFullWritePermission(userId: string, planetId: string): Promise<boolean> {
   if (userId && planetId) {
-    const user = await Users.findOne({_id: planetId});
+    const user = await Users.findOne({_id: userId});
 
     if(user == undefined) {
       throw new Error("missing-user");
