@@ -47,7 +47,8 @@ async function adminPlanets(root: undefined, args: IAdminPlanetsArgs, context: C
 
 // MUTATIONS
 interface IInsertPlanetArgs {
-  name: string
+  name: string,
+  private: boolean
 }
 
 async function insertPlanet(root: undefined, args: IInsertPlanetArgs, context: Context): Promise<IPlanet> {
@@ -56,7 +57,7 @@ async function insertPlanet(root: undefined, args: IInsertPlanetArgs, context: C
       name: args.name,
       createdAt: new Date(),
       owner: context.user.id,
-      private: false,
+      private: args.private,
       followerCount: 0,
       components: []
     });
