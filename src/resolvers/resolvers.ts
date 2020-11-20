@@ -44,6 +44,7 @@ const resolvers = {
     renameComponent: Planets.renameComponent,
     applyModTools: Planets.applyModTools,
     toggleBan: Planets.toggleBan,
+    setCSS: Planets.setCSS
     // Pages
     updatePage: Pages.updatePage
   }
