@@ -155,6 +155,8 @@ interface IRenameComponentArgs {
 async function renameComponent(root: undefined, args: IRenameComponentArgs, context: Context): Promise<IPlanet> {
   if(context.user && await permissions.checkFullWritePermission(context.user.id, args.planetId)) {
     return Planets.findOneAndUpdate({_id: args.planetId, "components.componentId": args.componentId}, {$set: {"components.$.name": args.name}}, {new: true});
+  } else {
+    throw new Error("You don't have permission to do that.");
   }
 }
 
@@ -192,4 +194,17 @@ async function toggleBan(root: undefined, args: IToggleBanArgs, context: Context
   }
 }
 
-export default {fieldResolvers, featuredPlanets, planet, adminPlanets, insertPlanet, addComponent, followPlanet, removeComponent, updateName, togglePrivate, renameComponent, applyModTools, toggleBan};
+interface ISetCSSArgs {
+  planetId: string,
+  css: string
+}
+
+async function setCSS(root: undefined, args: ISetCSSArgs, context: Context): Promise<IPlanet> {
+  if(context.user && await permissions.checkFullWritePermission(context.user.id, args.planetId)) {
+    return Planets.findOneAndUpdate({_id: args.planetId}, {$set: {css: args.css}}, {new: true});
+  } else {
+    throw new Error("You don't have permission to do that.");
+  }
+}
+
+export default {fieldResolvers, featuredPlanets, planet, adminPlanets, insertPlanet, addComponent, followPlanet, removeComponent, updateName, togglePrivate, renameComponent, applyModTools, toggleBan, setCSS};
