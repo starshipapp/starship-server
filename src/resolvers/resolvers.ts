@@ -3,12 +3,14 @@ import Users from "./Users";
 import Reports from "./Reports";
 import Planets from "./Planets";
 import Pages from "./components/Pages";
+import Invites from "./Invites";
 
 const resolvers = {
   User: Users.fieldResolvers,
   Report: Reports.fieldResolvers,
   Planet: Planets.fieldResolvers,
   Page: Pages.fieldResolvers,
+  Invite: Invites.fieldResolvers,
   Query: {
     // Users
     user: Users.user,
@@ -24,7 +26,9 @@ const resolvers = {
     planet: Planets.planet,
     adminPlanets: Planets.adminPlanets,
     // Pages
-    page: Pages.page
+    page: Pages.page,
+    // Invites
+    invite: Invites.invite
   },
   Mutation: {
     // Users
@@ -46,7 +50,10 @@ const resolvers = {
     toggleBan: Planets.toggleBan,
     setCSS: Planets.setCSS,
     // Pages
-    updatePage: Pages.updatePage
+    updatePage: Pages.updatePage,
+    // Invites
+    insertInvite: Invites.insertInvite,
+    useInvite: Invites.useInvite
   }
 };
 

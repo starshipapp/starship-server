@@ -15,7 +15,8 @@ export interface IPlanet extends Document {
   partnered: boolean,
   featuredDescription: string,
   banned: [string],
-  members: [string]
+  members: [string],
+  css: string
 }
 
 const planetSchema: Schema = new Schema({
@@ -32,7 +33,8 @@ const planetSchema: Schema = new Schema({
   partnered: Boolean,
   featuredDescription: String,
   banned: [String],
-  members: [String]
+  members: [String],
+  css: String 
 });
 
 planetSchema.plugin(nanoIdPlugin);
