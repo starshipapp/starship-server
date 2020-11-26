@@ -42,6 +42,7 @@ const resolvers = {
     insertPlanet: Planets.insertPlanet,
     addComponent: Planets.addComponent,
     followPlanet: Planets.followPlanet,
+    removeMember: Planets.removeMember,
     removeComponent: Planets.removeComponent,
     updateName: Planets.updateName,
     togglePrivate: Planets.togglePrivate,
