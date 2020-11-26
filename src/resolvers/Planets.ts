@@ -140,7 +140,7 @@ interface ITogglePrivateArgs {
 async function togglePrivate(root: undefined, args: ITogglePrivateArgs, context: Context): Promise<IPlanet> {
   if(context.user && await permissions.checkFullWritePermission(context.user.id, args.planetId)) {
     const planet = await Planets.findOne({_id: args.planetId});
-    return Planets.update({_id: args.planetId}, {$set: {private: !planet.private}}, {new: true});
+    return Planets.findOneAndUpdate({_id: args.planetId}, {$set: {private: !planet.private}}, {new: true});
   } else {
     throw new Error("You don't have permission to do that.");
   }
@@ -185,9 +185,9 @@ async function toggleBan(root: undefined, args: IToggleBanArgs, context: Context
   if(context.user && await permissions.checkFullWritePermission(context.user.id, args.planetId) && !await permissions.checkFullWritePermission(args.userId, args.planetId)) {
     const planet = await Planets.findOne({_id: args.planetId});
     if(planet.banned && planet.banned.includes(args.userId)) {
-      return Planets.update({_id: args.planetId}, {$pull: {banned: args.userId}}, {new: true});
+      return Planets.findOneAndUpdate({_id: args.planetId}, {$pull: {banned: args.userId}}, {new: true});
     } else {
-      return Planets.update({_id: args.planetId}, {$push: {banned: args.userId}}, {new: true});
+      return Planets.findOneAndUpdate({_id: args.planetId}, {$push: {banned: args.userId}}, {new: true});
     }
   } else {
     throw new Error("You don't have permission to do that.");
