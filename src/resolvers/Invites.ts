@@ -63,4 +63,27 @@ async function useInvite(root: undefined, args: IUseInviteArgs, context: Context
   }
 }
 
-export default {fieldResolvers, invite, insertInvite, useInvite};
+interface IRemoveInviteArgs {
+  inviteId: string
+}
+
+async function removeInvite(root: undefined, args: IRemoveInviteArgs, context: Context): Promise<IPlanet> {
+  if(context.user && context.user.id) {
+    const invite = await Invites.findOne({_id: args.inviteId});
+    if(invite) {
+      if(await permissions.checkFullWritePermission(context.user.id, invite.planet)) {
+        const planet = await Planets.findOne({_id: invite.planet});
+        await Invites.findOneAndDelete({_id: args.inviteId});
+        return planet;
+      } else {
+        throw new Error("You don't have permission to do that.");
+      }
+    } else {
+      throw new Error("That invite doesn't exist.");
+    }
+  } else {
+    throw new Error("You need to be logged in to do that.");
+  }
+}
+
+export default {fieldResolvers, invite, insertInvite, useInvite, removeInvite};

@@ -53,7 +53,8 @@ const resolvers = {
     updatePage: Pages.updatePage,
     // Invites
     insertInvite: Invites.insertInvite,
-    useInvite: Invites.useInvite
+    useInvite: Invites.useInvite,
+    removeInvite: Invites.removeInvite
   }
 };
 

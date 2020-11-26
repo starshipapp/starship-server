@@ -212,4 +212,17 @@ async function setCSS(root: undefined, args: ISetCSSArgs, context: Context): Pro
   }
 }
 
-export default {fieldResolvers, featuredPlanets, planet, adminPlanets, insertPlanet, addComponent, followPlanet, removeComponent, updateName, togglePrivate, renameComponent, applyModTools, toggleBan, setCSS};
+interface IRemoveMemberArgs {
+  planetId: string,
+  userId: string
+}
+
+async function removeMember(root: undefined, args: IRemoveMemberArgs, context: Context): Promise<IPlanet> {
+  if(context.user && await permissions.checkFullWritePermission(context.user.id, args.planetId)) {
+    return Planets.findOneAndUpdate({_id: args.planetId}, {$pull: {members: args.userId}}, {new: true});
+  } else {
+    throw new Error("You don't have permission to do that.");
+  }
+}
+
+export default {fieldResolvers, featuredPlanets, planet, adminPlanets, insertPlanet, addComponent, followPlanet, removeComponent, updateName, togglePrivate, renameComponent, applyModTools, toggleBan, setCSS, removeMember};
