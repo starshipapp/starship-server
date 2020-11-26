@@ -114,9 +114,10 @@ async function removeComponent(root: undefined, args: IRemoveComponentArgs, cont
     const filteredComponents = planet.components.filter(value => value.componentId === args.componentId);
     if(filteredComponents[0]) {
       await ComponentIndex.deleteComponent(filteredComponents[0].type, args.componentId);
-      return Planets.update({_id: args.planetId}, {$pull: {components: {componentId: args.componentId}}}, {new: true});
+      return Planets.findOneAndUpdate({_id: args.planetId}, {$pull: {components: {componentId: args.componentId}}}, {new: true});
+    } else {
+      throw new Error("That component doesn't exist");
     }
-    return Planets.update({_id: args.planetId}, {$set: {private: !planet.private}}, {new: true});
   } else {
     throw new Error("You don't have permission to do that.");
   }
