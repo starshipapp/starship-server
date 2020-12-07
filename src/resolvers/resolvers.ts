@@ -4,6 +4,8 @@ import Reports from "./Reports";
 import Planets from "./Planets";
 import Pages from "./components/Pages";
 import Invites from "./Invites";
+import WikiPages from "./components/wikis/WikiPages";
+import Wikis from "./components/wikis/Wikis";
 
 const resolvers = {
   User: Users.fieldResolvers,
@@ -11,6 +13,8 @@ const resolvers = {
   Planet: Planets.fieldResolvers,
   Page: Pages.fieldResolvers,
   Invite: Invites.fieldResolvers,
+  Wikis: Wikis.fieldResolvers,
+  WikiPages: WikiPages.fieldResolvers,
   Query: {
     // Users
     user: Users.user,
@@ -28,7 +32,10 @@ const resolvers = {
     // Pages
     page: Pages.page,
     // Invites
-    invite: Invites.invite
+    invite: Invites.invite,
+    // Wikis
+    wiki: Wikis.wiki,
+    wikiPage: WikiPages.wikiPage
   },
   Mutation: {
     // Users
@@ -55,7 +62,12 @@ const resolvers = {
     // Invites
     insertInvite: Invites.insertInvite,
     useInvite: Invites.useInvite,
-    removeInvite: Invites.removeInvite
+    removeInvite: Invites.removeInvite,
+    // Wikis
+    insertWikiPage: WikiPages.insertWikiPage,
+    updateWikiPage: WikiPages.updateWikiPage,
+    removeWikiPage: WikiPages.removeWikiPage,
+    renameWikiPage: WikiPages.renameWikiPage
   }
 };
 

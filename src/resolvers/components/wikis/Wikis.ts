@@ -35,4 +35,4 @@ async function wiki(root: undefined, args: IWikiArgs, context: Context): Promise
 }
 
 
-export {fieldResolvers, wiki};
+export default {fieldResolvers, wiki};

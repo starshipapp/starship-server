@@ -6,7 +6,8 @@ export interface IWikiPage extends Document {
   wikiId: string,
   content: string,
   planet: string,
-  createdAt: Date
+  createdAt: Date,
+  name: string
 }
 
 const wikiPageSchema: Schema = new Schema({
@@ -15,6 +16,7 @@ const wikiPageSchema: Schema = new Schema({
   content: String,
   planet: String,
   createdAt: Date,
+  name: String
 });
 
 wikiPageSchema.plugin(nanoIdPlugin);
