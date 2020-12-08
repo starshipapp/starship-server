@@ -13,8 +13,8 @@ const resolvers = {
   Planet: Planets.fieldResolvers,
   Page: Pages.fieldResolvers,
   Invite: Invites.fieldResolvers,
-  Wikis: Wikis.fieldResolvers,
-  WikiPages: WikiPages.fieldResolvers,
+  Wiki: Wikis.fieldResolvers,
+  WikiPage: WikiPages.fieldResolvers,
   Query: {
     // Users
     user: Users.user,
