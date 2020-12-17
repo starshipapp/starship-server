@@ -1,7 +1,7 @@
 import {model, Schema, Document} from "mongoose";
 import nanoIdPlugin from "@william341/mongoose-nanoid";
 
-export interface IForum extends Document {
+export interface IForumReply extends Document {
   _id: string,
   postId: string,
   componentId: string,
@@ -29,4 +29,4 @@ const forumRepliesSchema: Schema = new Schema({
 
 forumRepliesSchema.plugin(nanoIdPlugin);
 
-export default model<IForum>('forumreplies', forumRepliesSchema);
+export default model<IForumReply>('forumreplies', forumRepliesSchema);

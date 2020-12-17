@@ -7,7 +7,8 @@ export interface IForum extends IComponent {
   createdAt: Date,
   owner: string,
   updatedAt: Date,
-  planet: string
+  planet: string,
+  tags: string[]
 }
 
 const forumSchema: Schema = new Schema({
@@ -16,6 +17,7 @@ const forumSchema: Schema = new Schema({
   updatedAt: Date,
   planet: String,
   createdAt: Date,
+  tags: [String]
 });
 
 forumSchema.plugin(nanoIdPlugin);

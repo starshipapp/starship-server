@@ -6,6 +6,7 @@ import Pages from "./components/Pages";
 import Invites from "./Invites";
 import WikiPages from "./components/wikis/WikiPages";
 import Wikis from "./components/wikis/Wikis";
+import Forums from "./components/forums/Forums";
 
 const resolvers = {
   User: Users.fieldResolvers,
@@ -15,6 +16,7 @@ const resolvers = {
   Invite: Invites.fieldResolvers,
   Wiki: Wikis.fieldResolvers,
   WikiPage: WikiPages.fieldResolvers,
+  Forum: Forums.fieldResolvers,
   Query: {
     // Users
     user: Users.user,
@@ -35,7 +37,9 @@ const resolvers = {
     invite: Invites.invite,
     // Wikis
     wiki: Wikis.wiki,
-    wikiPage: WikiPages.wikiPage
+    wikiPage: WikiPages.wikiPage,
+    // Forums
+    forum: Forums.forum
   },
   Mutation: {
     // Users
@@ -67,7 +71,10 @@ const resolvers = {
     insertWikiPage: WikiPages.insertWikiPage,
     updateWikiPage: WikiPages.updateWikiPage,
     removeWikiPage: WikiPages.removeWikiPage,
-    renameWikiPage: WikiPages.renameWikiPage
+    renameWikiPage: WikiPages.renameWikiPage,
+    // Forums
+    createForumTag: Forums.createForumTag,
+    removeForumTag: Forums.removeForumTag
   }
 };
 

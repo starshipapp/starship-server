@@ -1,7 +1,7 @@
 import Files, { IFiles } from "../database/components/files/Files";
 import ForumPosts from "../database/components/forum/ForumPosts";
-import ForumReplies, { IForum } from "../database/components/forum/ForumReplies";
-import Forums from "../database/components/forum/Forums";
+import ForumReplies from "../database/components/forum/ForumReplies";
+import Forums, { IForum } from "../database/components/forum/Forums";
 import { IComponent } from "../database/components/IComponent";
 import Pages, { IPage } from "../database/components/Pages";
 import WikiPages from "../database/components/wiki/WikiPages";

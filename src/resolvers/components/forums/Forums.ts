@@ -1,0 +1,153 @@
+import ForumPosts from "../../../database/components/forum/ForumPosts";
+import Forums, { IForum } from "../../../database/components/forum/Forums";
+import { IPlanet } from "../../../database/Planets";
+import { IUser } from "../../../database/Users";
+import Context from "../../../util/Context";
+import IForumPostFeed from "../../../util/feeds/IForumPostFeed";
+import permissions from "../../../util/permissions";
+import { forumSortTypes } from "../../../util/sortTypes";
+
+interface IPostResolverArgs {
+  limit?: number,
+  cursor?: string,
+  sortMethod?: string
+}
+
+interface IForumPostResolverFindObject {
+  createdAt?: {
+    $lt?: Date,
+    $gt?: Date,
+  },
+  updatedAt?: {
+    $lt?: Date,
+    $gt?: Date,
+  },
+  replyCount?: {
+    $lt?: number,
+    $gt?: number,
+  },
+  componentId: string
+}
+
+const fieldResolvers = {
+  owner: async (root: IForum, args: undefined, context: Context): Promise<IUser> => {
+    return context.loaders.userLoader.load(root.owner);
+  },
+  planet: async (root: IForum, args: undefined, context: Context): Promise<IPlanet> => {
+    return context.loaders.planetLoader.load(root.planet);
+  },
+  posts: async (root: IForum, args: IPostResolverArgs): Promise<IForumPostFeed> => {
+    let limit = args.limit ?? 25;
+    let sortMethod = forumSortTypes.recentlyUpdated;
+    
+    if(limit > 25) {
+      limit = 25;
+    }
+
+    if(args.sortMethod && Object.keys(forumSortTypes).includes(args.sortMethod)) {
+      sortMethod = forumSortTypes[args.sortMethod];
+    } else {
+      throw new Error(`Invalid sort method '${args.sortMethod}'`);
+    }
+
+    const findObject: IForumPostResolverFindObject = {componentId: root._id};
+
+    // interpret cursor
+    if(args.cursor) {
+      const cursor = Number(args.cursor);
+      if(!cursor) {
+        throw new Error("Invalid cursor.");
+      }
+      if(sortMethod == forumSortTypes.newest) {
+        const date = new Date(cursor * 1000);
+        findObject.createdAt = {$lt: date};
+      } else if (sortMethod == forumSortTypes.oldest) {
+        const date = new Date(cursor * 1000);
+        findObject.createdAt = {$gt: date};
+      } else if (sortMethod == forumSortTypes.recentlyUpdated) {
+        const date = new Date(cursor * 1000);
+        findObject.updatedAt = {$lt: date};
+      } else if (sortMethod == forumSortTypes.leastRecentlyUpdated) {
+        const date = new Date(cursor * 1000);
+        findObject.updatedAt = {$gt: date};
+      } else if (sortMethod == forumSortTypes.mostReplies) {
+        findObject.replyCount = {$lt: cursor};
+      } else if (sortMethod == forumSortTypes.fewestReplies) {
+        findObject.replyCount = {$gt: cursor};
+      }
+    }
+    
+    const documents = await ForumPosts.find(findObject).sort(sortMethod).limit(limit);
+
+    const cursoryDocument = documents[documents.length - 1];
+    let cursor = "";
+
+    // determine returned cursor
+    if(sortMethod == forumSortTypes.newest || forumSortTypes.oldest) {
+      cursor = String(cursoryDocument.createdAt);
+    } else if (sortMethod == forumSortTypes.recentlyUpdated || sortMethod == forumSortTypes.leastRecentlyUpdated) {
+      cursor = String(cursoryDocument.updatedAt);
+    } else if (sortMethod == forumSortTypes.mostReplies || sortMethod == forumSortTypes.fewestReplies) {
+      cursor = String(cursoryDocument.replyCount);
+    }
+
+    return {
+      forumPosts: documents,
+      cursor
+    };
+  }
+};
+
+interface IForumArgs {
+  id: string
+}
+
+async function forum(root: undefined, args: IForumArgs, context: Context): Promise<IForum> {
+  const forum = await Forums.findOne({_id: args.id});
+  if(forum != undefined) {
+    if(context.user && context.user.id && await permissions.checkFullWritePermission(context.user.id, forum.planet)) {
+      return forum;
+    } else {
+      throw new Error("You don't have permission to do that.");
+    }
+  } else {
+    throw new Error("That forum doesn't exist.");
+  }
+}
+
+interface IForumTagArgs {
+  forumId: string,
+  tag: string
+}
+
+async function createForumTag(root: undefined, args: IForumTagArgs, context: Context): Promise<IForum> {
+  const forum = await Forums.findOne({_id: args.forumId});
+  if(forum != undefined) {
+    if(context.user && context.user.id && await permissions.checkFullWritePermission(context.user.id, forum.planet)) {
+      if((forum.tags && !forum.tags.includes(args.tag)) || !forum.tags) {
+        return Forums.findOneAndUpdate({_id: args.forumId}, {$push: {tags: args.tag}}, {new: true});
+      } else {
+        throw new Error("Tag already exists!");
+      }
+    } else {
+      throw new Error("You don't have permission to do that.");
+    }
+  } else {
+    throw new Error("That forum doesn't exist.");
+  }
+}
+
+async function removeForumTag(root: undefined, args: IForumTagArgs, context: Context): Promise<IForum> {
+  const forum = await Forums.findOne({_id: args.forumId});
+  if(forum != undefined) {
+    if(context.user && context.user.id && await permissions.checkFullWritePermission(context.user.id, forum.planet)) {
+      return Forums.findOneAndUpdate({_id: args.forumId}, {$pull: {tags: args.tag}}, {new: true});
+    } else {
+      throw new Error("You don't have permission to do that.");
+    }
+  } else {
+    throw new Error("That forum doesn't exist.");
+  }
+}
+
+export default {fieldResolvers, forum, createForumTag, removeForumTag};

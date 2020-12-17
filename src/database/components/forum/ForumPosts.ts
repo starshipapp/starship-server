@@ -35,4 +35,4 @@ const forumPostSchema: Schema = new Schema({
 
 forumPostSchema.plugin(nanoIdPlugin);
 
-export default model('forumposts', forumPostSchema);
+export default model<IForumPost>('forumposts', forumPostSchema);
