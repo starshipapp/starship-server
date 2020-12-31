@@ -8,7 +8,7 @@ export interface IForumReply extends Document {
   content: string,
   owner: string,
   planet: string,
-  reactions: [{emoji: string, reactors: string}],
+  reactions: [{emoji: string, reactors: string[]}],
   stickied: boolean,
   createdAt: Date,
   updatedAt: Date

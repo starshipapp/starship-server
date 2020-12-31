@@ -9,7 +9,7 @@ export interface IForumPost extends Document {
   owner: string,
   planet: string,
   tags: [string],
-  reactions: [{emoji: string, reactors: string}],
+  reactions: [{emoji: string, reactors: string[]}],
   replyCount: number,
   stickied: boolean,
   createdAt: Date,

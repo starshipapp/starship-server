@@ -46,7 +46,7 @@ const fieldResolvers = {
 
     if(args.sortMethod && Object.keys(forumSortTypes).includes(args.sortMethod)) {
       sortMethod = forumSortTypes[args.sortMethod];
-    } else {
+    } else if(args.sortMethod) {
       throw new Error(`Invalid sort method '${args.sortMethod}'`);
     }
 
@@ -59,16 +59,16 @@ const fieldResolvers = {
         throw new Error("Invalid cursor.");
       }
       if(sortMethod == forumSortTypes.newest) {
-        const date = new Date(cursor * 1000);
+        const date = new Date(cursor);
         findObject.createdAt = {$lt: date};
       } else if (sortMethod == forumSortTypes.oldest) {
-        const date = new Date(cursor * 1000);
+        const date = new Date(cursor);
         findObject.createdAt = {$gt: date};
       } else if (sortMethod == forumSortTypes.recentlyUpdated) {
-        const date = new Date(cursor * 1000);
+        const date = new Date(cursor);
         findObject.updatedAt = {$lt: date};
       } else if (sortMethod == forumSortTypes.leastRecentlyUpdated) {
-        const date = new Date(cursor * 1000);
+        const date = new Date(cursor);
         findObject.updatedAt = {$gt: date};
       } else if (sortMethod == forumSortTypes.mostReplies) {
         findObject.replyCount = {$lt: cursor};
@@ -84,9 +84,9 @@ const fieldResolvers = {
 
     // determine returned cursor
     if(sortMethod == forumSortTypes.newest || forumSortTypes.oldest) {
-      cursor = String(cursoryDocument.createdAt);
+      cursor = String(cursoryDocument.createdAt.getTime());
     } else if (sortMethod == forumSortTypes.recentlyUpdated || sortMethod == forumSortTypes.leastRecentlyUpdated) {
-      cursor = String(cursoryDocument.updatedAt);
+      cursor = String(cursoryDocument.updatedAt.getTime());
     } else if (sortMethod == forumSortTypes.mostReplies || sortMethod == forumSortTypes.fewestReplies) {
       cursor = String(cursoryDocument.replyCount);
     }
