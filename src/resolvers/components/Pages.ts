@@ -20,7 +20,7 @@ interface IPageArgs {
 async function page(root: undefined, args: IPageArgs, context: Context): Promise<IPage> {
   const page = await Pages.findOne({_id: args.id});
   if(page) {
-    if(context.user && await permissions.checkReadPermission(context.user.id, page.planet)) {
+    if(await permissions.checkReadPermission(context.user?.id ?? null, page.planet)) {
       return page;
     }
   } else {
@@ -36,7 +36,7 @@ interface IUpdatePageArgs {
 async function updatePage(root: undefined, args: IUpdatePageArgs, context: Context): Promise<IPage> {
   const page = await Pages.findOne({_id: args.pageId});
   if(page) {
-    if(context.user && await permissions.checkReadPermission(context.user.id, page.planet)) {
+    if(context.user && await permissions.checkFullWritePermission(context.user.id, page.planet)) {
       return Pages.findOneAndUpdate({_id: args.pageId}, {$set: {content: args.content}}, {new: true});
     } else {
       throw new Error("You don't have permission to do that.");

@@ -1,18 +1,8 @@
 import Planets from "../database/Planets";
 import Users, { IUser } from "../database/Users";
 
-async function checkReadPermission(userId: string, planetId: string): Promise<boolean> {
-  if (userId && planetId) {
-    const user = await Users.findOne({_id: userId});
-
-    if(user == undefined) {
-      throw new Error("missing-user");
-    }
-
-    if(user && user.admin) {
-      return true;
-    }
-
+async function checkReadPermission(userId: string | undefined, planetId: string): Promise<boolean> {
+  if (planetId) {
     const planet = await Planets.findOne({_id: planetId});
 
     if(planet == undefined) {
@@ -20,6 +10,20 @@ async function checkReadPermission(userId: string, planetId: string): Promise<bo
     }
 
     if(!planet.private) {
+      return true;
+    }
+
+    if(!userId) {
+      return false;
+    }
+
+    const user = await Users.findOne({_id: userId});
+
+    if(user == undefined) {
+      throw new Error("missing-user");
+    }
+
+    if(user && user.admin) {
       return true;
     }
 

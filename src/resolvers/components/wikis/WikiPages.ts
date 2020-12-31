@@ -21,7 +21,7 @@ interface IWikiPageArgs {
 async function wikiPage(root: undefined, args: IWikiPageArgs, context: Context): Promise<IWikiPage> {
   const wikiPage = await WikiPages.findOne({_id: args.id});
   if(wikiPage) {
-    if(context.user && await permissions.checkReadPermission(context.user.id, wikiPage.planet)) {
+    if(await permissions.checkReadPermission(context.user?.id ?? null, wikiPage.planet)) {
       return wikiPage;
     } else {
       throw new Error("That page doesn't exist.");
@@ -40,7 +40,7 @@ interface IInsertWikiPageArgs {
 async function insertWikiPage(root: undefined, args: IInsertWikiPageArgs, context: Context): Promise<IWikiPage> {
   const wiki = await Wikis.findOne({_id: args.wikiId});
   if(wiki) {
-    if(context.user && await permissions.checkFullWritePermission(context.user.id, wiki.planet)) {
+    if(context.user && await permissions.checkFullWritePermission(context.user?.id ?? null, wiki.planet)) {
       const wikiPage = new WikiPages({
         wikiId: args.wikiId,
         name: args.name,

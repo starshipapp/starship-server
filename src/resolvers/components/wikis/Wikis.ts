@@ -24,7 +24,7 @@ interface IWikiArgs {
 async function wiki(root: undefined, args: IWikiArgs, context: Context): Promise<IWiki> {
   const wiki = await Wikis.findOne({_id: args.id});
   if(wiki) {
-    if(context.user && await permissions.checkReadPermission(context.user.id, wiki.planet)) {
+    if(await permissions.checkReadPermission(context.user?.id ?? null, wiki.planet)) {
       return wiki;
     } else {
       throw new Error("Not found.");

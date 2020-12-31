@@ -33,7 +33,7 @@ interface IPlanetArgs {
 }
 
 async function planet(root: undefined, args: IPlanetArgs, context: Context): Promise<IPlanet> {
-  if(await permissions.checkReadPermission(context.user.id, args.id)) {
+  if(await permissions.checkReadPermission(context.user?.id ?? null, args.id)) {
     return Planets.findOne({_id: args.id});
   }
 }
