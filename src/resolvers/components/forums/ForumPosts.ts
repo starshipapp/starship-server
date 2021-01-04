@@ -6,6 +6,12 @@ import { IUser } from "../../../database/Users";
 import Context from "../../../util/Context";
 import permissions from "../../../util/permissions";
 import emoji from "node-emoji";
+import IForumReplyFeed from "../../../util/feeds/IForumReplyFeed";
+
+interface IReplyResolverArgs {
+  limit?: number,
+  cursor?: string
+}
 
 const fieldResolvers = {
   component: async (root: IForumPost, args: undefined, context: Context): Promise<IForum> => {
@@ -16,6 +22,20 @@ const fieldResolvers = {
   },
   planet: async (root: IForumPost, args: undefined, context: Context): Promise<IPlanet> => {
     return context.loaders.planetLoader.load(root.planet);
+  },
+  posts: async (root: IForumPost, args: IReplyResolverArgs): Promise<IForumReplyFeed> => {
+    let limit = args.limit ?? 25;
+
+    if(limit > 25) {
+      limit = 25;
+    }
+    
+    const documents = await ForumReplies.find({postId: root._id}).skip(Number(args.cursor ?? 0)).limit(limit);
+
+    return {
+      forumReplies: documents,
+      cursor: String(Number(args.cursor ?? 0) + documents.length)
+    };
   }
 };
 

@@ -8,6 +8,7 @@ import WikiPages from "./components/wikis/WikiPages";
 import Wikis from "./components/wikis/Wikis";
 import Forums from "./components/forums/Forums";
 import ForumPosts from "./components/forums/ForumPosts";
+import ForumReplies from "./components/forums/ForumReplies";
 
 const resolvers = {
   User: Users.fieldResolvers,
@@ -19,6 +20,7 @@ const resolvers = {
   WikiPage: WikiPages.fieldResolvers,
   Forum: Forums.fieldResolvers,
   ForumPost: ForumPosts.fieldResolvers,
+  forumReply: ForumReplies.fieldResolvers,
   Query: {
     // Users
     user: Users.user,
@@ -83,7 +85,11 @@ const resolvers = {
     deleteForumPost: ForumPosts.deleteForumPost,
     stickyForumPost: ForumPosts.stickyForumPost,
     lockForumPost: ForumPosts.lockForumPost,
-    forumPostReact: ForumPosts.forumPostReact
+    forumPostReact: ForumPosts.forumPostReact,
+    insertForumReply: ForumReplies.insertForumReply,
+    updateForumReply: ForumReplies.updateForumReply,
+    deleteForumReply: ForumReplies.deleteForumReply,
+    forumReplyReact: ForumReplies.forumReplyReact
   }
 };
 
