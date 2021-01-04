@@ -96,7 +96,12 @@ const resolvers = {
     insertForumReply: ForumReplies.insertForumReply,
     updateForumReply: ForumReplies.updateForumReply,
     deleteForumReply: ForumReplies.deleteForumReply,
-    forumReplyReact: ForumReplies.forumReplyReact
+    forumReplyReact: ForumReplies.forumReplyReact,
+    // Files
+    createFolder: FileObjects.createFolder,
+    completeUpload: FileObjects.completeUpload,
+    renameObject: FileObjects.renameObject,
+    moveObject: FileObjects.moveObject
   }
 };
 
