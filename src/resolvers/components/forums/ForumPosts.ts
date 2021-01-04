@@ -23,7 +23,7 @@ const fieldResolvers = {
   planet: async (root: IForumPost, args: undefined, context: Context): Promise<IPlanet> => {
     return context.loaders.planetLoader.load(root.planet);
   },
-  posts: async (root: IForumPost, args: IReplyResolverArgs): Promise<IForumReplyFeed> => {
+  replies: async (root: IForumPost, args: IReplyResolverArgs): Promise<IForumReplyFeed> => {
     let limit = args.limit ?? 25;
 
     if(limit > 25) {

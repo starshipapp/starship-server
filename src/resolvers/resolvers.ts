@@ -20,7 +20,7 @@ const resolvers = {
   WikiPage: WikiPages.fieldResolvers,
   Forum: Forums.fieldResolvers,
   ForumPost: ForumPosts.fieldResolvers,
-  forumReply: ForumReplies.fieldResolvers,
+  ForumReply: ForumReplies.fieldResolvers,
   Query: {
     // Users
     user: Users.user,
