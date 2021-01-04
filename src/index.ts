@@ -18,18 +18,33 @@ import Loaders from "./util/Loaders";
 
 const sysInfo = {
   serverName: "starship-server",
-  version: "prealpha",
-  production: !Boolean(process.env.DEVELOPMENT),
+  version: "prealpha (0.4)",
   schemaVersion: "0.3c",
-  syncEnabled: process.env.REDIS_URL !== undefined,
-  subscriptionsSupported: false,
   supportedFeatures: ["users", "reports", "planets", "invites"],
-  supportedComponents: ["pages", "wikis"],
-  recaptchaEnabled: process.env.RECAPTCHA_SECRET !== undefined,
-  emailVerificationEnabled: false,
-  bucketConnected: process.env.BUCKET_ENDPOINT !== undefined,
-  clientFlags: ["noproduction", "experimental"]
+  supportedComponents: ["pages", "wikis", "forums"],
+  clientFlags: ["+experimental"]
 };
+
+// update client flags
+if(!process.env.BUCKET_ENDPOINT) {
+  sysInfo.clientFlags.push("-upload");
+}
+
+if(!process.env.RECAPTCHA_SECRET) {
+  sysInfo.clientFlags.push("-recaptcha");
+}
+
+if(!process.env.REDIS_URL) {
+  sysInfo.clientFlags.push("+lowcapacity");
+}
+
+if(!process.env.MAIL_URI) {
+  sysInfo.clientFlags.push("-emailverify");
+}
+
+if(!process.env.DEVELOPMENT) {
+  sysInfo.clientFlags.push("+development");
+}
 
 connect(process.env.MONGO_URL, {
   useNewUrlParser: true,
