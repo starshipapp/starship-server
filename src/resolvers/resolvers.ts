@@ -9,6 +9,8 @@ import Wikis from "./components/wikis/Wikis";
 import Forums from "./components/forums/Forums";
 import ForumPosts from "./components/forums/ForumPosts";
 import ForumReplies from "./components/forums/ForumReplies";
+import Files from "./components/files/Files";
+import FileObjects from "./components/files/FileObjects";
 
 const resolvers = {
   User: Users.fieldResolvers,
@@ -21,6 +23,8 @@ const resolvers = {
   Forum: Forums.fieldResolvers,
   ForumPost: ForumPosts.fieldResolvers,
   ForumReply: ForumReplies.fieldResolvers,
+  FileComponent: Files.fieldResolvers,
+  FileObject: FileObjects.fieldResolvers,
   Query: {
     // Users
     user: Users.user,
@@ -44,7 +48,10 @@ const resolvers = {
     wikiPage: WikiPages.wikiPage,
     // Forums
     forum: Forums.forum,
-    forumPost: ForumPosts.forumPost
+    forumPost: ForumPosts.forumPost,
+    // Files
+    fileComponent: Files.fileComponent,
+    fileObject: FileObjects.fileObject,
   },
   Mutation: {
     // Users
