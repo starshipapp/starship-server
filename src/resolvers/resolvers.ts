@@ -11,6 +11,7 @@ import ForumPosts from "./components/forums/ForumPosts";
 import ForumReplies from "./components/forums/ForumReplies";
 import Files from "./components/files/Files";
 import FileObjects from "./components/files/FileObjects";
+import AWS from "./AWS";
 
 const resolvers = {
   User: Users.fieldResolvers,
@@ -52,6 +53,10 @@ const resolvers = {
     // Files
     fileComponent: Files.fileComponent,
     fileObject: FileObjects.fileObject,
+    // AWS
+    downloadFileObject: AWS.downloadFileObject,
+    downloadFolderObject: AWS.downloadFolderObject,
+    getObjectPreview: AWS.getObjectPreview
   },
   Mutation: {
     // Users
@@ -101,7 +106,10 @@ const resolvers = {
     createFolder: FileObjects.createFolder,
     completeUpload: FileObjects.completeUpload,
     renameObject: FileObjects.renameObject,
-    moveObject: FileObjects.moveObject
+    moveObject: FileObjects.moveObject,
+    // AWS
+    uploadFileObject: AWS.uploadFileObject,
+    deleteFileObject: AWS.deleteFileObject
   }
 };
 

@@ -6,7 +6,7 @@ async function checkReadPermission(userId: string | undefined, planetId: string)
     const planet = await Planets.findOne({_id: planetId});
 
     if(planet == undefined) {
-      throw new Error("missing-planet");
+      throw new Error("Not found.");
     }
 
     if(!planet.private) {
@@ -20,7 +20,7 @@ async function checkReadPermission(userId: string | undefined, planetId: string)
     const user = await Users.findOne({_id: userId});
 
     if(user == undefined) {
-      throw new Error("missing-user");
+      throw new Error("Not found.");
     }
 
     if(user && user.admin) {
@@ -37,7 +37,7 @@ async function checkReadPermission(userId: string | undefined, planetId: string)
 
     return false;
   } else {
-    throw new Error("missing-id");
+    throw new Error("server-missing-id");
   }
 }
 
@@ -46,7 +46,7 @@ async function checkPublicWritePermission(userId: string, planetId: string): Pro
     const user = await Users.findOne({_id: userId});
 
     if(user == undefined) {
-      throw new Error("missing-user");
+      throw new Error("Not found.");
     }
 
     if(user && user.banned) {
@@ -60,7 +60,7 @@ async function checkPublicWritePermission(userId: string, planetId: string): Pro
     const planet = await Planets.findOne({_id: planetId});
 
     if(planet == undefined) {
-      throw new Error("missing-planet");
+      throw new Error("Not found.");
     }
 
     if(planet.banned && planet.banned.includes(userId)) {
@@ -90,7 +90,7 @@ async function checkFullWritePermission(userId: string, planetId: string): Promi
     const user = await Users.findOne({_id: userId});
 
     if(user == undefined) {
-      throw new Error("missing-user");
+      throw new Error("Not found.");
     }
 
     if(user && user.banned) {
@@ -104,7 +104,7 @@ async function checkFullWritePermission(userId: string, planetId: string): Promi
     const planet = await Planets.findOne({_id: planetId});
 
     if(planet == undefined) {
-      throw new Error("missing-planet");
+      throw new Error("Not found.");
     }
 
     if(planet.banned && planet.banned.includes(userId)) {
@@ -121,7 +121,7 @@ async function checkFullWritePermission(userId: string, planetId: string): Promi
 
     return false;
   } else {
-    throw new Error("missing-id");
+    throw new Error("Not found.");
   }
 }
 

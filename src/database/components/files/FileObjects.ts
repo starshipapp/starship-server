@@ -12,6 +12,7 @@ export interface IFileObject extends Document {
   componentId: string,
   type: string,
   fileType: string,
+  key: string,
   finishedUploading: boolean
 }
 
@@ -26,6 +27,7 @@ const fileObjectsSchema: Schema = new Schema({
   componentId: String,
   type: String,
   fileType: String,
+  key: String,
   finishedUploading: Boolean
 });
 

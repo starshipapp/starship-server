@@ -42,6 +42,7 @@
     "@types/node-emoji": "^1.8.1",
     "@william341/mongoose-nanoid": "^1.0.4",
     "apollo-server-express": "^2.18.2",
+    "aws-sdk": "^2.820.0",
     "axios": "^0.21.0",
     "bcrypt": "^5.0.0",
     "dataloader": "^2.0.0",
@@ -52,6 +53,7 @@
     "log4js": "^6.3.0",
     "mongoose": "^5.10.10",
     "nanoid": "^2.1.11",
-    "node-emoji": "^1.10.0"
+    "node-emoji": "^1.10.0",
+    "yn": "^4.0.0"
   }
 }
