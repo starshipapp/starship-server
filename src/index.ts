@@ -19,7 +19,7 @@ import Loaders from "./util/Loaders";
 const sysInfo = {
   serverName: "starship-server",
   version: "prealpha (0.4)",
-  schemaVersion: "0.3f",
+  schemaVersion: "0.4",
   supportedFeatures: ["users", "reports", "planets", "invites"],
   supportedComponents: ["pages", "wikis", "forums", "files"],
   clientFlags: ["+experimental"]
@@ -38,7 +38,7 @@ if(!process.env.REDIS_URL) {
   sysInfo.clientFlags.push("+lowcapacity");
 }
 
-if(!process.env.MAIL_URI) {
+if(!process.env.SMTP_HOST) {
   sysInfo.clientFlags.push("-emailverify");
 }
 

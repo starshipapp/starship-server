@@ -1,0 +1,6 @@
+Hi, $username!
+
+A password reset has been requested for your account. You can 
+reset it here: $url
+
+If you didn't request this, you can safely ignore this email.

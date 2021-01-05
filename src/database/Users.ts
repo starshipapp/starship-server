@@ -17,7 +17,7 @@ export interface IUser extends Document {
   username: string,
   createdAt: Date,
   profilePicture: string,
-  emails: [{address: string, verified: boolean}],
+  emails: [{address: string, verified: boolean, verificationToken?: string}],
   following: [string],
   banned: boolean,
   admin: boolean,
@@ -29,7 +29,7 @@ const userSchema: Schema = new Schema({
   username: String,
   createdAt: Date,
   profilePicture: String,
-  emails: [{address: String, verified: Boolean}],
+  emails: [{address: String, verified: Boolean, verificationToken: String}],
   following: [String],
   banned: Boolean,
   admin: Boolean

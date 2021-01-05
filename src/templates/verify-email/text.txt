@@ -1,0 +1,6 @@
+Hi, $username! Welcome to Starship
+
+Before you can start using Starship, you need to activate 
+your email. You can do so here: $url
+
+If you didn't request this, you can safely ignore this email.

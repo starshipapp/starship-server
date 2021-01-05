@@ -5,6 +5,7 @@ import permissions from "../util/permissions";
 import Context from "../util/Context";
 import Loggers from "../Loggers";
 import Planets, { IPlanet } from "../database/Planets";
+import {sendVerificationEmail} from "../util/Emails";
 
 const fieldResolvers = {
   following: async (root: IUser, args: undefined, context: Context): Promise<IPlanet[]> => {
@@ -58,7 +59,6 @@ async function insertUser(root: undefined, args: IInsertUserArgs): Promise<IUser
   const response = args.recaptcha;
 
   const password = bcrypt.hashSync(args.password, 3) ;
-
   const newUser: IUser = new Users({
     createdAt: new Date(),
     services: {
@@ -72,7 +72,9 @@ async function insertUser(root: undefined, args: IInsertUserArgs): Promise<IUser
     following: []
   });
 
-  return await newUser.save().catch((e) => {console.error(e);}) as IUser;
+  const user = await newUser.save().catch((e) => {console.error(e);}) as IUser;
+  await sendVerificationEmail(user);
+  return user;
 }
 
 interface ILoginUserArgs {
@@ -85,11 +87,33 @@ async function loginUser(root: undefined, args: ILoginUserArgs): Promise<{token:
   if(document == undefined) {
     throw new Error('Incorrect username or password.');
   }
+  if(process.env.SMTP_HOST) {
+    if(document.emails.filter((value) => {return value.verified == true;}).length > 0) {
+      throw new Error('You need to verify your email.');
+    }
+  }
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
   if(bcrypt.compareSync(args.password, document.services.password.bcrypt)) {
     return {token: jwt.sign({id: document._id, username: document.username, admin: document.admin}, process.env.SECRET)};
   } else {
     throw new Error('Incorrect username or password.');
+  }
+}
+
+interface IResendVerificationEmailArgs {
+  username: string
+}
+
+async function resendVerificationEmail(root: undefined, args: IResendVerificationEmailArgs): Promise<boolean> {
+  const document = await Users.findOne({username: args.username});
+  if(document == undefined) {
+    throw new Error("User not found.");
+  } else {
+    if(document.emails.filter((value) => {return !value.verified;}).length < 1) {
+      throw new Error('Your email is already verified!');
+    } else {
+      return sendVerificationEmail(document);
+    }
   }
 }
 
@@ -183,4 +207,4 @@ async function adminUsersRecent(root: undefined, args: undefined, context: Conte
   }
 }
 
-export default {fieldResolvers, loginUser, currentUser, insertUser, user, adminUser, banUser, adminUsersRecent};
+export default {fieldResolvers, resendVerificationEmail, loginUser, currentUser, insertUser, user, adminUser, banUser, adminUsersRecent};
