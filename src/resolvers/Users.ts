@@ -6,6 +6,7 @@ import Context from "../util/Context";
 import Loggers from "../Loggers";
 import Planets, { IPlanet } from "../database/Planets";
 import {sendVerificationEmail} from "../util/Emails";
+import { v4 } from "uuid";
 
 const fieldResolvers = {
   following: async (root: IUser, args: undefined, context: Context): Promise<IPlanet[]> => {
@@ -88,7 +89,7 @@ async function loginUser(root: undefined, args: ILoginUserArgs): Promise<{token:
     throw new Error('Incorrect username or password.');
   }
   if(process.env.SMTP_HOST) {
-    if(document.emails.filter((value) => {return value.verified == true;}).length > 0) {
+    if(document.emails.filter((value) => {return value.verified == true;}).length < 1) {
       throw new Error('You need to verify your email.');
     }
   }
@@ -97,6 +98,27 @@ async function loginUser(root: undefined, args: ILoginUserArgs): Promise<{token:
     return {token: jwt.sign({id: document._id, username: document.username, admin: document.admin}, process.env.SECRET)};
   } else {
     throw new Error('Incorrect username or password.');
+  }
+}
+
+interface IActivateEmailArgs {
+  userId: string,
+  token: string
+}
+
+async function activateEmail(root: undefined, args: IActivateEmailArgs): Promise<boolean> {
+  const document = await Users.findOne({_id: args.userId});
+  if(document) {
+    const emails = document.emails.filter((value) => {return value.verificationToken == args.token;});
+    if(emails.length != 0) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      await Users.findOneAndUpdate({_id: document._id, emails: {$elemMatch: {verificationToken: args.token}}}, {$set: {"emails.$.verificationToken": v4()}}, {new: true});
+      return true;
+    } else {
+      throw new Error("Invalid token");
+    }
+  } else {
+    throw new Error("User not found.");
   }
 }
 
@@ -207,4 +229,4 @@ async function adminUsersRecent(root: undefined, args: undefined, context: Conte
   }
 }
 
-export default {fieldResolvers, resendVerificationEmail, loginUser, currentUser, insertUser, user, adminUser, banUser, adminUsersRecent};
+export default {fieldResolvers, activateEmail, resendVerificationEmail, loginUser, currentUser, insertUser, user, adminUser, banUser, adminUsersRecent};

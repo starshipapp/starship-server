@@ -13,7 +13,7 @@ export const safeUserFields = {
 
 export interface IUser extends Document {
   _id: string,
-  services: {password: {bcrypt: string}},
+  services: {password: {bcrypt: string, resetToken: string, resetExpiry: Date}},
   username: string,
   createdAt: Date,
   profilePicture: string,
@@ -25,14 +25,14 @@ export interface IUser extends Document {
 
 const userSchema: Schema = new Schema({
   _id: { type: String, required: true, unique: true},
-  services: Object,
+  services: {password: {bcrypt: String, resetToken: String, resetExpiry: Date}},
   username: String,
   createdAt: Date,
   profilePicture: String,
   emails: [{address: String, verified: Boolean, verificationToken: String}],
   following: [String],
   banned: Boolean,
-  admin: Boolean
+  admin: Boolean,
 });
 
 userSchema.plugin(nanoIdPlugin);

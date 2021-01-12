@@ -19,7 +19,7 @@ import Loaders from "./util/Loaders";
 const sysInfo = {
   serverName: "starship-server",
   version: "prealpha (0.4)",
-  schemaVersion: "0.4",
+  schemaVersion: "0.4d",
   supportedFeatures: ["users", "reports", "planets", "invites"],
   supportedComponents: ["pages", "wikis", "forums", "files"],
   clientFlags: ["+experimental"]

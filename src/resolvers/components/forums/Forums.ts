@@ -1,4 +1,4 @@
-import ForumPosts from "../../../database/components/forum/ForumPosts";
+import ForumPosts, { IForumPost } from "../../../database/components/forum/ForumPosts";
 import Forums, { IForum } from "../../../database/components/forum/Forums";
 import { IPlanet } from "../../../database/Planets";
 import { IUser } from "../../../database/Users";
@@ -26,7 +26,8 @@ interface IForumPostResolverFindObject {
     $lt?: number,
     $gt?: number,
   },
-  componentId: string
+  componentId: string,
+  stickied: boolean
 }
 
 const fieldResolvers = {
@@ -35,6 +36,9 @@ const fieldResolvers = {
   },
   planet: async (root: IForum, args: undefined, context: Context): Promise<IPlanet> => {
     return context.loaders.planetLoader.load(root.planet);
+  },
+  stickiedPosts: async (root: IForum): Promise<IForumPost[]> => {
+    return ForumPosts.find({componentId: root._id, stickied: true});
   },
   posts: async (root: IForum, args: IPostResolverArgs): Promise<IForumPostFeed> => {
     let limit = args.limit ?? 25;
@@ -50,7 +54,7 @@ const fieldResolvers = {
       throw new Error(`Invalid sort method '${args.sortMethod}'`);
     }
 
-    const findObject: IForumPostResolverFindObject = {componentId: root._id};
+    const findObject: IForumPostResolverFindObject = {componentId: root._id, stickied: false};
 
     // interpret cursor
     if(args.cursor) {
@@ -78,6 +82,14 @@ const fieldResolvers = {
     }
     
     const documents = await ForumPosts.find(findObject).sort(sortMethod).limit(limit);
+
+    // handle empty document array
+    if(documents.length == 0) {
+      return {
+        forumPosts: [],
+        cursor: args.cursor ?? ""
+      };
+    }
 
     const cursoryDocument = documents[documents.length - 1];
     let cursor = "";

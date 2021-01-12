@@ -26,13 +26,33 @@ export async function sendVerificationEmail(document: IUser): Promise<boolean> {
   const unverifiedEmails = updatedDocument.emails.filter((value) => {return value.verified == false;});
   const updatedTemplateText = verifyTemplateText.replace("$username", updatedDocument.username).replace("$url", siteUrl);
   const updatedTemplateHTML = verifyTemplateHTML.replace("$username", updatedDocument.username).replace("$url", siteUrl);
+  // i guess @types/nodemailer doesn't have types for these?
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   await transporter.sendMail({
-    from: process.env.MAIL_FROM, // sender address
-    to: unverifiedEmails[0].address, // list of receivers
-    subject: "Verify your email", // Subject line
-    text: updatedTemplateText, // plain text body
-    html: updatedTemplateHTML, // html body
+    from: process.env.MAIL_FROM,
+    to: unverifiedEmails[0].address,
+    subject: "Verify your email",
+    text: updatedTemplateText,
+    html: updatedTemplateHTML,
+  });
+  return true;
+}
+
+export async function sendForgotPasswordEmail(document: IUser): Promise<boolean> {
+  const verificationToken = v4();
+  const resetUrl = process.env.SITE_URL + "/forgot/" + document._id + ":token:" + verificationToken;
+  const expiryDate = new Date(new Date().getTime() + 86400000);
+  const updatedDocument = await Users.findOneAndUpdate({_id: document._id}, {$set: {password: {resetToken: verificationToken, resetExpiry: expiryDate}}});
+  const updatedTemplateText = forgotTemplateText.replace("$username", updatedDocument.username).replace("$url", resetUrl);
+  const updatedTemplateHTML = forgotTemplateHTML.replace("$username", updatedDocument.username).replace("$url", resetUrl);
+  // i guess @types/nodemailer doesn't have types for these?
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  await transporter.sendMail({
+    from: process.env.MAIL_FROM,
+    to: updatedDocument.emails[0].address,
+    subject: "Reset your password",
+    text: updatedTemplateText,
+    html: updatedTemplateHTML,
   });
   return true;
 }
