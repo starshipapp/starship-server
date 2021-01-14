@@ -68,7 +68,7 @@ async function insertForumPost(root: undefined, args: IInsertForumPostArgs, cont
   if(forum && context.user && await permissions.checkPublicWritePermission(context.user.id, forum.planet)) {
     const tags: string[] = [];
 
-    if(args.tag) {
+    if(args.tag && args.tag != "" && forum.tags && forum.tags.includes(args.tag)) {
       tags.push(args.tag);
     }
 
