@@ -1,6 +1,6 @@
 import ForumPosts, { IForumPost } from "../../../database/components/forum/ForumPosts";
 import ForumReplies, { IForumReply } from "../../../database/components/forum/ForumReplies";
-import { IForum } from "../../../database/components/forum/Forums";
+import Forums, { IForum } from "../../../database/components/forum/Forums";
 import { IPlanet } from "../../../database/Planets";
 import { IUser } from "../../../database/Users";
 import Context from "../../../util/Context";
@@ -58,7 +58,7 @@ async function insertForumReply(root: undefined, args: IInsertForumReplyArgs, co
       createdAt: new Date(),
       updatedAt: new Date()
     });
-
+    await ForumPosts.findOneAndUpdate({_id: args.postId}, {$set: {updatedAt: new Date()}, $inc: {replyCount: 1}});
     return reply.save();
   } else {
     throw new Error("Not found.");
@@ -74,7 +74,9 @@ async function updateForumReply(root: undefined, args: IUpdateForumReplyArgs, co
   const post = await ForumReplies.findOne({_id: args.replyId});
   if(post && context.user) {
     if(await permissions.checkFullWritePermission(context.user.id, post.planet) || post.owner == context.user.id) {
-      return ForumReplies.update({_id: args.replyId}, {$set: {content: args.content}}, {new: true});
+      return ForumReplies.findOneAndUpdate({_id: args.replyId}, {$set: {content: args.content}}, {new: true});
+    } else {
+      throw new Error("Not found.");
     }
   } else {
     throw new Error("Not found.");
@@ -90,7 +92,10 @@ async function deleteForumReply(root: undefined, args: IDeleteForumReplyArgs, co
   if(post && context.user) {
     if(await permissions.checkFullWritePermission(context.user.id, post.planet) || post.owner == context.user.id) {
       await ForumReplies.remove({_id: args.replyId});
+      await ForumPosts.findOneAndUpdate({_id: post.postId}, {$inc: {replyCount: -1}});
       return true;
+    } else {
+      throw new Error("Not found.");
     }
   } else {
     throw new Error("Not found.");
@@ -106,7 +111,6 @@ async function forumReplyReact(root: undefined, args: IForumReplyReactArgs, cont
   const post = await ForumReplies.findOne({_id: args.replyId});
   if(post && context.user) {
     if(await permissions.checkPublicWritePermission(context.user.id, post.planet)) {
-
       if(emoji.hasEmoji(args.emojiId)) {
         const reaction = post.reactions.find(value => value.emoji === args.emojiId);
         if(reaction) {
@@ -115,16 +119,18 @@ async function forumReplyReact(root: undefined, args: IForumReplyReactArgs, cont
               return ForumReplies.findOneAndUpdate({_id: args.replyId}, {$pull: {reactions: reaction}}, {new: true});
             } else {
               // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-              return ForumReplies.findOneAndUpdate({_id: args.replyId, reactions: {$elemMatch: {emoji: args.emojiId}}}, {$pull: {"reactions.$.reactors": context.user.id}});
+              return ForumReplies.findOneAndUpdate({_id: args.replyId, reactions: {$elemMatch: {emoji: args.emojiId}}}, {$pull: {"reactions.$.reactors": context.user.id}}, {new: true});
             }
           } else {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            return ForumReplies.findOneAndUpdate({_id: args.replyId, reactions: {$elemMatch: {emoji: args.emojiId}}}, {$push: {"reactions.$.reactors": context.user.id}});
+            return ForumReplies.findOneAndUpdate({_id: args.replyId, reactions: {$elemMatch: {emoji: args.emojiId}}}, {$push: {"reactions.$.reactors": context.user.id}}, {new: true});
           }
         } else {
-          return ForumReplies.findOneAndUpdate({_id: args.replyId}, {$push: {reactions: {emoji: args.emojiId, reactors: [context.user.id]}}});
+          return ForumReplies.findOneAndUpdate({_id: args.replyId}, {$push: {reactions: {emoji: args.emojiId, reactors: [context.user.id]}}}, {new: true});
         }
       }
+    } else {
+      throw new Error("Not found.");
     }
   } else {
     throw new Error("Not found.");

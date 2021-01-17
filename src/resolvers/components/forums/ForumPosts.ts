@@ -101,7 +101,9 @@ async function updateForumPost(root: undefined, args: IUpdateForumPost, context:
   const post = await ForumPosts.findOne({_id: args.postId});
   if(post && context.user) {
     if(await permissions.checkFullWritePermission(context.user.id, post.planet) || post.owner == context.user.id) {
-      return ForumPosts.update({_id: args.postId}, {$set: {content: args.content}}, {new: true});
+      return ForumPosts.findOneAndUpdate({_id: args.postId}, {$set: {content: args.content}}, {new: true});
+    } else {
+      throw new Error("Not found.");
     }
   } else {
     throw new Error("Not found.");
@@ -119,6 +121,8 @@ async function deleteForumPost(root: undefined, args: IGenericForumPostArgs, con
       await ForumPosts.findOneAndRemove({_id: args.postId});
       await ForumReplies.remove({postId: args.postId});
       return true;
+    } else {
+      throw new Error("Not found.");
     }
   } else {
     throw new Error("Not found.");
@@ -129,7 +133,9 @@ async function lockForumPost(root: undefined, args: IGenericForumPostArgs, conte
   const post = await ForumPosts.findOne({_id: args.postId});
   if(post && context.user) {
     if(await permissions.checkFullWritePermission(context.user.id, post.planet)) {
-      return ForumPosts.update({_id: args.postId}, {$set: {locked: !post.locked}}, {new: true});
+      return ForumPosts.findOneAndUpdate({_id: args.postId}, {$set: {locked: !post.locked}}, {new: true});
+    } else {
+      throw new Error("Not found.");
     }
   } else {
     throw new Error("Not found.");
@@ -140,7 +146,9 @@ async function stickyForumPost(root: undefined, args: IGenericForumPostArgs, con
   const post = await ForumPosts.findOne({_id: args.postId});
   if(post && context.user) {
     if(await permissions.checkFullWritePermission(context.user.id, post.planet)) {
-      return ForumPosts.update({_id: args.postId}, {$set: {stickied: !post.stickied}}, {new: true});
+      return ForumPosts.findOneAndUpdate({_id: args.postId}, {$set: {stickied: !post.stickied}}, {new: true});
+    } else {
+      throw new Error("Not found.");
     }
   } else {
     throw new Error("Not found.");
@@ -156,7 +164,6 @@ async function forumPostReact(root: undefined, args: IForumPostReactArgs, contex
   const post = await ForumPosts.findOne({_id: args.postId});
   if(post && context.user) {
     if(await permissions.checkPublicWritePermission(context.user.id, post.planet)) {
-
       if(emoji.hasEmoji(args.emojiId)) {
         const reaction = post.reactions.find(value => value.emoji === args.emojiId);
         if(reaction) {
@@ -165,16 +172,18 @@ async function forumPostReact(root: undefined, args: IForumPostReactArgs, contex
               return ForumPosts.findOneAndUpdate({_id: args.postId}, {$pull: {reactions: reaction}}, {new: true});
             } else {
               // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-              return ForumPosts.findOneAndUpdate({_id: args.postId, reactions: {$elemMatch: {emoji: args.emojiId}}}, {$pull: {"reactions.$.reactors": context.user.id}});
+              return ForumPosts.findOneAndUpdate({_id: args.postId, reactions: {$elemMatch: {emoji: args.emojiId}}}, {$pull: {"reactions.$.reactors": context.user.id}}, {new: true});
             }
           } else {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            return ForumPosts.findOneAndUpdate({_id: args.postId, reactions: {$elemMatch: {emoji: args.emojiId}}}, {$push: {"reactions.$.reactors": context.user.id}});
+            return ForumPosts.findOneAndUpdate({_id: args.postId, reactions: {$elemMatch: {emoji: args.emojiId}}}, {$push: {"reactions.$.reactors": context.user.id}}, {new: true});
           }
         } else {
-          return ForumPosts.findOneAndUpdate({_id: args.postId}, {$push: {reactions: {emoji: args.emojiId, reactors: [context.user.id]}}});
+          return ForumPosts.findOneAndUpdate({_id: args.postId}, {$push: {reactions: {emoji: args.emojiId, reactors: [context.user.id]}}}, {new: true});
         }
       }
+    } else {
+      throw new Error("Not found.");
     }
   } else {
     throw new Error("Not found.");
