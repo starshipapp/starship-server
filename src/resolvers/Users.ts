@@ -112,7 +112,7 @@ async function activateEmail(root: undefined, args: IActivateEmailArgs): Promise
     const emails = document.emails.filter((value) => {return value.verificationToken == args.token;});
     if(emails.length != 0) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      await Users.findOneAndUpdate({_id: document._id, emails: {$elemMatch: {verificationToken: args.token}}}, {$set: {"emails.$.verificationToken": v4()}}, {new: true});
+      await Users.findOneAndUpdate({_id: document._id, emails: {$elemMatch: {verificationToken: args.token}}}, {$set: {"emails.$.verificationToken": v4(), "emails.$.verified": true}}, {new: true});
       return true;
     } else {
       throw new Error("Invalid token");

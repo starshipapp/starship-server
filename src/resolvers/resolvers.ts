@@ -64,6 +64,7 @@ const resolvers = {
     loginUser: Users.loginUser,
     banUser: Users.banUser,
     resendVerificationEmail: Users.resendVerificationEmail,
+    activateEmail: Users.activateEmail,
     // Reports
     insertReport: Reports.insertReport,
     solveReport: Reports.solveReport,
