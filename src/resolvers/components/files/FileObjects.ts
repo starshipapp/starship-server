@@ -1,3 +1,4 @@
+import e from "express";
 import FileObjects, { IFileObject } from "../../../database/components/files/FileObjects";
 import Files, { IFiles } from "../../../database/components/files/Files";
 import { IPlanet } from "../../../database/Planets";
@@ -172,4 +173,25 @@ async function moveObject(root: undefined, args: IMoveObjectArgs, context: Conte
   }
 }
 
-export default {fieldResolvers, fileObject, files, folders, createFolder, completeUpload, renameObject, moveObject};
+interface IFileObjectArrayArgs {
+  ids: string[]
+}
+
+async function fileObjectArray(root: undefined, args: IFileObjectArrayArgs, context: Context): Promise<IFileObject[]> {
+  const objects = await FileObjects.find({_id: {$in: args.ids}});
+  if(objects[0]) {
+    if(context.user && await permissions.checkReadPermission(context.user.id, objects[0].planet)) {
+      if(objects.filter(object => object.planet == objects[0].planet)) {
+        return objects;
+      } else {
+        throw new Error ("All files must be from the same planet.");
+      }
+    } else {
+      throw new Error("No objects found.");
+    }
+  } else {
+    throw new Error("No objects found.");
+  }
+}
+
+export default {fieldResolvers, fileObjectArray, fileObject, files, folders, createFolder, completeUpload, renameObject, moveObject};
