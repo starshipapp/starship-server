@@ -53,6 +53,9 @@ const resolvers = {
     // Files
     fileComponent: Files.fileComponent,
     fileObject: FileObjects.fileObject,
+    folders: FileObjects.folders,
+    files: FileObjects.files,
+    fileObjectArray: FileObjects.fileObjectArray,
     // AWS
     downloadFileObject: AWS.downloadFileObject,
     downloadFolderObject: AWS.downloadFolderObject,

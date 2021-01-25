@@ -32,7 +32,7 @@ interface IFileObjectArgs {
 async function fileObject(root: undefined, args: IFileObjectArgs, context: Context): Promise<IFileObject> {
   const fileObject = await FileObjects.findOne({_id: args.id});
   if(fileObject) {
-    if(await permissions.checkReadPermission(context.user.id, fileObject.planet)) {
+    if(await permissions.checkReadPermission(context.user?.id ?? null, fileObject.planet)) {
       return fileObject;
     } else {
       throw new Error("Not found.");
@@ -49,8 +49,9 @@ interface IFilesArgs {
 
 async function files(root: undefined, args: IFilesArgs, context: Context): Promise<IFileObject[]> {
   const fileComponent = await Files.findOne({_id: args.componentId});
-  if(fileComponent && await permissions.checkReadPermission(context.user.id, fileComponent.id)) {
-    return FileObjects.find({componentId: args.componentId, parent: args.parent, type: "file", finishedUploading: true});
+  if(fileComponent && await permissions.checkReadPermission(context.user?.id ?? null, fileComponent.planet)) {
+    const files = FileObjects.find({componentId: args.componentId, parent: args.parent, type: "file", finishedUploading: true});
+    return files;
   } else {
     throw new Error("Not found.");
   }
@@ -58,8 +59,9 @@ async function files(root: undefined, args: IFilesArgs, context: Context): Promi
 
 async function folders(root: undefined, args: IFilesArgs, context: Context): Promise<IFileObject[]> {
   const fileComponent = await Files.findOne({_id: args.componentId});
-  if(fileComponent && await permissions.checkReadPermission(context.user.id, fileComponent.id)) {
-    return FileObjects.find({componentId: args.componentId, parent: args.parent, type: "folder"});
+  if(fileComponent && await permissions.checkReadPermission(context.user?.id ?? null, fileComponent.planet)) {
+    const folders = await FileObjects.find({componentId: args.componentId, parent: args.parent, type: "folder"});
+    return folders;
   } else {
     throw new Error("Not found.");
   }
@@ -76,7 +78,7 @@ async function createFolder(root: undefined, args: ICreateFolderArgs, context: C
     const component = await Files.findOne({_id: args.componentId});
     if(component && await permissions.checkFullWritePermission(context.user.id, component.planet)) {
       let path = ["root"];
-      if(args.parent != root) {
+      if(args.parent != "root") {
         const parentObject = await FileObjects.findOne({_id: args.parent});
         if(!parentObject) {
           throw new Error("Parent not found");
@@ -127,8 +129,8 @@ interface IRenameObjectArgs {
 }
 
 async function renameObject(root: undefined, args: IRenameObjectArgs, context: Context): Promise<IFileObject> {
-  const object = await FileObjects.findOne({id: args.objectId});
-  if(context.user && await permissions.checkFullWritePermission(context.user.id, object.planet)) {
+  const object = await FileObjects.findOne({_id: args.objectId});
+  if(object && context.user && await permissions.checkFullWritePermission(context.user.id, object.planet)) {
     const name = args.name.replace(/[/\\?%*:|"<>]/g, "-");
     return FileObjects.findOneAndUpdate({_id: args.objectId}, {$set: {name}}, {new: true});
   } else {
@@ -180,8 +182,8 @@ interface IFileObjectArrayArgs {
 async function fileObjectArray(root: undefined, args: IFileObjectArrayArgs, context: Context): Promise<IFileObject[]> {
   const objects = await FileObjects.find({_id: {$in: args.ids}});
   if(objects[0]) {
-    if(context.user && await permissions.checkReadPermission(context.user.id, objects[0].planet)) {
-      if(objects.filter(object => object.planet == objects[0].planet)) {
+    if(await permissions.checkReadPermission(context.user?.id ?? null, objects[0].planet)) {
+      if(objects.filter(object => object.planet == objects[0].planet).length == objects.length) {
         return objects;
       } else {
         throw new Error ("All files must be from the same planet.");

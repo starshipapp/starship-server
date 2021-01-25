@@ -24,7 +24,7 @@ interface IDownloadFileObjectArgs {
 async function downloadFileObject(root: undefined, args: IDownloadFileObjectArgs, context: Context): Promise<string> {
   const file = await FileObjects.findOne({_id: args.fileId});
   if(file && file.type == "file") {
-    if(await permissions.checkReadPermission(context.user.id, file.planet)) {
+    if(await permissions.checkReadPermission(context.user?.id ?? null, file.planet)) {
       const url = s3.getSignedUrl("getObject", {
         Bucket: process.env.BUCKET_NAME,
         Key: file.key,
@@ -47,7 +47,7 @@ interface IDownloadFolderObjectArgs {
 async function downloadFolderObject(root: undefined, args: IDownloadFolderObjectArgs, context: Context): Promise<string[]> {
   const file = await FileObjects.findOne({_id: args.folderId});
   if(file && file.type == "folder") {
-    if(await permissions.checkReadPermission(context.user.id, file.planet)) {
+    if(await permissions.checkReadPermission(context.user?.id ?? null, file.planet)) {
       const urls: string[] = [];
       const files = await FileObjects.find({parent: args.folderId});
       files.map((value) => {
@@ -74,7 +74,7 @@ interface IGetObjectPreviewArgs {
 async function getObjectPreview(root: undefined, args: IGetObjectPreviewArgs, context: Context): Promise<string> {
   const file = await FileObjects.findOne({_id: args.fileId});
   if(file && file.type == "file") {
-    if(await permissions.checkReadPermission(context.user.id, file.planet)) {
+    if(await permissions.checkReadPermission(context.user?.id ?? null, file.planet)) {
       const url = s3.getSignedUrl("getObject", {
         Bucket: process.env.BUCKET_NAME,
         Key: file.key,
@@ -177,9 +177,9 @@ async function deleteFileObject(root: undefined, args: IDeleteFileObjectArgs, co
             if (err) console.log(err, err.stack);  // error
           });
         });
-        await FileObjects.remove({path: file._id});
+        await FileObjects.deleteMany({path: file._id});
       }
-      await FileObjects.findOneAndRemove({_id: file._id});
+      await FileObjects.findOneAndDelete({_id: file._id});
       return true;
     }
   } else {

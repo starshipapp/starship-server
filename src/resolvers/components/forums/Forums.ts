@@ -117,13 +117,13 @@ interface IForumArgs {
 async function forum(root: undefined, args: IForumArgs, context: Context): Promise<IForum> {
   const forum = await Forums.findOne({_id: args.id});
   if(forum != undefined) {
-    if(context.user && context.user.id && await permissions.checkFullWritePermission(context.user.id, forum.planet)) {
+    if(await permissions.checkReadPermission(context.user?.id ?? null, forum.planet)) {
       return forum;
     } else {
-      throw new Error("You don't have permission to do that.");
+      throw new Error("Not found.");
     }
   } else {
-    throw new Error("That forum doesn't exist.");
+    throw new Error("Not found.");
   }
 }
 
@@ -142,10 +142,10 @@ async function createForumTag(root: undefined, args: IForumTagArgs, context: Con
         throw new Error("Tag already exists!");
       }
     } else {
-      throw new Error("You don't have permission to do that.");
+      throw new Error("Not found.");
     }
   } else {
-    throw new Error("That forum doesn't exist.");
+    throw new Error("Not found.");
   }
 }
 
@@ -155,10 +155,10 @@ async function removeForumTag(root: undefined, args: IForumTagArgs, context: Con
     if(context.user && context.user.id && await permissions.checkFullWritePermission(context.user.id, forum.planet)) {
       return Forums.findOneAndUpdate({_id: args.forumId}, {$pull: {tags: args.tag}}, {new: true});
     } else {
-      throw new Error("You don't have permission to do that.");
+      throw new Error("Not found.");
     }
   } else {
-    throw new Error("That forum doesn't exist.");
+    throw new Error("Not found.");
   }
 }
 
