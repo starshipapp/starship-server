@@ -15,6 +15,7 @@ import { connect } from "mongoose";
 import IUserToken from "./util/IUserToken";
 import Context from "./util/Context";
 import Loaders from "./util/Loaders";
+import https from "https";
 
 const sysInfo = {
   serverName: "starship-server",
@@ -44,6 +45,10 @@ if(!process.env.SMTP_HOST) {
 
 if(!process.env.DEVELOPMENT) {
   sysInfo.clientFlags.push("+development");
+}
+
+if(!process.env.SSL_PRIVATE_PATH) {
+  sysInfo.clientFlags.push("-secure");
 }
 
 connect(process.env.MONGO_URL, {
@@ -106,9 +111,30 @@ connect(process.env.MONGO_URL, {
       res.json(sysInfo);
     });
 
-    app.listen({ port: 4000 }, () =>
-      Loggers.apolloLogger.info(`Server up at http://localhost:4000${server.graphqlPath}`)
-    );
+    if(!process.env.SSL_PRIVATE_PATH) {
+      app.listen({ port: Number(process.env.PORT) }, () =>
+        Loggers.apolloLogger.info(`Server up at http://localhost:${process.env.PORT}${server.graphqlPath}`)
+      );
+    } else {
+      Loggers.httpsLogger.info(`Starting HTTPS server`);
+      Loggers.httpsLogger.info(`Loading certificate information`);
+      const cert = readFileSync(process.env.SSL_CERTIFICATE_PATH);
+      const key = readFileSync(process.env.SSL_PRIVATE_PATH);
+      const options: https.ServerOptions = {
+        cert,
+        key
+      };
+      if(process.env.SSL_CA_PATH) {
+        options.ca = readFileSync(process.env.SSL_CA_PATH);
+      }
+
+      Loggers.httpsLogger.info(`Creating server`);
+      const httpsServer = https.createServer(options, app);
+
+      httpsServer.listen(process.env.HTTPS_PORT, function() {
+        Loggers.httpsLogger.info(`Server up at http://localhost:${process.env.HTTPS_PORT}${server.graphqlPath}`);
+      });
+    }
 }).catch((error) => {
   Loggers.dbLogger.error(error);
   Loggers.mainLogger.fatal("Exiting...");
