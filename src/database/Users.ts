@@ -13,7 +13,7 @@ export const safeUserFields = {
 
 export interface IUser extends Document {
   _id: string,
-  services: {password: {bcrypt: string, resetToken: string, resetExpiry: Date}},
+  services: {password: {bcrypt?: string, resetToken?: string, resetExpiry?: Date}},
   username: string,
   createdAt: Date,
   profilePicture: string,

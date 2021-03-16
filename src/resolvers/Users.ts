@@ -5,7 +5,7 @@ import permissions from "../util/permissions";
 import Context from "../util/Context";
 import Loggers from "../Loggers";
 import Planets, { IPlanet } from "../database/Planets";
-import {sendVerificationEmail} from "../util/Emails";
+import {sendForgotPasswordEmail, sendVerificationEmail} from "../util/Emails";
 import { v4 } from "uuid";
 
 const fieldResolvers = {
@@ -59,7 +59,7 @@ async function insertUser(root: undefined, args: IInsertUserArgs): Promise<IUser
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const response = args.recaptcha;
 
-  const password = bcrypt.hashSync(args.password, 3) ;
+  const password = bcrypt.hashSync(args.password, 3);
   const newUser: IUser = new Users({
     createdAt: new Date(),
     services: {
@@ -122,6 +122,33 @@ async function activateEmail(root: undefined, args: IActivateEmailArgs): Promise
   }
 }
 
+interface IResetPasswordArgs {
+  userId: string,
+  token: string,
+  password: string
+}
+
+async function resetPassword(root: undefined, args: IResetPasswordArgs): Promise<boolean> {
+  const document = await Users.findOne({_id: args.userId});
+  if(document) {
+    if(document.services.password.resetExpiry && document.services.password.resetToken) {
+      if(document.services.password.resetToken == args.token) {
+        if(document.services.password.resetExpiry.getTime() > Date.now()) {
+          const newPassword = bcrypt.hashSync(args.password, 3);
+          await Users.findOneAndUpdate({_id: document._id}, {$set: {services: {password: {bcrypt: newPassword, resetExpiry: new Date(Date.now()), resetToken: v4()}}}}, {new: true});
+          return true;
+        }
+      } else {
+        throw new Error("Invalid token");
+      }
+    } else {
+      throw new Error("Invalid token");
+    }
+  } else {
+    throw new Error("User not found.")
+  }
+}
+
 interface IResendVerificationEmailArgs {
   username: string
 }
@@ -136,6 +163,19 @@ async function resendVerificationEmail(root: undefined, args: IResendVerificatio
     } else {
       return sendVerificationEmail(document);
     }
+  }
+}
+
+interface ISendResetPasswordEmail {
+  username: string
+}
+
+async function sendResetPasswordEmail(root: undefined, args: ISendResetPasswordEmail): Promise<boolean> {
+  const document = await Users.findOne({username: args.username});
+  if(document == undefined) {
+    throw new Error("User not found.");
+  } else {
+    return sendForgotPasswordEmail(document);
   }
 }
 
@@ -229,4 +269,4 @@ async function adminUsersRecent(root: undefined, args: undefined, context: Conte
   }
 }
 
-export default {fieldResolvers, activateEmail, resendVerificationEmail, loginUser, currentUser, insertUser, user, adminUser, banUser, adminUsersRecent};
+export default {fieldResolvers, resetPassword, activateEmail, resendVerificationEmail, loginUser, currentUser, insertUser, user, adminUser, banUser, adminUsersRecent, sendResetPasswordEmail};
