@@ -48,7 +48,7 @@ export async function sendForgotPasswordEmail(document: IUser): Promise<boolean>
   const verificationToken = v4();
   const resetUrl = process.env.SITE_URL + "/forgot/" + document._id + ":token:" + verificationToken;
   const expiryDate = new Date(new Date().getTime() + 86400000);
-  const updatedDocument = await Users.findOneAndUpdate({_id: document._id}, {$set: {services: {password: {resetToken: verificationToken, resetExpiry: expiryDate}}}});
+  const updatedDocument = await Users.findOneAndUpdate({_id: document._id}, {$set: {services: {password: {bcrypt: document.services.password.bcrypt, resetToken: verificationToken, resetExpiry: expiryDate}}}});
   const updatedTemplateText = forgotTemplateText.replace("$username", updatedDocument.username).replace("$url", resetUrl);
   const updatedTemplateHTML = forgotTemplateHTML.replace("$username", updatedDocument.username).replace("$url", resetUrl);
   // i guess @types/nodemailer doesn't have types for these?
@@ -57,6 +57,7 @@ export async function sendForgotPasswordEmail(document: IUser): Promise<boolean>
     Loggers.debugLogger.debug("password reset requested:")
     Loggers.debugLogger.debug(`uid: ${document.id}`)
     Loggers.debugLogger.debug(`token: ${verificationToken}`)
+    Loggers.debugLogger.debug(`url: ${resetUrl}`)
   }
   await transporter.sendMail({
     from: process.env.MAIL_FROM,
