@@ -50,6 +50,7 @@ const resolvers = {
     // Forums
     forum: Forums.forum,
     forumPost: ForumPosts.forumPost,
+    forumReply: ForumReplies.forumReply,
     // Files
     fileComponent: Files.fileComponent,
     fileObject: FileObjects.fileObject,
