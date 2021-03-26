@@ -117,7 +117,9 @@ const resolvers = {
     moveObject: FileObjects.moveObject,
     // AWS
     uploadFileObject: AWS.uploadFileObject,
-    deleteFileObject: AWS.deleteFileObject
+    deleteFileObject: AWS.deleteFileObject,
+    uploadProfilePicture: AWS.uploadProfilePicture,
+    uploadMarkdownImage: AWS.uploadMarkdownImage
   }
 };
 

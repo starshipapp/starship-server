@@ -19,8 +19,8 @@ import https from "https";
 
 const sysInfo = {
   serverName: "starship-server",
-  version: "prealpha (0.5)",
-  schemaVersion: "0.5b",
+  version: "prealpha (0.6)",
+  schemaVersion: "0.6",
   supportedFeatures: ["users", "reports", "planets", "invites"],
   supportedComponents: ["pages", "wikis", "forums", "files"],
   clientFlags: ["+experimental"]
