@@ -1,6 +1,6 @@
 import ForumPosts, { IForumPost } from "../../../database/components/forum/ForumPosts";
 import ForumReplies, { IForumReply } from "../../../database/components/forum/ForumReplies";
-import Forums, { IForum } from "../../../database/components/forum/Forums";
+import { IForum } from "../../../database/components/forum/Forums";
 import { IPlanet } from "../../../database/Planets";
 import { IUser } from "../../../database/Users";
 import Context from "../../../util/Context";

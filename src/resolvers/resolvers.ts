@@ -30,7 +30,7 @@ const resolvers = {
     // Users
     user: Users.user,
     adminUser: Users.adminUser,
-    adminUsersRecent: Users.adminUsersRecent,
+    adminUsers: Users.adminUsers,
     currentUser: Users.currentUser,
     // Reports
     report: Reports.report,

@@ -145,7 +145,7 @@ async function resetPassword(root: undefined, args: IResetPasswordArgs): Promise
       throw new Error("Invalid token");
     }
   } else {
-    throw new Error("User not found.")
+    throw new Error("User not found.");
   }
 }
 
@@ -254,19 +254,17 @@ async function adminUser(root: undefined, args: IUserArgs, context: Context): Pr
   }
 }
 
-async function adminUsersRecent(root: undefined, args: undefined, context: Context): Promise<IUser[]> {
-  const userCheck = context.user && await permissions.checkAdminPermission(context.user.id);
+interface IAdminUsersArgs {
+  startNumber: number,
+  count: number,
+}
 
-  if(userCheck) {
-
-    if(user == undefined) {
-      throw new Error('That user does not exist.');
-    }
-
-    return Users.find({}, {sort: { createdAt: -1 }, limit: 15});
+async function adminUsers(root: undefined, args: IAdminUsersArgs, context: Context): Promise<IUser[]> {
+  if(context.user && await permissions.checkAdminPermission(context.user.id)) {
+    return Users.find({}).sort({createdAt: -1}).skip(args.startNumber).limit(args.count);
   } else {
     throw new Error('You don\'t have permission to do that.');
   }
 }
 
-export default {fieldResolvers, resetPassword, activateEmail, resendVerificationEmail, loginUser, currentUser, insertUser, user, adminUser, banUser, adminUsersRecent, sendResetPasswordEmail};
+export default {fieldResolvers, resetPassword, activateEmail, resendVerificationEmail, loginUser, currentUser, insertUser, user, adminUser, banUser, adminUsers, sendResetPasswordEmail};

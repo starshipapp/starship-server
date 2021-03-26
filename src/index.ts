@@ -20,7 +20,7 @@ import https from "https";
 const sysInfo = {
   serverName: "starship-server",
   version: "prealpha (0.5)",
-  schemaVersion: "0.5a",
+  schemaVersion: "0.5b",
   supportedFeatures: ["users", "reports", "planets", "invites"],
   supportedComponents: ["pages", "wikis", "forums", "files"],
   clientFlags: ["+experimental"]
