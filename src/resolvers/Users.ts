@@ -7,6 +7,7 @@ import Loggers from "../Loggers";
 import Planets, { IPlanet } from "../database/Planets";
 import {sendForgotPasswordEmail, sendVerificationEmail} from "../util/Emails";
 import { v4 } from "uuid";
+import axios from "axios";
 
 const fieldResolvers = {
   following: async (root: IUser, args: undefined, context: Context): Promise<IPlanet[]> => {
@@ -53,29 +54,59 @@ async function insertUser(root: undefined, args: IInsertUserArgs): Promise<IUser
     throw new Error('Your password needs to be at least 8 characters long.');
   }
 
-  // don't do anything with RECAPTCHA yet, needs client
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const secret = process.env.RECAPTCHASECRET;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const secret = process.env.RECAPTCHA_SECRET;
   const response = args.recaptcha;
 
-  const password = bcrypt.hashSync(args.password, 3);
-  const newUser: IUser = new Users({
-    createdAt: new Date(),
-    services: {
-      password: {
-        bcrypt: password
-      }
-    },
-    username: args.username,
-    emails: [{address: args.email, verified: false}],
-    admin: false,
-    following: []
-  });
+  let shouldContinue = true;
 
-  const user = await newUser.save().catch((e) => {console.error(e);}) as IUser;
-  await sendVerificationEmail(user);
-  return user;
+  if(secret) {
+    shouldContinue = false;
+    const res = await axios.post(
+      `https://www.google.com/recaptcha/api/siteverify?secret=${secret}&response=${response}`,
+      {},
+      {
+        headers: {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          "Content-Type": "application/x-www-form-urlencoded; charset=utf-8"
+        },
+      },
+    );
+
+    if(res) {
+      if(res.data) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        if(res.data.success && res.data.success == true) {
+          shouldContinue = true;
+        } else {
+          throw new Error("Invalid captcha.");
+        }
+      } else {
+        throw new Error("Failed to verfiy captcha");
+      }
+    } else {
+      throw new Error("Failed to verfiy captcha");
+    }
+  }
+
+  if(shouldContinue) {
+    const password = bcrypt.hashSync(args.password, 3);
+    const newUser: IUser = new Users({
+      createdAt: new Date(),
+      services: {
+        password: {
+          bcrypt: password
+        }
+      },
+      username: args.username,
+      emails: [{address: args.email, verified: false}],
+      admin: false,
+      following: []
+    });
+  
+    const user = await newUser.save().catch((e) => {console.error(e);}) as IUser;
+    await sendVerificationEmail(user);
+    return user;
+  }
 }
 
 interface ILoginUserArgs {
