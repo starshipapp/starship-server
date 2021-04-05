@@ -30,7 +30,7 @@ const resolvers = {
     // Users
     user: Users.user,
     adminUser: Users.adminUser,
-    adminUsersRecent: Users.adminUsersRecent,
+    adminUsers: Users.adminUsers,
     currentUser: Users.currentUser,
     // Reports
     report: Reports.report,
@@ -50,6 +50,7 @@ const resolvers = {
     // Forums
     forum: Forums.forum,
     forumPost: ForumPosts.forumPost,
+    forumReply: ForumReplies.forumReply,
     // Files
     fileComponent: Files.fileComponent,
     fileObject: FileObjects.fileObject,
@@ -66,6 +67,8 @@ const resolvers = {
     insertUser: Users.insertUser,
     loginUser: Users.loginUser,
     banUser: Users.banUser,
+    resetPassword: Users.resetPassword,
+    sendResetPasswordEmail: Users.sendResetPasswordEmail,
     resendVerificationEmail: Users.resendVerificationEmail,
     activateEmail: Users.activateEmail,
     // Reports
@@ -114,7 +117,9 @@ const resolvers = {
     moveObject: FileObjects.moveObject,
     // AWS
     uploadFileObject: AWS.uploadFileObject,
-    deleteFileObject: AWS.deleteFileObject
+    deleteFileObject: AWS.deleteFileObject,
+    uploadProfilePicture: AWS.uploadProfilePicture,
+    uploadMarkdownImage: AWS.uploadMarkdownImage
   }
 };
 

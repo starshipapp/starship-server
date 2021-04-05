@@ -1,6 +1,6 @@
 import ForumPosts, { IForumPost } from "../../../database/components/forum/ForumPosts";
 import ForumReplies, { IForumReply } from "../../../database/components/forum/ForumReplies";
-import Forums, { IForum } from "../../../database/components/forum/Forums";
+import { IForum } from "../../../database/components/forum/Forums";
 import { IPlanet } from "../../../database/Planets";
 import { IUser } from "../../../database/Users";
 import Context from "../../../util/Context";
@@ -119,6 +119,8 @@ async function forumReplyReact(root: undefined, args: IForumReplyReactArgs, cont
               return ForumReplies.findOneAndUpdate({_id: args.replyId}, {$pull: {reactions: reaction}}, {new: true});
             } else {
               // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+              // @ts-ignore
               return ForumReplies.findOneAndUpdate({_id: args.replyId, reactions: {$elemMatch: {emoji: args.emojiId}}}, {$pull: {"reactions.$.reactors": context.user.id}}, {new: true});
             }
           } else {

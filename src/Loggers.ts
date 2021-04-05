@@ -6,10 +6,12 @@ export default class Loggers {
   static apolloLogger: Logger = getLogger("apollo");
   static awsLogger: Logger = getLogger("aws");
   static httpsLogger: Logger = getLogger("https");
+  static debugLogger: Logger = getLogger("debug");
 }
 
-Loggers.awsLogger.level = "debug";
-Loggers.mainLogger.level = "debug";
-Loggers.dbLogger.level = "debug";
-Loggers.apolloLogger.level = "debug";
-Loggers.httpsLogger.level = "debug";
+Loggers.awsLogger.level = "info";
+Loggers.mainLogger.level = "info";
+Loggers.dbLogger.level = "info";
+Loggers.apolloLogger.level = "info";
+Loggers.httpsLogger.level = "info";
+Loggers.debugLogger.level = "debug";

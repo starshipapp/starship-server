@@ -7,6 +7,9 @@ import Files from "../database/components/files/Files";
 import Loggers from "../Loggers";
 import Context from "../util/Context";
 import permissions from "../util/permissions";
+import {v4} from "uuid";
+import mimeTypes from "../util/mimeTypes";
+import Users from "../database/Users";
 
 Loggers.awsLogger.info("Connecting to AWS");
 const s3 = new AWS.S3({
@@ -187,4 +190,68 @@ async function deleteFileObject(root: undefined, args: IDeleteFileObjectArgs, co
   }
 }
 
-export default {downloadFileObject, downloadFolderObject, getObjectPreview, uploadFileObject, deleteFileObject};
+interface IImageUploadArgs {
+  type: string
+  size: number
+}
+
+interface IUploadMarkdownImageData {
+  finalUrl: string
+  uploadUrl: string
+}
+
+function uploadMarkdownImage(root: undefined, args: IImageUploadArgs, context: Context): IUploadMarkdownImageData {
+  if(args.size > 8000000) {
+    throw new Error("Image too big.");
+  }
+
+  if(!context.user) {
+    throw new Error("Not logged in.");
+  }
+
+  if(!mimeTypes.imageTypes.includes(args.type)) {
+    throw new Error("Invalid file type.");
+  }
+
+  const uuid = v4();
+  const url = s3.getSignedUrl("putObject", {
+    Bucket: process.env.BUCKET_NAME,
+    Key: "mdattachments/" + uuid,
+    Expires: 120,
+    ContentType: args.type,
+    ACL: "public-read"
+  });
+  
+  return {
+    finalUrl: process.env.BUCKET_ENDPOINT + "/" + process.env.BUCKET_NAME + "/mdattachments/" + uuid,
+    uploadUrl: url
+  };
+}
+
+async function uploadProfilePicture(root: undefined, args: IImageUploadArgs, context: Context): Promise<string> {
+  if(args.size > 8000000) {
+    throw new Error("Image too big.");
+  }
+
+  if(!context.user) {
+    throw new Error("Not logged in.");
+  }
+
+  if(!mimeTypes.imageTypes.includes(args.type)) {
+    throw new Error("Invalid file type.");
+  }
+
+  const url = s3.getSignedUrl("putObject", {
+    Bucket: process.env.BUCKET_NAME,
+    Key: "profilepictures/" + context.user.id,
+    Expires: 120,
+    ContentType: args.type,
+    ACL: "public-read"
+  });
+  
+  await Users.findOneAndUpdate({_id: context.user.id}, {$set: {profilePicture: process.env.BUCKET_ENDPOINT + "/" + process.env.BUCKET_NAME + "/profilepictures/" + context.user.id}});
+
+  return url;
+}
+
+export default {uploadProfilePicture, uploadMarkdownImage, downloadFileObject, downloadFolderObject, getObjectPreview, uploadFileObject, deleteFileObject};

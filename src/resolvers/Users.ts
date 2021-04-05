@@ -5,8 +5,9 @@ import permissions from "../util/permissions";
 import Context from "../util/Context";
 import Loggers from "../Loggers";
 import Planets, { IPlanet } from "../database/Planets";
-import {sendVerificationEmail} from "../util/Emails";
+import {sendForgotPasswordEmail, sendVerificationEmail} from "../util/Emails";
 import { v4 } from "uuid";
+import axios from "axios";
 
 const fieldResolvers = {
   following: async (root: IUser, args: undefined, context: Context): Promise<IPlanet[]> => {
@@ -53,29 +54,59 @@ async function insertUser(root: undefined, args: IInsertUserArgs): Promise<IUser
     throw new Error('Your password needs to be at least 8 characters long.');
   }
 
-  // don't do anything with RECAPTCHA yet, needs client
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const secret = process.env.RECAPTCHASECRET;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const secret = process.env.RECAPTCHA_SECRET;
   const response = args.recaptcha;
 
-  const password = bcrypt.hashSync(args.password, 3) ;
-  const newUser: IUser = new Users({
-    createdAt: new Date(),
-    services: {
-      password: {
-        bcrypt: password
-      }
-    },
-    username: args.username,
-    emails: [{address: args.email, verified: false}],
-    admin: false,
-    following: []
-  });
+  let shouldContinue = true;
 
-  const user = await newUser.save().catch((e) => {console.error(e);}) as IUser;
-  await sendVerificationEmail(user);
-  return user;
+  if(secret) {
+    shouldContinue = false;
+    const res = await axios.post(
+      `https://www.google.com/recaptcha/api/siteverify?secret=${secret}&response=${response}`,
+      {},
+      {
+        headers: {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          "Content-Type": "application/x-www-form-urlencoded; charset=utf-8"
+        },
+      },
+    );
+
+    if(res) {
+      if(res.data) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        if(res.data.success && res.data.success == true) {
+          shouldContinue = true;
+        } else {
+          throw new Error("Invalid captcha.");
+        }
+      } else {
+        throw new Error("Failed to verfiy captcha");
+      }
+    } else {
+      throw new Error("Failed to verfiy captcha");
+    }
+  }
+
+  if(shouldContinue) {
+    const password = bcrypt.hashSync(args.password, 3);
+    const newUser: IUser = new Users({
+      createdAt: new Date(),
+      services: {
+        password: {
+          bcrypt: password
+        }
+      },
+      username: args.username,
+      emails: [{address: args.email, verified: false}],
+      admin: false,
+      following: []
+    });
+  
+    const user = await newUser.save().catch((e) => {console.error(e);}) as IUser;
+    await sendVerificationEmail(user);
+    return user;
+  }
 }
 
 interface ILoginUserArgs {
@@ -122,6 +153,33 @@ async function activateEmail(root: undefined, args: IActivateEmailArgs): Promise
   }
 }
 
+interface IResetPasswordArgs {
+  userId: string,
+  token: string,
+  password: string
+}
+
+async function resetPassword(root: undefined, args: IResetPasswordArgs): Promise<boolean> {
+  const document = await Users.findOne({_id: args.userId});
+  if(document) {
+    if(document.services.password.resetExpiry && document.services.password.resetToken) {
+      if(document.services.password.resetToken == args.token) {
+        if(document.services.password.resetExpiry.getTime() > Date.now()) {
+          const newPassword = bcrypt.hashSync(args.password, 3);
+          await Users.findOneAndUpdate({_id: document._id}, {$set: {services: {password: {bcrypt: newPassword, resetExpiry: new Date(Date.now()), resetToken: v4()}}}}, {new: true});
+          return true;
+        }
+      } else {
+        throw new Error("Invalid token");
+      }
+    } else {
+      throw new Error("Invalid token");
+    }
+  } else {
+    throw new Error("User not found.");
+  }
+}
+
 interface IResendVerificationEmailArgs {
   username: string
 }
@@ -136,6 +194,19 @@ async function resendVerificationEmail(root: undefined, args: IResendVerificatio
     } else {
       return sendVerificationEmail(document);
     }
+  }
+}
+
+interface ISendResetPasswordEmail {
+  username: string
+}
+
+async function sendResetPasswordEmail(root: undefined, args: ISendResetPasswordEmail): Promise<boolean> {
+  const document = await Users.findOne({username: args.username});
+  if(document == undefined) {
+    throw new Error("User not found.");
+  } else {
+    return sendForgotPasswordEmail(document);
   }
 }
 
@@ -214,19 +285,17 @@ async function adminUser(root: undefined, args: IUserArgs, context: Context): Pr
   }
 }
 
-async function adminUsersRecent(root: undefined, args: undefined, context: Context): Promise<IUser[]> {
-  const userCheck = context.user && await permissions.checkAdminPermission(context.user.id);
+interface IAdminUsersArgs {
+  startNumber: number,
+  count: number,
+}
 
-  if(userCheck) {
-
-    if(user == undefined) {
-      throw new Error('That user does not exist.');
-    }
-
-    return Users.find({}, {sort: { createdAt: -1 }, limit: 15});
+async function adminUsers(root: undefined, args: IAdminUsersArgs, context: Context): Promise<IUser[]> {
+  if(context.user && await permissions.checkAdminPermission(context.user.id)) {
+    return Users.find({}).sort({createdAt: -1}).skip(args.startNumber).limit(args.count);
   } else {
     throw new Error('You don\'t have permission to do that.');
   }
 }
 
-export default {fieldResolvers, activateEmail, resendVerificationEmail, loginUser, currentUser, insertUser, user, adminUser, banUser, adminUsersRecent};
+export default {fieldResolvers, resetPassword, activateEmail, resendVerificationEmail, loginUser, currentUser, insertUser, user, adminUser, banUser, adminUsers, sendResetPasswordEmail};

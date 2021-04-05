@@ -149,7 +149,7 @@ async function moveObject(root: undefined, args: IMoveObjectArgs, context: Conte
   if(object)  {
     if(context.user && await permissions.checkFullWritePermission(context.user.id, object.planet)) {
       if((newParent && newParent.type == "folder") || args.parent == "root") {
-        if(object.componentId == newParent.componentId) {
+        if(object.componentId == newParent?.componentId || args.parent == "root") {
           if(object.type == "file") {
             const newPath = newParent ? newParent.path.concat([newParent._id]) : ["root"];
             const newObjectParent = newParent ? newParent._id : "root";
