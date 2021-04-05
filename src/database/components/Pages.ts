@@ -1,5 +1,5 @@
 import {model, Schema} from "mongoose";
-import nanoIdPlugin from "@william341/mongoose-nanoid";
+import nanoIdPlugin from "mongoose-nanoid";
 import { IComponent } from "./IComponent";
 
 export interface IPage extends IComponent {
