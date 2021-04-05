@@ -16,6 +16,8 @@ import IUserToken from "./util/IUserToken";
 import Context from "./util/Context";
 import Loaders from "./util/Loaders";
 import https from "https";
+import { RedisCache } from "apollo-server-cache-redis";
+import yn from "yn";
 
 const sysInfo = {
   serverName: "starship-server",
@@ -35,7 +37,7 @@ if(!process.env.RECAPTCHA_SECRET) {
   sysInfo.clientFlags.push("-recaptcha");
 }
 
-if(!process.env.REDIS_URL) {
+if(!process.env.REDIS_SERVER) {
   sysInfo.clientFlags.push("+lowcapacity");
 }
 
@@ -102,7 +104,13 @@ connect(process.env.MONGO_URL, {
 
         return ctx;
       },
-      tracing: Boolean(process.env.DEVELOPMENT)
+      tracing: yn(process.env.DEVELOPMENT),
+      cache: (process.env.REDIS_SERVER ? new RedisCache({
+        host: process.env.REDIS_SERVER,
+        port: Number(process.env.REDIS_PORT),
+        password: process.env.REDIS_PASSWORD,
+        username: process.env.REDIS_USERNAME
+      }) : undefined)
     });
 
     server.applyMiddleware({ app });
