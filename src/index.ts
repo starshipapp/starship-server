@@ -18,11 +18,12 @@ import Loaders from "./util/Loaders";
 import https from "https";
 import { RedisCache } from "apollo-server-cache-redis";
 import yn from "yn";
+import e from "express";
 
 const sysInfo = {
   serverName: "starship-server",
-  version: "prealpha (0.6)",
-  schemaVersion: "0.6",
+  version: "prealpha (0.6.995-1)",
+  schemaVersion: "0.6.995",
   supportedFeatures: ["users", "reports", "planets", "invites"],
   supportedComponents: ["pages", "wikis", "forums", "files"],
   clientFlags: ["+experimental"]
@@ -68,7 +69,12 @@ connect(process.env.MONGO_URL, {
       Loggers.mainLogger.warn("RUNNING IN DEVELOPMENT MODE, NOT USING REDIS");
     }
     Loggers.apolloLogger.info("Verifying schema integrity");
-    const schema = readFileSync('dist/starship-schema/schema.graphql', 'utf8');
+    let schema = "";
+    if(yn(process.env.DEVELOPMENT)) {
+      schema = readFileSync('src/starship-schema/schema.graphql', 'utf8');
+    } else {
+      schema = readFileSync('dist/starship-schema/schema.graphql', 'utf8');
+    }
     if(!schema.startsWith("# starship-schema ")) {
       Loggers.apolloLogger.fatal("Invalid schema header. Expected '# starship-schema (version)', got '" + schema.split("\n")[0] + "'.");
       Loggers.mainLogger.fatal("Exiting...");
@@ -76,8 +82,8 @@ connect(process.env.MONGO_URL, {
     }
     if(!schema.startsWith("# starship-schema " + sysInfo.schemaVersion)) {
       Loggers.apolloLogger.fatal("Server schema version mismatch. Verify that schema.graphql is the correct version.");
-      Loggers.apolloLogger.debug("sysInfo.schemaVersion: " + sysInfo.schemaVersion);
-      Loggers.apolloLogger.debug("schema.graphql version: " + schema.split("\n")[0].split("starship-schema ")[1]);
+      Loggers.apolloLogger.fatal("sysInfo.schemaVersion: " + sysInfo.schemaVersion);
+      Loggers.apolloLogger.fatal("schema.graphql version: " + schema.split("\n")[0].split("starship-schema ")[1]);
       Loggers.mainLogger.fatal("Exiting...");
       process.exit(2);
     }
