@@ -15,10 +15,22 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const verifyTemplateHTML = readFileSync("dist/templates/verify-email/html.html", "utf8");
-const verifyTemplateText = readFileSync("dist/templates/verify-email/text.txt", "utf8");
-const forgotTemplateHTML = readFileSync("dist/templates/forgot-password/html.html", "utf8");
-const forgotTemplateText = readFileSync("dist/templates/forgot-password/text.txt", "utf8");
+let verifyTemplateHTML = "";
+let verifyTemplateText = "";
+let forgotTemplateHTML = "";
+let forgotTemplateText = "";
+
+if(!yn(process.env.DEVELOPMENT)) {
+  verifyTemplateHTML = readFileSync("dist/templates/verify-email/html.html", "utf8");
+  verifyTemplateText = readFileSync("dist/templates/verify-email/text.txt", "utf8");
+  forgotTemplateHTML = readFileSync("dist/templates/forgot-password/html.html", "utf8");
+  forgotTemplateText = readFileSync("dist/templates/forgot-password/text.txt", "utf8");
+} else {
+  verifyTemplateHTML = readFileSync("src/templates/verify-email/html.html", "utf8");
+  verifyTemplateText = readFileSync("src/templates/verify-email/text.txt", "utf8");
+  forgotTemplateHTML = readFileSync("src/templates/forgot-password/html.html", "utf8");
+  forgotTemplateText = readFileSync("src/templates/forgot-password/text.txt", "utf8");
+}
 
 export async function sendVerificationEmail(document: IUser): Promise<boolean> {
   const verificationToken = v4();
@@ -30,9 +42,9 @@ export async function sendVerificationEmail(document: IUser): Promise<boolean> {
   // i guess @types/nodemailer doesn't have types for these?
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   if(yn(process.env.DEVELOPMENT)) {
-    Loggers.debugLogger.debug("verification email requested:")
-    Loggers.debugLogger.debug(`uid: ${document.id}`)
-    Loggers.debugLogger.debug(`token:  ${verificationToken}`)
+    Loggers.debugLogger.debug("verification email requested:");
+    Loggers.debugLogger.debug(`uid: ${document._id ?? ""}`);
+    Loggers.debugLogger.debug(`token:  ${verificationToken}`);
   }
   await transporter.sendMail({
     from: process.env.MAIL_FROM,
@@ -54,10 +66,10 @@ export async function sendForgotPasswordEmail(document: IUser): Promise<boolean>
   // i guess @types/nodemailer doesn't have types for these?
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   if(yn(process.env.DEVELOPMENT)) {
-    Loggers.debugLogger.debug("password reset requested:")
-    Loggers.debugLogger.debug(`uid: ${document.id}`)
-    Loggers.debugLogger.debug(`token: ${verificationToken}`)
-    Loggers.debugLogger.debug(`url: ${resetUrl}`)
+    Loggers.debugLogger.debug("password reset requested:");
+    Loggers.debugLogger.debug(`uid: ${document._id}`);
+    Loggers.debugLogger.debug(`token: ${verificationToken}`);
+    Loggers.debugLogger.debug(`url: ${resetUrl}`);
   }
   await transporter.sendMail({
     from: process.env.MAIL_FROM,

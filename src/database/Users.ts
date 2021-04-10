@@ -1,6 +1,6 @@
 import {model, Schema, Document} from "mongoose";
 // import idPlugin from "./idPlugin";
-import nanoIdPlugin from "@william341/mongoose-nanoid";
+import nanoIdPlugin from "mongoose-nanoid";
 
 export const safeUserFields = {
   _id: true,
