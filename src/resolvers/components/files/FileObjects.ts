@@ -49,7 +49,7 @@ interface IFilesArgs {
 async function files(root: undefined, args: IFilesArgs, context: Context): Promise<IFileObject[]> {
   const fileComponent = await Files.findOne({_id: args.componentId});
   if(fileComponent && await permissions.checkReadPermission(context.user?.id ?? null, fileComponent.planet)) {
-    const files = FileObjects.find({componentId: args.componentId, parent: args.parent, type: "file", finishedUploading: true});
+    const files = FileObjects.find({componentId: args.componentId, parent: args.parent, type: "file", finishedUploading: true}).sort({'name': 1});
     return files;
   } else {
     throw new Error("Not found.");
@@ -59,7 +59,7 @@ async function files(root: undefined, args: IFilesArgs, context: Context): Promi
 async function folders(root: undefined, args: IFilesArgs, context: Context): Promise<IFileObject[]> {
   const fileComponent = await Files.findOne({_id: args.componentId});
   if(fileComponent && await permissions.checkReadPermission(context.user?.id ?? null, fileComponent.planet)) {
-    const folders = await FileObjects.find({componentId: args.componentId, parent: args.parent, type: "folder"});
+    const folders = await FileObjects.find({componentId: args.componentId, parent: args.parent, type: "folder"}).sort({'name': 1});
     return folders;
   } else {
     throw new Error("Not found.");
