@@ -53,7 +53,13 @@ if(!process.env.SSL_PRIVATE_PATH) {
   sysInfo.clientFlags.push("-secure");
 }
 
-connect(process.env.MONGO_URL, {
+let url = process.env.MONGO_URL;
+
+if(process.env.DATABASE_URL) {
+  url = process.env.DATABASE_URL;
+}
+
+connect(url, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   useFindAndModify: false,
