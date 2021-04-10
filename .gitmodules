@@ -1,3 +1,3 @@
 [submodule "src/starship-schema"]
 	path = src/starship-schema
-	url = git@github.com:starshipapp/starship-schema.git
+	url = https://github.com/starshipapp/starship-schema.git
