@@ -18,12 +18,11 @@ import Loaders from "./util/Loaders";
 import https from "https";
 import { RedisCache } from "apollo-server-cache-redis";
 import yn from "yn";
-import e from "express";
 
 const sysInfo = {
   serverName: "starship-server",
-  version: "prealpha (0.6.995-1)",
-  schemaVersion: "0.6.995",
+  version: "prealpha (0.6.996)",
+  schemaVersion: "0.6.996",
   supportedFeatures: ["users", "reports", "planets", "invites"],
   supportedComponents: ["pages", "wikis", "forums", "files"],
   clientFlags: ["+experimental"]

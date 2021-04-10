@@ -10,7 +10,8 @@ import { forumSortTypes } from "../../../util/sortTypes";
 interface IPostResolverArgs {
   limit?: number,
   cursor?: string,
-  sortMethod?: string
+  sortMethod?: string,
+  tag?: string
 }
 
 interface IForumPostResolverFindObject {
@@ -27,7 +28,8 @@ interface IForumPostResolverFindObject {
     $gt?: number,
   },
   componentId: string,
-  stickied: boolean
+  stickied: boolean,
+  tags?: string[],
 }
 
 const fieldResolvers = {
@@ -55,6 +57,10 @@ const fieldResolvers = {
     }
 
     const findObject: IForumPostResolverFindObject = {componentId: root._id, stickied: false};
+
+    if(args.tag) {
+      findObject.tags = [args.tag];
+    }
 
     // interpret cursor
     if(args.cursor) {
