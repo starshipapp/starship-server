@@ -120,7 +120,8 @@ connect(url, {
         host: process.env.REDIS_SERVER,
         port: Number(process.env.REDIS_PORT),
         password: process.env.REDIS_PASSWORD,
-        username: process.env.REDIS_USERNAME
+        username: process.env.REDIS_USERNAME,
+        tls: {}
       }) : undefined)
     });
 
