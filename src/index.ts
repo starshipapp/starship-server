@@ -21,8 +21,8 @@ import yn from "yn";
 
 const sysInfo = {
   serverName: "starship-server",
-  version: "prealpha (0.6.996)",
-  schemaVersion: "0.6.996",
+  version: "prealpha (0.7)",
+  schemaVersion: "0.7",
   supportedFeatures: ["users", "reports", "planets", "invites"],
   supportedComponents: ["pages", "wikis", "forums", "files"],
   clientFlags: ["+experimental"]
