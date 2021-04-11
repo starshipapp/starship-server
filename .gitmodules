@@ -1,4 +1,4 @@
 [submodule "src/starship-schema"]
 	path = src/starship-schema
 	url = https://github.com/starshipapp/starship-schema.git
-	branch = master
+	branch = stable
