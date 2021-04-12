@@ -105,23 +105,6 @@ async function createFolder(root: undefined, args: ICreateFolderArgs, context: C
   }
 }
 
-interface ICompleteUploadArgs {
-  objectId: string
-}
-
-async function completeUpload(root: undefined, args: ICompleteUploadArgs, context: Context): Promise<IFileObject> {
-  if(context.user) {
-    const fileObject = await FileObjects.findOne({_id: args.objectId});
-    if(fileObject && fileObject.owner == context.user.id) {
-      return FileObjects.findOneAndUpdate({_id: args.objectId}, {$set: {finishedUploading: true}}, {new: true});
-    } else {
-      throw new Error("Not found.");
-    }
-  } else {
-    throw new Error("Not logged in.");
-  }
-}
-
 interface IRenameObjectArgs {
   objectId: string,
   name: string
@@ -195,4 +178,4 @@ async function fileObjectArray(root: undefined, args: IFileObjectArrayArgs, cont
   }
 }
 
-export default {fieldResolvers, fileObjectArray, fileObject, files, folders, createFolder, completeUpload, renameObject, moveObject};
+export default {fieldResolvers, fileObjectArray, fileObject, files, folders, createFolder, renameObject, moveObject};

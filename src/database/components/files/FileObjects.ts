@@ -13,7 +13,9 @@ export interface IFileObject extends Document {
   type: string,
   fileType: string,
   key: string,
-  finishedUploading: boolean
+  finishedUploading: boolean,
+  shareId: string,
+  size: number
 }
 
 const fileObjectsSchema: Schema = new Schema({
@@ -28,7 +30,9 @@ const fileObjectsSchema: Schema = new Schema({
   type: String,
   fileType: String,
   key: String,
-  finishedUploading: Boolean
+  finishedUploading: Boolean,
+  shareId: String,
+  size: Number
 });
 
 fileObjectsSchema.plugin(nanoIdPlugin);

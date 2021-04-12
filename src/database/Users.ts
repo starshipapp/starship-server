@@ -21,6 +21,8 @@ export interface IUser extends Document {
   following: [string],
   banned: boolean,
   admin: boolean,
+  usedBytes: number,
+  capWaived: boolean
 }
 
 const userSchema: Schema = new Schema({
@@ -33,6 +35,8 @@ const userSchema: Schema = new Schema({
   following: [String],
   banned: Boolean,
   admin: Boolean,
+  usedBytes: {type: Number, default: 0},
+  capWaived: Boolean
 });
 
 userSchema.plugin(nanoIdPlugin);

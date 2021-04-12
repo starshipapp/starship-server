@@ -112,14 +112,14 @@ const resolvers = {
     forumReplyReact: ForumReplies.forumReplyReact,
     // Files
     createFolder: FileObjects.createFolder,
-    completeUpload: FileObjects.completeUpload,
     renameObject: FileObjects.renameObject,
     moveObject: FileObjects.moveObject,
     // AWS
     uploadFileObject: AWS.uploadFileObject,
     deleteFileObject: AWS.deleteFileObject,
     uploadProfilePicture: AWS.uploadProfilePicture,
-    uploadMarkdownImage: AWS.uploadMarkdownImage
+    uploadMarkdownImage: AWS.uploadMarkdownImage,
+    completeUpload: AWS.completeUpload,
   }
 };
 

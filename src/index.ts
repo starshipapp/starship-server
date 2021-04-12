@@ -8,7 +8,6 @@ import Loggers from "./Loggers";
 import jwt from "jsonwebtoken";
 
 Loggers.mainLogger.info("Starting starship-server");
-Loggers.mainLogger.warn("PRE-ALPHA BUILD; DO NOT USE IN PRODUCTION");
 
 import resolvers from "./resolvers/resolvers";
 import { connect } from "mongoose";
@@ -21,11 +20,11 @@ import yn from "yn";
 
 const sysInfo = {
   serverName: "starship-server",
-  version: "prealpha (0.7)",
-  schemaVersion: "0.7",
+  version: "prealpha (0.8-wip)",
+  schemaVersion: "0.8",
   supportedFeatures: ["users", "reports", "planets", "invites"],
   supportedComponents: ["pages", "wikis", "forums", "files"],
-  clientFlags: ["+experimental"]
+  clientFlags: []
 };
 
 // update client flags
@@ -70,7 +69,7 @@ connect(url, {
     require('./database/database');
     Loggers.apolloLogger.info("Starting Apollo");
     const app = express();
-    if(!process.env.REDIS_URL) {
+    if(!process.env.REDIS_SERVER) {
       Loggers.mainLogger.warn("RUNNING IN DEVELOPMENT MODE, NOT USING REDIS");
     }
     Loggers.apolloLogger.info("Verifying schema integrity");
