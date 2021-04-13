@@ -225,4 +225,12 @@ async function removeMember(root: undefined, args: IRemoveMemberArgs, context: C
   }
 }
 
-export default {fieldResolvers, featuredPlanets, planet, adminPlanets, insertPlanet, addComponent, followPlanet, removeComponent, updateName, togglePrivate, renameComponent, applyModTools, toggleBan, setCSS, removeMember};
+interface ISearchForPlanetArgs {
+  searchString: string
+}
+
+async function searchForPlanet(root: undefined, args: ISearchForPlanetArgs): Promise<IPlanet[]> {
+  return Planets.find({$text: {$search: args.searchString}, private: false}).sort({score: {$meta: "textScore"}}).limit(150);
+}
+
+export default {fieldResolvers, searchForPlanet, featuredPlanets, planet, adminPlanets, insertPlanet, addComponent, followPlanet, removeComponent, updateName, togglePrivate, renameComponent, applyModTools, toggleBan, setCSS, removeMember};

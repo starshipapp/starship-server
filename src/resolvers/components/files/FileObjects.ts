@@ -178,4 +178,28 @@ async function fileObjectArray(root: undefined, args: IFileObjectArrayArgs, cont
   }
 }
 
-export default {fieldResolvers, fileObjectArray, fileObject, files, folders, createFolder, renameObject, moveObject};
+interface ISearchForFilesArgs {
+  componentId: string,
+  parent: string,
+  searchText: string
+}
+
+async function searchForFiles(root: undefined, args: ISearchForFilesArgs, context: Context): Promise<IFileObject[]> {
+  const component = await Files.findOne({_id: args.componentId});
+  if(component && await permissions.checkReadPermission(context.user?.id ?? null, component.planet)) {
+    const parent = await Files.findOne({_id: args.parent});
+    if((parent && parent.planet == component.planet) || args.parent == "root") {
+      if(args.searchText.length > 3) {
+        return FileObjects.find({path: args.parent, componentId: args.componentId, $text: {$search: args.searchText}}).sort({score: {$meta: "textScore"}});
+      } else {
+        throw new Error("Search text must be at least 4 characters long.");
+      }
+    } else {
+      throw new Error("Parent not found.");
+    }
+  } else {
+    throw new Error("Component not found.");
+  }
+}
+
+export default {fieldResolvers, searchForFiles, fileObjectArray, fileObject, files, folders, createFolder, renameObject, moveObject};

@@ -6,6 +6,7 @@ import { IComponent } from "../database/components/IComponent";
 import Pages, { IPage } from "../database/components/Pages";
 import WikiPages from "../database/components/wiki/WikiPages";
 import Wikis, { IWiki } from "../database/components/wiki/Wikis";
+import deleteFileComponent from "./deleteFileComponent";
 
 export default class ComponentIndex {
   public static availableComponents = ["page", "wiki", "files", "forum"];
@@ -64,7 +65,8 @@ export default class ComponentIndex {
       await WikiPages.remove({wikiId: componentId});
     },
     files: async (componentId: string) => {
-      await Files.remove({_id: componentId});
+      // await Files.remove({_id: componentId});
+      await deleteFileComponent(componentId);
     },
     page: async (componentId: string) => {
       await Pages.remove({_id: componentId});

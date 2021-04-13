@@ -40,6 +40,7 @@ const resolvers = {
     featuredPlanets: Planets.featuredPlanets,
     planet: Planets.planet,
     adminPlanets: Planets.adminPlanets,
+    searchForPlanet: Planets.searchForPlanet,
     // Pages
     page: Pages.page,
     // Invites
@@ -57,6 +58,7 @@ const resolvers = {
     folders: FileObjects.folders,
     files: FileObjects.files,
     fileObjectArray: FileObjects.fileObjectArray,
+    searchForFiles: FileObjects.searchForFiles,
     // AWS
     downloadFileObject: AWS.downloadFileObject,
     downloadFolderObject: AWS.downloadFolderObject,

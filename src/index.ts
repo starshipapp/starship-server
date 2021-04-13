@@ -67,6 +67,7 @@ connect(url, {
   Loggers.dbLogger.info("Connected to database sucessfully");
     Loggers.dbLogger.info("Setting up DB schema");
     require('./database/database');
+    require('./database/indexes');
     Loggers.apolloLogger.info("Starting Apollo");
     const app = express();
     if(!process.env.REDIS_SERVER) {

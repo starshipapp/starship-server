@@ -16,7 +16,8 @@ export interface IPlanet extends Document {
   featuredDescription: string,
   banned: [string],
   members: [string],
-  css: string
+  css: string,
+  description: string
 }
 
 const planetSchema: Schema = new Schema({
