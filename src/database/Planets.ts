@@ -35,7 +35,8 @@ const planetSchema: Schema = new Schema({
   featuredDescription: String,
   banned: [String],
   members: [String],
-  css: String 
+  css: String,
+  description: String
 });
 
 planetSchema.plugin(nanoIdPlugin, 16);

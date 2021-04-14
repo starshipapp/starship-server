@@ -88,6 +88,7 @@ const resolvers = {
     applyModTools: Planets.applyModTools,
     toggleBan: Planets.toggleBan,
     setCSS: Planets.setCSS,
+    setDescription: Planets.setDescription,
     // Pages
     updatePage: Pages.updatePage,
     // Invites
