@@ -27,6 +27,6 @@ const forumRepliesSchema: Schema = new Schema({
   updatedAt: Date
 });
 
-forumRepliesSchema.plugin(nanoIdPlugin);
+forumRepliesSchema.plugin(nanoIdPlugin, 16);
 
 export default model<IForumReply>('forumreplies', forumRepliesSchema);

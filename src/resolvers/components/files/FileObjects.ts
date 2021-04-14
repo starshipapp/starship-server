@@ -187,14 +187,16 @@ interface ISearchForFilesArgs {
 async function searchForFiles(root: undefined, args: ISearchForFilesArgs, context: Context): Promise<IFileObject[]> {
   const component = await Files.findOne({_id: args.componentId});
   if(component && await permissions.checkReadPermission(context.user?.id ?? null, component.planet)) {
-    const parent = await Files.findOne({_id: args.parent});
+    const parent = await FileObjects.findOne({_id: args.parent});
     if((parent && parent.planet == component.planet) || args.parent == "root") {
-      if(args.searchText.length > 3) {
+      if(args.searchText.length > 2) {
         return FileObjects.find({path: args.parent, componentId: args.componentId, $text: {$search: args.searchText}}).sort({score: {$meta: "textScore"}});
       } else {
-        throw new Error("Search text must be at least 4 characters long.");
+        throw new Error("Search text must be at least 3 characters long.");
       }
     } else {
+      console.log(parent);
+      console.log(args.parent);
       throw new Error("Parent not found.");
     }
   } else {

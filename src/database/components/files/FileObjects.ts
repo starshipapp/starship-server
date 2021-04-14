@@ -35,6 +35,6 @@ const fileObjectsSchema: Schema = new Schema({
   size: Number
 });
 
-fileObjectsSchema.plugin(nanoIdPlugin);
+fileObjectsSchema.plugin(nanoIdPlugin, 16);
 
 export default model<IFileObject>('fileobjects', fileObjectsSchema);

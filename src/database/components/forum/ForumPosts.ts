@@ -33,6 +33,6 @@ const forumPostSchema: Schema = new Schema({
   updatedAt: Date
 });
 
-forumPostSchema.plugin(nanoIdPlugin);
+forumPostSchema.plugin(nanoIdPlugin, 16);
 
 export default model<IForumPost>('forumposts', forumPostSchema);

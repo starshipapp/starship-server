@@ -39,7 +39,7 @@ const userSchema: Schema = new Schema({
   capWaived: Boolean
 });
 
-userSchema.plugin(nanoIdPlugin);
+userSchema.plugin(nanoIdPlugin, 16);
 
 // userSchema.plugin(customId, {mongoose});
 

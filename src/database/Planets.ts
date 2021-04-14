@@ -38,6 +38,6 @@ const planetSchema: Schema = new Schema({
   css: String 
 });
 
-planetSchema.plugin(nanoIdPlugin);
+planetSchema.plugin(nanoIdPlugin, 16);
 
 export default model<IPlanet>('planets', planetSchema);

@@ -18,6 +18,6 @@ const wikiSchema: Schema = new Schema({
   createdAt: Date,
 });
 
-wikiSchema.plugin(nanoIdPlugin);
+wikiSchema.plugin(nanoIdPlugin, 16);
 
 export default model<IWiki>('wikis', wikiSchema);
