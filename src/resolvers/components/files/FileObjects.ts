@@ -195,8 +195,6 @@ async function searchForFiles(root: undefined, args: ISearchForFilesArgs, contex
         throw new Error("Search text must be at least 3 characters long.");
       }
     } else {
-      console.log(parent);
-      console.log(args.parent);
       throw new Error("Parent not found.");
     }
   } else {
