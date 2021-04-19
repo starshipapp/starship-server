@@ -226,11 +226,15 @@ async function removeMember(root: undefined, args: IRemoveMemberArgs, context: C
 }
 
 interface ISearchForPlanetArgs {
-  searchString: string
+  searchText: string
 }
 
 async function searchForPlanets(root: undefined, args: ISearchForPlanetArgs): Promise<IPlanet[]> {
-  return Planets.find({$text: {$search: args.searchString}, private: false}).sort({score: {$meta: "textScore"}}).limit(150);
+  if(args.searchText.length > 2) {
+    return Planets.find({$text: {$search: args.searchText}, private: false}).sort({score: {$meta: "textScore"}}).limit(150);
+  } else {
+    throw new Error("Search text must be at least 3 characters long.");
+  }
 }
 
 interface ISetDescriptionArgs {
