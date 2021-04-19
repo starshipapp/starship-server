@@ -40,7 +40,7 @@ const resolvers = {
     featuredPlanets: Planets.featuredPlanets,
     planet: Planets.planet,
     adminPlanets: Planets.adminPlanets,
-    searchForPlanet: Planets.searchForPlanet,
+    searchForPlanets: Planets.searchForPlanets,
     // Pages
     page: Pages.page,
     // Invites
