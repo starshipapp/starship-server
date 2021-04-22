@@ -121,28 +121,32 @@ async function renameObject(root: undefined, args: IRenameObjectArgs, context: C
 }
 
 interface IMoveObjectArgs {
-  objectId: string,
+  objectIds: string[],
   parent: string
 }
 
-async function moveObject(root: undefined, args: IMoveObjectArgs, context: Context): Promise<IFileObject> {
-  const object = await FileObjects.findOne({_id: args.objectId});
+async function moveObject(root: undefined, args: IMoveObjectArgs, context: Context): Promise<IFileObject[]> {
+  const objects = await FileObjects.find({_id: {$in: args.objectIds}});
   const newParent = await FileObjects.findOne({_id: args.parent});
-  if(object)  {
-    if(context.user && await permissions.checkFullWritePermission(context.user.id, object.planet)) {
+  if(objects && objects[0] && objects.length == objects.length)  {
+    if(context.user && await permissions.checkFullWritePermission(context.user.id, objects[0].planet)) {
       if((newParent && newParent.type == "folder") || args.parent == "root") {
-        if(object.componentId == newParent?.componentId || args.parent == "root") {
-          if(object.type == "file") {
-            const newPath = newParent ? newParent.path.concat([newParent._id]) : ["root"];
-            const newObjectParent = newParent ? newParent._id : "root";
-            return FileObjects.findOneAndUpdate({_id: args.objectId}, {$set: {path: newPath as [string], parent: newObjectParent}});
-          } else if(object.type == "folder") {
-            const newPath = newParent ? newParent.path.concat([newParent._id]) : ["root"];
-            const newObjectParent = newParent ? newParent._id : "root";
-            await FileObjects.updateMany({path: object._id}, {$pull: {path: {$in: object.path}}}, {multi: true});
-            await FileObjects.updateMany({path: object._id}, {$push: {path: {$each: newPath, $position: 0}}}, {multi: true});
-            return FileObjects.findOneAndUpdate({_id: object._id}, {$set: {path: newPath as [string], parent: newObjectParent}});
+        if(objects[0].componentId == newParent?.componentId || args.parent == "root" && objects.filter((file) => file.componentId == objects[0].componentId).length == files.length) {
+          const updatedObjects: IFileObject[] = [];
+          for(const object of objects) {
+            if(object.type == "file") {
+              const newPath = newParent ? newParent.path.concat([newParent._id]) : ["root"];
+              const newObjectParent = newParent ? newParent._id : "root";
+              updatedObjects.push(await FileObjects.findOneAndUpdate({_id: object._id}, {$set: {path: newPath as [string], parent: newObjectParent}}, {new: true}));
+            } else if(object.type == "folder") {
+              const newPath = newParent ? newParent.path.concat([newParent._id]) : ["root"];
+              const newObjectParent = newParent ? newParent._id : "root";
+              await FileObjects.updateMany({path: object._id}, {$pull: {path: {$in: object.path}}}, {multi: true});
+              await FileObjects.updateMany({path: object._id}, {$push: {path: {$each: newPath, $position: 0}}}, {multi: true});
+              updatedObjects.push(await FileObjects.findOneAndUpdate({_id: object._id}, {$set: {path: newPath as [string], parent: newObjectParent}}, {new: true}));
+            }
           }
+          return updatedObjects;
         } else {
           throw new Error ("Cannot move across components.");
         }

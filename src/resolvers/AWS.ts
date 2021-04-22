@@ -158,7 +158,7 @@ async function uploadFileObject(root: undefined, args: IUploadFileObjectArgs, co
 }
 
 interface IDeleteFileObjectArgs {
-  objectId: string
+  objectIds: string[]
 }
 
 // mongoose doesn't like it when it's promises are voided, so we need to wrap it
@@ -168,40 +168,46 @@ async function workaroundVoidNoopBug(value: IFileObject) {
 }
 
 async function deleteFileObject(root: undefined, args: IDeleteFileObjectArgs, context: Context): Promise<boolean> {
-  const file = await FileObjects.findOne({_id: args.objectId});
-  if(file) {
-    if(context.user && await permissions.checkFullWritePermission(context.user.id, file.planet)) {
-      if(file.key) {
-        if(file.size) {
-          await Users.findOneAndUpdate({_id: file.owner}, {$inc: {usedBytes: -1 * file.size}}, {new: true});
-        }
-        s3.deleteObject({Bucket: process.env.BUCKET_NAME, Key: file.key}, function(err) {
-          if (err) console.log(err, err.stack);  // error
-        });
-      } else if(file.type === "folder") {
-        // delete everything from s3
-        const filesToCheck = await FileObjects.find({path: file._id});
-        const keys: {Key: string}[][] = [[]];
-        filesToCheck.map((value) => {
-          if(value.key) {
-            if(keys[keys.length - 1].length === 1000) {
-              keys.push([]);
+  const files = await FileObjects.find({_id: {$in: args.objectIds}});
+  if(files && files[0] && files.length == args.objectIds.length) {
+    if(context.user && await permissions.checkFullWritePermission(context.user.id, files[0].planet)) {
+      if(files.filter((file) => file.componentId == files[0].componentId).length == files.length) {
+        for(const file of files) {
+          if(file.key) {
+            if(file.size) {
+              await Users.findOneAndUpdate({_id: file.owner}, {$inc: {usedBytes: -1 * file.size}}, {new: true});
             }
-            keys[keys.length - 1].push({Key: value.key});
+            s3.deleteObject({Bucket: process.env.BUCKET_NAME, Key: file.key}, function(err) {
+              if (err) console.log(err, err.stack);  // error
+            });
+          } else if(file.type === "folder") {
+            // delete everything from s3
+            const filesToCheck = await FileObjects.find({path: file._id});
+            const keys: {Key: string}[][] = [[]];
+            filesToCheck.map((value) => {
+              if(value.key) {
+                if(keys[keys.length - 1].length === 1000) {
+                  keys.push([]);
+                }
+                keys[keys.length - 1].push({Key: value.key});
+              }
+              if(value.size) {
+                void workaroundVoidNoopBug(value);
+              }
+            });
+            keys.map((value) => {
+              s3.deleteObjects({Bucket: process.env.BUCKET_NAME, Delete: {Objects: value}}, function(err) {
+                if (err) console.log(err, err.stack);  // error
+              });
+            });
+            await FileObjects.deleteMany({path: file._id});
           }
-          if(value.size) {
-            void workaroundVoidNoopBug(value);
-          }
-        });
-        keys.map((value) => {
-          s3.deleteObjects({Bucket: process.env.BUCKET_NAME, Delete: {Objects: value}}, function(err) {
-            if (err) console.log(err, err.stack);  // error
-          });
-        });
-        await FileObjects.deleteMany({path: file._id});
+        }
+        await FileObjects.deleteMany({_id: {$in: args.objectIds}});
+        return true;
+      } else {
+        throw new Error("All files must be from the same component.");
       }
-      await FileObjects.findOneAndDelete({_id: file._id});
-      return true;
     }
   } else {
     throw new Error("Not found.");
