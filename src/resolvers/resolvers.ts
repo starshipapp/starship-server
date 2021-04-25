@@ -89,6 +89,7 @@ const resolvers = {
     toggleBan: Planets.toggleBan,
     setCSS: Planets.setCSS,
     setDescription: Planets.setDescription,
+    deletePlanet: Planets.deletePlanet,
     // Pages
     updatePage: Pages.updatePage,
     // Invites
