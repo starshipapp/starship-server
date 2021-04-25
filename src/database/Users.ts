@@ -22,7 +22,10 @@ export interface IUser extends Document {
   banned: boolean,
   admin: boolean,
   usedBytes: number,
-  capWaived: boolean
+  capWaived: boolean,
+  tfaSecret: string,
+  tfaEnabled: boolean,
+  backupCodes: [number]
 }
 
 const userSchema: Schema = new Schema({
@@ -36,7 +39,10 @@ const userSchema: Schema = new Schema({
   banned: Boolean,
   admin: Boolean,
   usedBytes: {type: Number, default: 0},
-  capWaived: Boolean
+  capWaived: Boolean,
+  tfaSecret: String,
+  tfaEnabled: {type: Boolean, default: false},
+  backupCodes: [Number]
 });
 
 userSchema.plugin(nanoIdPlugin, 16);
