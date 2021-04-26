@@ -8,7 +8,7 @@ import Planets, { IPlanet } from "../database/Planets";
 import {sendForgotPasswordEmail, sendVerificationEmail} from "../util/Emails";
 import { v4 } from "uuid";
 import axios from "axios";
-import { totp } from "otplib";
+import { authenticator, totp } from "otplib";
 import Crypto from "crypto";
 
 const fieldResolvers = {
@@ -306,7 +306,7 @@ async function adminUsers(root: undefined, args: IAdminUsersArgs, context: Conte
 
 async function generateTOTPSecret(root: undefined, args: undefined, context: Context): Promise<string> {
   if(context.user) {
-    const secret = Crypto.randomBytes(256).toString("hex");
+    const secret = authenticator.generateSecret();
     const user = await Users.findOneAndUpdate({_id: context.user.id}, {$set: {tfaSecret: secret}});
     if(user) {
       return totp.keyuri(user.username, "Starship", secret); 
@@ -326,19 +326,24 @@ async function confirmTFA(root: undefined, args: ITFAArgs, context: Context): Pr
   if(context.user) {
     const user = await Users.findOne({_id: context.user.id});
     if(user) {
-      if(totp.check(String(args.token), user.tfaSecret)) {
+      console.log(String(args.token));
+      console.log(user.tfaSecret);
+      console.log(authenticator.generate(user.tfaSecret));
+      if(authenticator.check(String(args.token), user.tfaSecret)) {
         const backupCodes = [
-          Crypto.randomInt(9999999999999999), 
-          Crypto.randomInt(9999999999999999), 
-          Crypto.randomInt(9999999999999999), 
-          Crypto.randomInt(9999999999999999),
-          Crypto.randomInt(9999999999999999),
-          Crypto.randomInt(9999999999999999),
-          Crypto.randomInt(9999999999999999),
-          Crypto.randomInt(9999999999999999),
+          Crypto.randomInt(999999999), 
+          Crypto.randomInt(999999999), 
+          Crypto.randomInt(999999999), 
+          Crypto.randomInt(999999999),
+          Crypto.randomInt(999999999),
+          Crypto.randomInt(999999999),
+          Crypto.randomInt(999999999),
+          Crypto.randomInt(999999999),
         ];
         await Users.findOneAndUpdate({_id: context.user.id}, {$set: {backupCodes, tfaEnabled: true}});
         return backupCodes;
+      } else {
+        throw new Error("Invalid token.");
       }
     } else {
       throw new Error("Not logged in.");
@@ -355,6 +360,8 @@ async function disableTFA(root: undefined, args: ITFAArgs, context: Context): Pr
       if(totp.check(String(args.token), user.tfaSecret) || user.backupCodes.includes(args.token)) {
         await Users.findOneAndUpdate({_id: context.user.id}, {$set: {tfaEnabled: false}});
         return true;
+      } else {
+        throw new Error("Invalid token or backup code.");
       }
     } else {
       throw new Error("Not logged in.");
@@ -375,7 +382,12 @@ async function finalizeAuthorization(root: undefined, args: IFinalizeAuthorizati
     const user = await Users.findOne({_id: token.unverifiedId});
     if(user) {
       if(totp.check(String(args.totpToken), user.tfaSecret) || user.backupCodes.includes(args.totpToken)) {
+        if(user.backupCodes.includes(args.totpToken)) {
+          await Users.findOneAndUpdate({_id: user._id}, {$pull: {backupCodes: args.totpToken}});
+        }
         return {token: jwt.sign({id: user._id, username: user.username, admin: user.admin}, process.env.SECRET), expectingTFA: false};
+      } else {
+        throw new Error("Invalid token or backup code.");
       }
     } else {
       throw new Error("Not logged in.");

@@ -73,6 +73,9 @@ const resolvers = {
     sendResetPasswordEmail: Users.sendResetPasswordEmail,
     resendVerificationEmail: Users.resendVerificationEmail,
     activateEmail: Users.activateEmail,
+    generateTOTPSecret: Users.generateTOTPSecret,
+    confirmTFA: Users.confirmTFA,
+    disableTFA: Users.disableTFA,
     // Reports
     insertReport: Reports.insertReport,
     solveReport: Reports.solveReport,
