@@ -76,6 +76,7 @@ const resolvers = {
     generateTOTPSecret: Users.generateTOTPSecret,
     confirmTFA: Users.confirmTFA,
     disableTFA: Users.disableTFA,
+    finalizeAuthorization: Users.finalizeAuthorization,
     // Reports
     insertReport: Reports.insertReport,
     solveReport: Reports.solveReport,

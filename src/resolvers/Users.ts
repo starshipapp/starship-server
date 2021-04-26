@@ -357,7 +357,7 @@ async function disableTFA(root: undefined, args: ITFAArgs, context: Context): Pr
   if(context.user) {
     const user = await Users.findOne({_id: context.user.id});
     if(user) {
-      if(totp.check(String(args.token), user.tfaSecret) || user.backupCodes.includes(args.token)) {
+      if(authenticator.check(String(args.token), user.tfaSecret) || user.backupCodes.includes(args.token)) {
         await Users.findOneAndUpdate({_id: context.user.id}, {$set: {tfaEnabled: false}});
         return true;
       } else {
@@ -381,7 +381,7 @@ async function finalizeAuthorization(root: undefined, args: IFinalizeAuthorizati
   if(token) {
     const user = await Users.findOne({_id: token.unverifiedId});
     if(user) {
-      if(totp.check(String(args.totpToken), user.tfaSecret) || user.backupCodes.includes(args.totpToken)) {
+      if(authenticator.check(String(args.totpToken), user.tfaSecret) || user.backupCodes.includes(args.totpToken)) {
         if(user.backupCodes.includes(args.totpToken)) {
           await Users.findOneAndUpdate({_id: user._id}, {$pull: {backupCodes: args.totpToken}});
         }
