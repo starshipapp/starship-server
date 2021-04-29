@@ -122,6 +122,7 @@ const resolvers = {
     createFolder: FileObjects.createFolder,
     renameObject: FileObjects.renameObject,
     moveObject: FileObjects.moveObject,
+    cancelUpload: FileObjects.cancelUpload,
     // AWS
     uploadFileObject: AWS.uploadFileObject,
     deleteFileObject: AWS.deleteFileObject,

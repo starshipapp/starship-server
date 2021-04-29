@@ -206,4 +206,22 @@ async function searchForFiles(root: undefined, args: ISearchForFilesArgs, contex
   }
 }
 
-export default {fieldResolvers, searchForFiles, fileObjectArray, fileObject, files, folders, createFolder, renameObject, moveObject};
+interface ICancelUploadArgs {
+  objectId: string
+}
+
+async function cancelUpload(root: undefined, args: ICancelUploadArgs, context: Context): Promise<boolean> {
+  if(context.user) {
+    const fileObject = await FileObjects.findOne({_id: args.objectId});
+    if(fileObject && fileObject.owner == context.user.id && !fileObject.finishedUploading) {
+      await FileObjects.deleteOne({_id: fileObject._id});
+      return true;
+    } else {
+      throw new Error("Not found.");
+    }
+  } else {
+    throw new Error("Not logged in.");
+  }
+}
+
+export default {fieldResolvers, cancelUpload, searchForFiles, fileObjectArray, fileObject, files, folders, createFolder, renameObject, moveObject};
