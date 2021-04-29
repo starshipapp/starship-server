@@ -297,4 +297,58 @@ async function completeUpload(root: undefined, args: ICompleteUploadArgs, contex
   }
 }
 
-export default {completeUpload, uploadProfilePicture, uploadMarkdownImage, downloadFileObject, downloadFolderObject, getObjectPreview, uploadFileObject, deleteFileObject};
+interface ICopyFileArgs {
+  objectIds: string[],
+  parent: string,
+}
+
+async function copyFile(root: undefined, args: ICopyFileArgs, context: Context): Promise<IFileObject[]> {
+  const objects = await FileObjects.find({_id: {$in: args.objectIds}});
+  const newParent = await FileObjects.findOne({_id: args.parent});
+  if(objects && objects[0] && objects.length == objects.length)  {
+    if(context.user && await permissions.checkFullWritePermission(context.user.id, objects[0].planet)) {
+      if((newParent && newParent.type == "folder") || args.parent == "root") {
+        if(objects[0].componentId == newParent?.componentId || args.parent == "root" && objects.filter((file) => file.componentId == objects[0].componentId).length == objects.length) {
+          const updatedObjects: IFileObject[] = [];
+          for(const object of objects) {
+            if(object.type == "file" && object.finishedUploading == true) {
+              const newPath = newParent ? newParent.path.concat([newParent._id]) : ["root"];
+              const newObjectParent = newParent ? newParent._id : "root";
+              const document = new FileObjects({
+                path: newPath,
+                parent: newObjectParent,
+                name: object.name,
+                planet: object.parent,
+                componentId: object.componentId,
+                owner: context.user.id,
+                createdAt: new Date(),
+                type: "file",
+                fileType: object.fileType,
+                finishedUploading: true,
+                size: object.size
+              });
+              await document.save();
+              if(object.size) {
+                await Users.findOneAndUpdate({_id: context.user.id}, {$inc: {usedBytes: object.size}});
+              }
+              const key = object.componentId + "/" + newObjectParent + "/" + document._id + "/" + object.name;
+              await s3.copyObject({CopySource: `${process.env.BUCKET_NAME}/${object.key}`, Bucket: process.env.BUCKET_NAME, Key: key}).promise();
+              updatedObjects.push(await FileObjects.findOneAndUpdate({_id: document._id}, {$set: {key}}, {new: true}));
+            }
+          }
+          return updatedObjects;
+        } else {
+          throw new Error ("Cannot copy across components.");
+        }
+      } else {
+        throw new Error ("Invalid destination.");
+      }
+    } else {
+      throw new Error("Not found.");
+    }
+  } else {
+    throw new Error("Not found.");
+  }
+}
+
+export default {copyFile, completeUpload, uploadProfilePicture, uploadMarkdownImage, downloadFileObject, downloadFolderObject, getObjectPreview, uploadFileObject, deleteFileObject};

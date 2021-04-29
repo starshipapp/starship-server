@@ -129,6 +129,7 @@ const resolvers = {
     uploadProfilePicture: AWS.uploadProfilePicture,
     uploadMarkdownImage: AWS.uploadMarkdownImage,
     completeUpload: AWS.completeUpload,
+    copyFile: AWS.copyFile
   }
 };
 
