@@ -15,6 +15,6 @@ const inviteSchema: Schema = new Schema({
   createdAt: Date,
 });
 
-inviteSchema.plugin(nanoIdPlugin);
+inviteSchema.plugin(nanoIdPlugin, 16);
 
 export default model<IInvite>('invites', inviteSchema);

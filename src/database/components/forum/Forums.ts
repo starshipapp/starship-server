@@ -20,6 +20,6 @@ const forumSchema: Schema = new Schema({
   tags: [String]
 });
 
-forumSchema.plugin(nanoIdPlugin);
+forumSchema.plugin(nanoIdPlugin, 16);
 
 export default model<IForum>('forums', forumSchema);

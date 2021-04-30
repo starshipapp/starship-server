@@ -8,6 +8,8 @@ import Planets, { IPlanet } from "../database/Planets";
 import {sendForgotPasswordEmail, sendVerificationEmail} from "../util/Emails";
 import { v4 } from "uuid";
 import axios from "axios";
+import { authenticator, totp } from "otplib";
+import Crypto from "crypto";
 
 const fieldResolvers = {
   following: async (root: IUser, args: undefined, context: Context): Promise<IPlanet[]> => {
@@ -114,7 +116,7 @@ interface ILoginUserArgs {
   password: string,
 }
 
-async function loginUser(root: undefined, args: ILoginUserArgs): Promise<{token: string}> {
+async function loginUser(root: undefined, args: ILoginUserArgs): Promise<{token: string, expectingTFA: boolean}> {
   const document = await Users.findOne({username: args.username}).catch((error) => {Loggers.mainLogger.error(error);}) as unknown as IUser;
   if(document == undefined) {
     throw new Error('Incorrect username or password.');
@@ -126,7 +128,11 @@ async function loginUser(root: undefined, args: ILoginUserArgs): Promise<{token:
   }
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
   if(bcrypt.compareSync(args.password, document.services.password.bcrypt)) {
-    return {token: jwt.sign({id: document._id, username: document.username, admin: document.admin}, process.env.SECRET)};
+    if(!document.tfaEnabled) {
+      return {token: jwt.sign({id: document._id, username: document.username, admin: document.admin}, process.env.SECRET), expectingTFA: false};
+    } else {
+      return {token: jwt.sign({unverifiedId: document._id}, process.env.SECRET + "tfa"), expectingTFA: true};
+    }
   } else {
     throw new Error('Incorrect username or password.');
   }
@@ -298,4 +304,95 @@ async function adminUsers(root: undefined, args: IAdminUsersArgs, context: Conte
   }
 }
 
-export default {fieldResolvers, resetPassword, activateEmail, resendVerificationEmail, loginUser, currentUser, insertUser, user, adminUser, banUser, adminUsers, sendResetPasswordEmail};
+async function generateTOTPSecret(root: undefined, args: undefined, context: Context): Promise<string> {
+  if(context.user) {
+    const secret = authenticator.generateSecret();
+    const user = await Users.findOneAndUpdate({_id: context.user.id}, {$set: {tfaSecret: secret}});
+    if(user) {
+      return totp.keyuri(user.username, "Starship", secret); 
+    } else {
+      throw new Error("Not logged in.");
+    }
+  } else {
+    throw new Error("Not logged in.");
+  }
+}
+
+interface ITFAArgs {
+  token: number
+}
+
+async function confirmTFA(root: undefined, args: ITFAArgs, context: Context): Promise<number[]> {
+  if(context.user) {
+    const user = await Users.findOne({_id: context.user.id});
+    if(user) {
+      console.log(String(args.token));
+      console.log(user.tfaSecret);
+      console.log(authenticator.generate(user.tfaSecret));
+      if(authenticator.check(String(args.token), user.tfaSecret)) {
+        const backupCodes = [
+          Crypto.randomInt(999999999), 
+          Crypto.randomInt(999999999), 
+          Crypto.randomInt(999999999), 
+          Crypto.randomInt(999999999),
+          Crypto.randomInt(999999999),
+          Crypto.randomInt(999999999),
+          Crypto.randomInt(999999999),
+          Crypto.randomInt(999999999),
+        ];
+        await Users.findOneAndUpdate({_id: context.user.id}, {$set: {backupCodes, tfaEnabled: true}});
+        return backupCodes;
+      } else {
+        throw new Error("Invalid token.");
+      }
+    } else {
+      throw new Error("Not logged in.");
+    }
+  } else {
+    throw new Error("Not logged in.");
+  }
+}
+
+async function disableTFA(root: undefined, args: ITFAArgs, context: Context): Promise<boolean> {
+  if(context.user) {
+    const user = await Users.findOne({_id: context.user.id});
+    if(user) {
+      if(authenticator.check(String(args.token), user.tfaSecret) || user.backupCodes.includes(args.token)) {
+        await Users.findOneAndUpdate({_id: context.user.id}, {$set: {tfaEnabled: false}});
+        return true;
+      } else {
+        throw new Error("Invalid token or backup code.");
+      }
+    } else {
+      throw new Error("Not logged in.");
+    }
+  } else {
+    throw new Error("Not logged in.");
+  }
+}
+
+interface IFinalizeAuthorizationArgs {
+  loginToken: string,
+  totpToken: number
+}
+
+async function finalizeAuthorization(root: undefined, args: IFinalizeAuthorizationArgs): Promise<{token: string, expectingTFA: boolean}> {
+  const token = jwt.verify(args.loginToken, process.env.SECRET + "tfa") as {unverifiedId: string};
+  if(token) {
+    const user = await Users.findOne({_id: token.unverifiedId});
+    if(user) {
+      if(authenticator.check(String(args.totpToken), user.tfaSecret) || user.backupCodes.includes(args.totpToken)) {
+        if(user.backupCodes.includes(args.totpToken)) {
+          await Users.findOneAndUpdate({_id: user._id}, {$pull: {backupCodes: args.totpToken}});
+        }
+        return {token: jwt.sign({id: user._id, username: user.username, admin: user.admin}, process.env.SECRET), expectingTFA: false};
+      } else {
+        throw new Error("Invalid token or backup code.");
+      }
+    } else {
+      throw new Error("Not logged in.");
+    }
+  }
+}
+
+export default {fieldResolvers, finalizeAuthorization, disableTFA, confirmTFA, generateTOTPSecret, resetPassword, activateEmail, resendVerificationEmail, loginUser, currentUser, insertUser, user, adminUser, banUser, adminUsers, sendResetPasswordEmail};

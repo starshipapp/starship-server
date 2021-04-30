@@ -40,6 +40,7 @@ const resolvers = {
     featuredPlanets: Planets.featuredPlanets,
     planet: Planets.planet,
     adminPlanets: Planets.adminPlanets,
+    searchForPlanets: Planets.searchForPlanets,
     // Pages
     page: Pages.page,
     // Invites
@@ -57,6 +58,7 @@ const resolvers = {
     folders: FileObjects.folders,
     files: FileObjects.files,
     fileObjectArray: FileObjects.fileObjectArray,
+    searchForFiles: FileObjects.searchForFiles,
     // AWS
     downloadFileObject: AWS.downloadFileObject,
     downloadFolderObject: AWS.downloadFolderObject,
@@ -71,6 +73,10 @@ const resolvers = {
     sendResetPasswordEmail: Users.sendResetPasswordEmail,
     resendVerificationEmail: Users.resendVerificationEmail,
     activateEmail: Users.activateEmail,
+    generateTOTPSecret: Users.generateTOTPSecret,
+    confirmTFA: Users.confirmTFA,
+    disableTFA: Users.disableTFA,
+    finalizeAuthorization: Users.finalizeAuthorization,
     // Reports
     insertReport: Reports.insertReport,
     solveReport: Reports.solveReport,
@@ -86,6 +92,8 @@ const resolvers = {
     applyModTools: Planets.applyModTools,
     toggleBan: Planets.toggleBan,
     setCSS: Planets.setCSS,
+    setDescription: Planets.setDescription,
+    deletePlanet: Planets.deletePlanet,
     // Pages
     updatePage: Pages.updatePage,
     // Invites
@@ -112,14 +120,16 @@ const resolvers = {
     forumReplyReact: ForumReplies.forumReplyReact,
     // Files
     createFolder: FileObjects.createFolder,
-    completeUpload: FileObjects.completeUpload,
     renameObject: FileObjects.renameObject,
     moveObject: FileObjects.moveObject,
+    cancelUpload: FileObjects.cancelUpload,
     // AWS
     uploadFileObject: AWS.uploadFileObject,
     deleteFileObject: AWS.deleteFileObject,
     uploadProfilePicture: AWS.uploadProfilePicture,
-    uploadMarkdownImage: AWS.uploadMarkdownImage
+    uploadMarkdownImage: AWS.uploadMarkdownImage,
+    completeUpload: AWS.completeUpload,
+    copyFile: AWS.copyFile
   }
 };
 

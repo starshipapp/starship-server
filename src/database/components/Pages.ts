@@ -20,6 +20,6 @@ const pageSchema: Schema = new Schema({
   content: String,
 });
 
-pageSchema.plugin(nanoIdPlugin);
+pageSchema.plugin(nanoIdPlugin, 16);
 
 export default model<IPage>('pages', pageSchema);

@@ -25,6 +25,6 @@ const reportSchema: Schema = new Schema({
   solved: Boolean
 });
 
-reportSchema.plugin(nanoIdPlugin);
+reportSchema.plugin(nanoIdPlugin, 16);
 
 export default model<IReport>('reports', reportSchema);

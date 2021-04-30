@@ -19,6 +19,6 @@ const wikiPageSchema: Schema = new Schema({
   name: String
 });
 
-wikiPageSchema.plugin(nanoIdPlugin);
+wikiPageSchema.plugin(nanoIdPlugin, 16);
 
 export default model<IWikiPage>('wikipages', wikiPageSchema);

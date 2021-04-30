@@ -103,7 +103,7 @@ async function followPlanet(root: undefined, args: IFollowPlanetArgs, context: C
       return Planets.findByIdAndUpdate({_id: planet._id}, {$inc: {followerCount: 1}}, {new: true});
     }
   } else {
-    throw new Error("You don't have permission to do that.");
+    throw new Error("Not found.");
   }
 }
 
@@ -123,7 +123,7 @@ async function removeComponent(root: undefined, args: IRemoveComponentArgs, cont
       throw new Error("That component doesn't exist");
     }
   } else {
-    throw new Error("You don't have permission to do that.");
+    throw new Error("Not found.");
   }
 }
 
@@ -147,7 +147,7 @@ async function togglePrivate(root: undefined, args: ITogglePrivateArgs, context:
     const planet = await Planets.findOne({_id: args.planetId});
     return Planets.findOneAndUpdate({_id: args.planetId}, {$set: {private: !planet.private}}, {new: true});
   } else {
-    throw new Error("You don't have permission to do that.");
+    throw new Error("Not found.");
   }
 }
 
@@ -161,7 +161,7 @@ async function renameComponent(root: undefined, args: IRenameComponentArgs, cont
   if(context.user && await permissions.checkFullWritePermission(context.user.id, args.planetId)) {
     return Planets.findOneAndUpdate({_id: args.planetId, "components.componentId": args.componentId}, {$set: {"components.$.name": args.name}}, {new: true});
   } else {
-    throw new Error("You don't have permission to do that.");
+    throw new Error("Not found.");
   }
 }
 
@@ -195,7 +195,7 @@ async function toggleBan(root: undefined, args: IToggleBanArgs, context: Context
       return Planets.findOneAndUpdate({_id: args.planetId}, {$push: {banned: args.userId}}, {new: true});
     }
   } else {
-    throw new Error("You don't have permission to do that.");
+    throw new Error("Not found.");
   }
 }
 
@@ -208,7 +208,7 @@ async function setCSS(root: undefined, args: ISetCSSArgs, context: Context): Pro
   if(context.user && await permissions.checkFullWritePermission(context.user.id, args.planetId)) {
     return Planets.findOneAndUpdate({_id: args.planetId}, {$set: {css: args.css}}, {new: true});
   } else {
-    throw new Error("You don't have permission to do that.");
+    throw new Error("Not found.");
   }
 }
 
@@ -221,8 +221,54 @@ async function removeMember(root: undefined, args: IRemoveMemberArgs, context: C
   if(context.user && await permissions.checkFullWritePermission(context.user.id, args.planetId)) {
     return Planets.findOneAndUpdate({_id: args.planetId}, {$pull: {members: args.userId}}, {new: true});
   } else {
-    throw new Error("You don't have permission to do that.");
+    throw new Error("Not found.");
   }
 }
 
-export default {fieldResolvers, featuredPlanets, planet, adminPlanets, insertPlanet, addComponent, followPlanet, removeComponent, updateName, togglePrivate, renameComponent, applyModTools, toggleBan, setCSS, removeMember};
+interface ISearchForPlanetArgs {
+  searchText: string
+}
+
+async function searchForPlanets(root: undefined, args: ISearchForPlanetArgs): Promise<IPlanet[]> {
+  if(args.searchText.length > 2) {
+    return Planets.find({$text: {$search: args.searchText}, private: false}).sort({score: {$meta: "textScore"}}).limit(150);
+  } else {
+    throw new Error("Search text must be at least 3 characters long.");
+  }
+}
+
+interface ISetDescriptionArgs {
+  planetId: string,
+  description: string
+}
+
+async function setDescription(root: undefined, args: ISetDescriptionArgs, context: Context): Promise<IPlanet> {
+  if(context.user && await permissions.checkFullWritePermission(context.user.id, args.planetId)) {
+    return Planets.findOneAndUpdate({_id: args.planetId}, {description: args.description}, {new: true});
+  } else {
+    throw new Error("Not found.");
+  }
+}
+
+interface IDeletePlanetArgs {
+  planetId: string
+}
+
+async function deletePlanet(root: undefined, args: IDeletePlanetArgs, context: Context): Promise<boolean> {
+  if(context.user && await permissions.checkFullWritePermission(context.user.id, args.planetId)) {
+    const planet = await Planets.findOneAndDelete({_id: args.planetId});
+    await Users.findOneAndUpdate({following: args.planetId}, {$pull: {following: args.planetId}});
+    if(planet) {
+      for(const component of planet.components) {
+        void ComponentIndex.deleteComponent(component.type, component.componentId);
+      }
+      return true;
+    } else {
+      throw new Error("Not found.");
+    }
+  } else {
+    throw new Error("Not found.");
+  }
+}
+
+export default {fieldResolvers, deletePlanet, setDescription, searchForPlanets, featuredPlanets, planet, adminPlanets, insertPlanet, addComponent, followPlanet, removeComponent, updateName, togglePrivate, renameComponent, applyModTools, toggleBan, setCSS, removeMember};

@@ -18,6 +18,6 @@ const filesSchema: Schema = new Schema({
   createdAt: Date,
 });
 
-filesSchema.plugin(nanoIdPlugin);
+filesSchema.plugin(nanoIdPlugin, 16);
 
 export default model<IFiles>('files', filesSchema);

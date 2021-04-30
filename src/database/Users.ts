@@ -21,6 +21,11 @@ export interface IUser extends Document {
   following: [string],
   banned: boolean,
   admin: boolean,
+  usedBytes: number,
+  capWaived: boolean,
+  tfaSecret: string,
+  tfaEnabled: boolean,
+  backupCodes: [number]
 }
 
 const userSchema: Schema = new Schema({
@@ -33,9 +38,14 @@ const userSchema: Schema = new Schema({
   following: [String],
   banned: Boolean,
   admin: Boolean,
+  usedBytes: {type: Number, default: 0},
+  capWaived: Boolean,
+  tfaSecret: String,
+  tfaEnabled: {type: Boolean, default: false},
+  backupCodes: [Number]
 });
 
-userSchema.plugin(nanoIdPlugin);
+userSchema.plugin(nanoIdPlugin, 16);
 
 // userSchema.plugin(customId, {mongoose});
 

@@ -105,23 +105,6 @@ async function createFolder(root: undefined, args: ICreateFolderArgs, context: C
   }
 }
 
-interface ICompleteUploadArgs {
-  objectId: string
-}
-
-async function completeUpload(root: undefined, args: ICompleteUploadArgs, context: Context): Promise<IFileObject> {
-  if(context.user) {
-    const fileObject = await FileObjects.findOne({_id: args.objectId});
-    if(fileObject && fileObject.owner == context.user.id) {
-      return FileObjects.findOneAndUpdate({_id: args.objectId}, {$set: {finishedUploading: true}}, {new: true});
-    } else {
-      throw new Error("Not found.");
-    }
-  } else {
-    throw new Error("Not logged in.");
-  }
-}
-
 interface IRenameObjectArgs {
   objectId: string,
   name: string
@@ -138,28 +121,32 @@ async function renameObject(root: undefined, args: IRenameObjectArgs, context: C
 }
 
 interface IMoveObjectArgs {
-  objectId: string,
+  objectIds: string[],
   parent: string
 }
 
-async function moveObject(root: undefined, args: IMoveObjectArgs, context: Context): Promise<IFileObject> {
-  const object = await FileObjects.findOne({_id: args.objectId});
+async function moveObject(root: undefined, args: IMoveObjectArgs, context: Context): Promise<IFileObject[]> {
+  const objects = await FileObjects.find({_id: {$in: args.objectIds}});
   const newParent = await FileObjects.findOne({_id: args.parent});
-  if(object)  {
-    if(context.user && await permissions.checkFullWritePermission(context.user.id, object.planet)) {
+  if(objects && objects[0] && objects.length == objects.length)  {
+    if(context.user && await permissions.checkFullWritePermission(context.user.id, objects[0].planet)) {
       if((newParent && newParent.type == "folder") || args.parent == "root") {
-        if(object.componentId == newParent?.componentId || args.parent == "root") {
-          if(object.type == "file") {
-            const newPath = newParent ? newParent.path.concat([newParent._id]) : ["root"];
-            const newObjectParent = newParent ? newParent._id : "root";
-            return FileObjects.findOneAndUpdate({_id: args.objectId}, {$set: {path: newPath as [string], parent: newObjectParent}});
-          } else if(object.type == "folder") {
-            const newPath = newParent ? newParent.path.concat([newParent._id]) : ["root"];
-            const newObjectParent = newParent ? newParent._id : "root";
-            await FileObjects.updateMany({path: object._id}, {$pull: {path: {$in: object.path}}}, {multi: true});
-            await FileObjects.updateMany({path: object._id}, {$push: {path: {$each: newPath, $position: 0}}}, {multi: true});
-            return FileObjects.findOneAndUpdate({_id: object._id}, {$set: {path: newPath as [string], parent: newObjectParent}});
+        if(objects[0].componentId == newParent?.componentId || args.parent == "root" && objects.filter((file) => file.componentId == objects[0].componentId).length == files.length) {
+          const updatedObjects: IFileObject[] = [];
+          for(const object of objects) {
+            if(object.type == "file") {
+              const newPath = newParent ? newParent.path.concat([newParent._id]) : ["root"];
+              const newObjectParent = newParent ? newParent._id : "root";
+              updatedObjects.push(await FileObjects.findOneAndUpdate({_id: object._id}, {$set: {path: newPath as [string], parent: newObjectParent}}, {new: true}));
+            } else if(object.type == "folder") {
+              const newPath = newParent ? newParent.path.concat([newParent._id]) : ["root"];
+              const newObjectParent = newParent ? newParent._id : "root";
+              await FileObjects.updateMany({path: object._id}, {$pull: {path: {$in: object.path}}}, {multi: true});
+              await FileObjects.updateMany({path: object._id}, {$push: {path: {$each: newPath, $position: 0}}}, {multi: true});
+              updatedObjects.push(await FileObjects.findOneAndUpdate({_id: object._id}, {$set: {path: newPath as [string], parent: newObjectParent}}, {new: true}));
+            }
           }
+          return updatedObjects;
         } else {
           throw new Error ("Cannot move across components.");
         }
@@ -195,4 +182,46 @@ async function fileObjectArray(root: undefined, args: IFileObjectArrayArgs, cont
   }
 }
 
-export default {fieldResolvers, fileObjectArray, fileObject, files, folders, createFolder, completeUpload, renameObject, moveObject};
+interface ISearchForFilesArgs {
+  componentId: string,
+  parent: string,
+  searchText: string
+}
+
+async function searchForFiles(root: undefined, args: ISearchForFilesArgs, context: Context): Promise<IFileObject[]> {
+  const component = await Files.findOne({_id: args.componentId});
+  if(component && await permissions.checkReadPermission(context.user?.id ?? null, component.planet)) {
+    const parent = await FileObjects.findOne({_id: args.parent});
+    if((parent && parent.planet == component.planet) || args.parent == "root") {
+      if(args.searchText.length > 2) {
+        return FileObjects.find({path: args.parent, componentId: args.componentId, $text: {$search: args.searchText}}).sort({score: {$meta: "textScore"}});
+      } else {
+        throw new Error("Search text must be at least 3 characters long.");
+      }
+    } else {
+      throw new Error("Parent not found.");
+    }
+  } else {
+    throw new Error("Component not found.");
+  }
+}
+
+interface ICancelUploadArgs {
+  objectId: string
+}
+
+async function cancelUpload(root: undefined, args: ICancelUploadArgs, context: Context): Promise<boolean> {
+  if(context.user) {
+    const fileObject = await FileObjects.findOne({_id: args.objectId});
+    if(fileObject && fileObject.owner == context.user.id && !fileObject.finishedUploading) {
+      await FileObjects.deleteOne({_id: fileObject._id});
+      return true;
+    } else {
+      throw new Error("Not found.");
+    }
+  } else {
+    throw new Error("Not logged in.");
+  }
+}
+
+export default {fieldResolvers, cancelUpload, searchForFiles, fileObjectArray, fileObject, files, folders, createFolder, renameObject, moveObject};

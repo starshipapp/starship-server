@@ -16,7 +16,8 @@ export interface IPlanet extends Document {
   featuredDescription: string,
   banned: [string],
   members: [string],
-  css: string
+  css: string,
+  description: string
 }
 
 const planetSchema: Schema = new Schema({
@@ -34,9 +35,10 @@ const planetSchema: Schema = new Schema({
   featuredDescription: String,
   banned: [String],
   members: [String],
-  css: String 
+  css: String,
+  description: String
 });
 
-planetSchema.plugin(nanoIdPlugin);
+planetSchema.plugin(nanoIdPlugin, 16);
 
 export default model<IPlanet>('planets', planetSchema);
