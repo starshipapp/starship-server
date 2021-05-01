@@ -21,7 +21,7 @@ import fs from "fs";
 
 const sysInfo = {
   serverName: "starship-server",
-  version: "prealpha (0.8-wip)",
+  version: "alpha (0.8)",
   schemaVersion: "0.8",
   supportedFeatures: ["users", "reports", "planets", "invites"],
   supportedComponents: ["pages", "wikis", "forums", "files"],
