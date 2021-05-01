@@ -17,6 +17,7 @@ import Loaders from "./util/Loaders";
 import https from "https";
 import { RedisCache } from "apollo-server-cache-redis";
 import yn from "yn";
+import fs from "fs";
 
 const sysInfo = {
   serverName: "starship-server",
@@ -62,7 +63,8 @@ connect(url, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   useFindAndModify: false,
-  useCreateIndex: true
+  useCreateIndex: true,
+  sslCA: process.env.MONGO_CA ? [fs.readFileSync(process.env.MONGO_CA)] : null
 }).then(() => {
   Loggers.dbLogger.info("Connected to database sucessfully");
     Loggers.dbLogger.info("Setting up DB schema");
