@@ -21,8 +21,8 @@ import fs from "fs";
 
 const sysInfo = {
   serverName: "starship-server",
-  version: "alpha (0.8)",
-  schemaVersion: "0.8",
+  version: "alpha (0.9-wip)",
+  schemaVersion: "0.9-wip",
   supportedFeatures: ["users", "reports", "planets", "invites"],
   supportedComponents: ["pages", "wikis", "forums", "files"],
   clientFlags: []
