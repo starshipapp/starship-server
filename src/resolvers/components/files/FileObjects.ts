@@ -131,7 +131,7 @@ async function moveObject(root: undefined, args: IMoveObjectArgs, context: Conte
   if(objects && objects[0] && objects.length == objects.length)  {
     if(context.user && await permissions.checkFullWritePermission(context.user.id, objects[0].planet)) {
       if((newParent && newParent.type == "folder") || args.parent == "root") {
-        if(objects[0].componentId == newParent?.componentId || args.parent == "root" && objects.filter((file) => file.componentId == objects[0].componentId).length == files.length) {
+        if((objects[0].componentId == newParent?.componentId || args.parent == "root") && objects.filter((file) => file.componentId == objects[0].componentId).length == objects.length) {
           const updatedObjects: IFileObject[] = [];
           for(const object of objects) {
             if(object.type == "file") {
