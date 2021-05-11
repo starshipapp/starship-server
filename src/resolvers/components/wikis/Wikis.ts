@@ -13,7 +13,7 @@ const fieldResolvers = {
     return context.loaders.planetLoader.load(root.planet);
   },
   pages: async (root: IWiki): Promise<IWikiPage[]> => {
-    return WikiPages.find({wikiId: root._id});
+    return WikiPages.find({wikiId: root._id}).sort({ createdAt: 1 });
   }
 };
 

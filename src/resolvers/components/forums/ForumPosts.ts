@@ -30,7 +30,7 @@ const fieldResolvers = {
       limit = 25;
     }
     
-    const documents = await ForumReplies.find({postId: root._id}).skip(Number(args.cursor ?? 0)).limit(limit);
+    const documents = await ForumReplies.find({postId: root._id}).sort({ createdAt: 1 }).skip(Number(args.cursor ?? 0)).limit(limit);
 
     return {
       forumReplies: documents,
