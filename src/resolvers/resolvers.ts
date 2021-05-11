@@ -12,6 +12,7 @@ import ForumReplies from "./components/forums/ForumReplies";
 import Files from "./components/files/Files";
 import FileObjects from "./components/files/FileObjects";
 import AWS from "./AWS";
+import Notifications from "./Notifications";
 
 const resolvers = {
   User: Users.fieldResolvers,
@@ -26,6 +27,7 @@ const resolvers = {
   ForumReply: ForumReplies.fieldResolvers,
   FileComponent: Files.fieldResolvers,
   FileObject: FileObjects.fieldResolvers,
+  Notification: Notifications.fieldResolvers,
   Query: {
     // Users
     user: Users.user,
@@ -62,7 +64,13 @@ const resolvers = {
     // AWS
     downloadFileObject: AWS.downloadFileObject,
     downloadFolderObject: AWS.downloadFolderObject,
-    getObjectPreview: AWS.getObjectPreview
+    getObjectPreview: AWS.getObjectPreview,
+    // Notifications
+    notifications: Notifications.notifications,
+    notification: Notifications.notification
+  },
+  Subscription: {
+    notificationRecieved: Notifications.notificationRecieved
   },
   Mutation: {
     // Users
@@ -129,7 +137,10 @@ const resolvers = {
     uploadProfilePicture: AWS.uploadProfilePicture,
     uploadMarkdownImage: AWS.uploadMarkdownImage,
     completeUpload: AWS.completeUpload,
-    copyFile: AWS.copyFile
+    copyFile: AWS.copyFile,
+    // Notifications
+    clearNotification: Notifications.clearNotification,
+    clearAllNotifications: Notifications.clearAllNotifications
   }
 };
 

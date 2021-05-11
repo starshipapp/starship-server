@@ -10,6 +10,7 @@ require('./components/forum/ForumReplies');
 require('./components/forum/Forums');
 require('./components/wiki/WikiPages');
 require('./components/wiki/Wikis');
+require('./Notifications');
 
 import Loggers from '../Loggers';
 

@@ -326,9 +326,6 @@ async function confirmTFA(root: undefined, args: ITFAArgs, context: Context): Pr
   if(context.user) {
     const user = await Users.findOne({_id: context.user.id});
     if(user) {
-      console.log(String(args.token));
-      console.log(user.tfaSecret);
-      console.log(authenticator.generate(user.tfaSecret));
       if(authenticator.check(String(args.token), user.tfaSecret)) {
         const backupCodes = [
           Crypto.randomInt(999999999), 

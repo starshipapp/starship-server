@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-import { ApolloServer, gql } from "apollo-server-express";
+import { ApolloServer, gql, PubSub } from "apollo-server-express";
 import { readFileSync } from "fs";
 import express from "express";
 import Loggers from "./Loggers";
@@ -15,9 +15,11 @@ import IUserToken from "./util/IUserToken";
 import Context from "./util/Context";
 import Loaders from "./util/Loaders";
 import https from "https";
+import http from "http";
 import { RedisCache } from "apollo-server-cache-redis";
 import yn from "yn";
 import fs from "fs";
+import PubSubContainer from "./util/PubSubContainer";
 
 const sysInfo = {
   serverName: "starship-server",
@@ -71,6 +73,8 @@ connect(url, {
     require('./database/database');
     require('./database/indexes');
     Loggers.apolloLogger.info("Starting Apollo");
+    Loggers.apolloLogger.info("Setting up PubSub");
+    PubSubContainer.pubSub = new PubSub();
     const app = express();
     if(!process.env.REDIS_SERVER) {
       Loggers.mainLogger.warn("RUNNING IN DEVELOPMENT MODE, NOT USING REDIS");
@@ -98,12 +102,25 @@ connect(url, {
     const server = new ApolloServer({
       typeDefs,
       resolvers,
-      context: ({req}) => {
+      context: ({req, connection}) => {
         let user: IUserToken = null;
+        let token: string = null;
 
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        if (req.headers.authorization !== undefined && req.headers.authorization.includes("Bearer")) {
-          const token = req.headers.authorization.replace('Bearer ', '');
+        if(req) {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+          if (req.headers.authorization !== undefined && req.headers.authorization.includes("Bearer")) {
+            token = req.headers.authorization;
+          }
+        } else {
+          // eslint-disable-next-line
+          if (connection.context.Authorization !== undefined && connection.context.Authorization.includes("Bearer")) {
+            // eslint-disable-next-line
+            token = connection.context.Authorization;
+          }
+        }
+
+        if(token) {
+          token = token.replace('Bearer ', '');
           user = jwt.verify(token, process.env.SECRET) as IUserToken;
           if(user.id == undefined) {
             user = null;
@@ -111,7 +128,7 @@ connect(url, {
         }
 
         const ctx = new Context();
-        
+          
         ctx.user = user;
         ctx.loaders = new Loaders();
 
@@ -133,30 +150,11 @@ connect(url, {
       res.json(sysInfo);
     });
 
-    if(!process.env.SSL_PRIVATE_PATH) {
-      app.listen({ port: Number(process.env.PORT) }, () =>
-        Loggers.apolloLogger.info(`Server up at http://localhost:${process.env.PORT}${server.graphqlPath}`)
-      );
-    } else {
-      Loggers.httpsLogger.info(`Starting HTTPS server`);
-      Loggers.httpsLogger.info(`Loading certificate information`);
-      const cert = readFileSync(process.env.SSL_CERTIFICATE_PATH);
-      const key = readFileSync(process.env.SSL_PRIVATE_PATH);
-      const options: https.ServerOptions = {
-        cert,
-        key
-      };
-      if(process.env.SSL_CA_PATH) {
-        options.ca = readFileSync(process.env.SSL_CA_PATH);
-      }
-
-      Loggers.httpsLogger.info(`Creating server`);
-      const httpsServer = https.createServer(options, app);
-
-      httpsServer.listen(process.env.HTTPS_PORT, function() {
-        Loggers.httpsLogger.info(`Server up at http://localhost:${process.env.HTTPS_PORT}${server.graphqlPath}`);
-      });
-    }
+    const httpServer = http.createServer(app);
+    server.installSubscriptionHandlers(httpServer);
+    httpServer.listen({ port: Number(process.env.PORT) }, () => {
+      Loggers.apolloLogger.info(`Server up at http://localhost:${process.env.PORT}${server.graphqlPath}`);
+    });
 }).catch((error) => {
   Loggers.dbLogger.error(error);
   Loggers.mainLogger.fatal("Exiting...");
