@@ -6,15 +6,17 @@ export interface INotification extends Document {
   user: string,
   createdAt: Date,
   icon: string,
-  text: string
+  text: string,
+  isRead: boolean
 }
 
 const notificationSchema: Schema = new Schema({
   _id: String,
   user: String,
-  createdAt: Date,
+  createdAt: {type: Date, expires: 15780000, default: Date.now()},
   icon: String,
-  text: String
+  text: String,
+  isRead: {type: Boolean, default: false}
 });
 
 notificationSchema.plugin(nanoIdPlugin, 16);

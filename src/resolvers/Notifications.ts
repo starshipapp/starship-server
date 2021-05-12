@@ -21,7 +21,7 @@ const notificationRecieved = {
 
 async function notifications(root: undefined, args: undefined, context: Context): Promise<INotification[]> {
   if(context.user) {
-    return await Notifications.find({user: context.user.id});
+    return await Notifications.find({user: context.user.id}).sort({createdAt: 1});
   } else {
     throw new Error("Not logged in.");
   }
@@ -70,4 +70,13 @@ async function clearAllNotifications(root: undefined, args: undefined, context: 
   }
 }
 
-export default {fieldResolvers, notificationRecieved, notifications, notification, clearNotification, clearAllNotifications};
+async function markAllRead(root: undefined, args: undefined, context: Context): Promise<boolean> {
+  if(context.user) {
+    await Notifications.updateMany({user: context.user.id, isRead: false}, {$set: {isRead: true}});
+    return true;
+  } else {
+    throw new Error("Not logged in.");
+  }
+}
+
+export default {fieldResolvers, notificationRecieved, markAllRead, notifications, notification, clearNotification, clearAllNotifications};

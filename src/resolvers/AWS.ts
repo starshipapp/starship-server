@@ -11,6 +11,7 @@ import {v4} from "uuid";
 import mimeTypes from "../util/mimeTypes";
 import Users from "../database/Users";
 import canUpload from "../util/canUpload";
+import createNotification from "../util/createNotification";
 
 Loggers.awsLogger.info("Connecting to AWS");
 const s3 = new AWS.S3({
@@ -287,7 +288,10 @@ async function completeUpload(root: undefined, args: ICompleteUploadArgs, contex
     const fileObject = await FileObjects.findOne({_id: args.objectId});
     if(fileObject && fileObject.owner == context.user.id) {
       const head = await s3.headObject({Key: fileObject.key, Bucket: process.env.BUCKET_NAME}).promise();
-      await Users.findOneAndUpdate({_id: context.user.id}, {$inc: {usedBytes: head.ContentLength}});
+      const user = await Users.findOneAndUpdate({_id: context.user.id}, {$inc: {usedBytes: head.ContentLength}}, {new: true});
+      if(user && !canUpload(user)) {
+        void createNotification("You have reached your file upload cap. In order to upload more files, you will need to delete old ones.", "warning-sign", user._id);
+      }
       return FileObjects.findOneAndUpdate({_id: args.objectId}, {$set: {finishedUploading: true, size: head.ContentLength}}, {new: true});
     } else {
       throw new Error("Not found.");

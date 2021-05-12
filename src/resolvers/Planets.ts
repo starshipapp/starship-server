@@ -6,6 +6,7 @@ import Invites, { IInvite } from "../database/Invites";
 import ComponentIndex from "../util/ComponentIndex";
 import Notifications from "../database/Notifications";
 import PubSubContainer from "../util/PubSubContainer";
+import createNotification from "../util/createNotification";
 
 const fieldResolvers = {
   owner: async (root: IPlanet, args: undefined, context: Context): Promise<IUser> => {
@@ -180,43 +181,13 @@ async function applyModTools(root: undefined, args: IApplyModTools, context: Con
     const planet = await Planets.findOne({_id: args.planetId});
     if(planet) {
       if(args.featured && !planet.featured) {
-        const notification = new Notifications({
-          user: planet.owner,
-          createdAt: Date.now(),
-          icon: "star",
-          text: `Your planet ${planet.name} has been featured!`
-        });
-        await notification.save();
-        await PubSubContainer.pubSub.publish("NOTIFICATION_RECIEVED", {
-          notificationRecieved: notification
-        });
+        void createNotification(`Your planet ${planet.name} has been featured!`, "star", planet.owner);
       }
       if(args.verified && !planet.verified) {
-        const notification = new Notifications({
-          user: planet.owner,
-          createdAt: Date.now(),
-          icon: "tick-circle",
-          text: `Your planet ${planet.name} has been verified!`
-        });
-        await notification.save();
-        await PubSubContainer.pubSub.publish("NOTIFICATION_RECIEVED", {
-          notificationRecieved: notification
-        });
+        void createNotification(`Your planet ${planet.name} has been verified!`, "tick-circle", planet.owner);
       }
       if(args.partnered && !planet.partnered) {
-        const notification = new Notifications({
-          user: planet.owner,
-          createdAt: Date.now(),
-          icon: "star",
-          text: `Your planet ${planet.name} has been partnered!`
-        });
-        await notification.save();
-        await PubSubContainer.pubSub.publish("NOTIFICATION_RECIEVED", {
-          notificationRecieved: {
-            ...notification,
-            id: notification._id
-          }
-        });
+        void createNotification(`Your planet ${planet.name} is now partnered!`, "unresolve", planet.owner);
       }
     }
     return Planets.findOneAndUpdate({_id: args.planetId}, {$set: {featuredDescription: args.featuredDescription, featured: args.featured, verified: args.verified, partnered: args.partnered}}, {new: true});

@@ -140,7 +140,8 @@ const resolvers = {
     copyFile: AWS.copyFile,
     // Notifications
     clearNotification: Notifications.clearNotification,
-    clearAllNotifications: Notifications.clearAllNotifications
+    clearAllNotifications: Notifications.clearAllNotifications,
+    markAllRead: Notifications.markAllRead
   }
 };
 

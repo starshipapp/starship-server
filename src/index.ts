@@ -14,7 +14,6 @@ import { connect } from "mongoose";
 import IUserToken from "./util/IUserToken";
 import Context from "./util/Context";
 import Loaders from "./util/Loaders";
-import https from "https";
 import http from "http";
 import { RedisCache } from "apollo-server-cache-redis";
 import yn from "yn";
