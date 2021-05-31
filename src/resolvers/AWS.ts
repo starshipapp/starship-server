@@ -279,6 +279,32 @@ async function uploadProfilePicture(root: undefined, args: IImageUploadArgs, con
   return url;
 }
 
+async function uploadProfileBanner(root: undefined, args: IImageUploadArgs, context: Context): Promise<string> {
+  if(args.size > 8000000) {
+    throw new Error("Image too big.");
+  }
+
+  if(!context.user) {
+    throw new Error("Not logged in.");
+  }
+
+  if(!mimeTypes.imageTypes.includes(args.type)) {
+    throw new Error("Invalid file type.");
+  }
+
+  const url = s3.getSignedUrl("putObject", {
+    Bucket: process.env.BUCKET_NAME,
+    Key: "profilebanners/" + context.user.id,
+    Expires: 120,
+    ContentType: args.type,
+    ACL: "public-read"
+  });
+  
+  await Users.findOneAndUpdate({_id: context.user.id}, {$set: {profileBanner: process.env.BUCKET_ENDPOINT + "/" + process.env.BUCKET_NAME + "/profilebanners/" + context.user.id}});
+
+  return url;
+}
+
 interface ICompleteUploadArgs {
   objectId: string
 }
@@ -355,4 +381,4 @@ async function copyFile(root: undefined, args: ICopyFileArgs, context: Context):
   }
 }
 
-export default {copyFile, completeUpload, uploadProfilePicture, uploadMarkdownImage, downloadFileObject, downloadFolderObject, getObjectPreview, uploadFileObject, deleteFileObject};
+export default {uploadProfileBanner, copyFile, completeUpload, uploadProfilePicture, uploadMarkdownImage, downloadFileObject, downloadFolderObject, getObjectPreview, uploadFileObject, deleteFileObject};

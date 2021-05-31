@@ -25,7 +25,9 @@ export interface IUser extends Document {
   capWaived: boolean,
   tfaSecret: string,
   tfaEnabled: boolean,
-  backupCodes: [number]
+  backupCodes: [number],
+  profileBanner: string,
+  profileBio: string,
 }
 
 const userSchema: Schema = new Schema({
@@ -42,7 +44,9 @@ const userSchema: Schema = new Schema({
   capWaived: Boolean,
   tfaSecret: String,
   tfaEnabled: {type: Boolean, default: false},
-  backupCodes: [Number]
+  backupCodes: [Number],
+  profileBanner: String,
+  profileBio: String,
 });
 
 userSchema.plugin(nanoIdPlugin, 16);

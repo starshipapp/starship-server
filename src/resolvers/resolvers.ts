@@ -85,6 +85,7 @@ const resolvers = {
     confirmTFA: Users.confirmTFA,
     disableTFA: Users.disableTFA,
     finalizeAuthorization: Users.finalizeAuthorization,
+    updateProfileBio: Users.updateProfileBio,
     // Reports
     insertReport: Reports.insertReport,
     solveReport: Reports.solveReport,
@@ -138,6 +139,7 @@ const resolvers = {
     uploadMarkdownImage: AWS.uploadMarkdownImage,
     completeUpload: AWS.completeUpload,
     copyFile: AWS.copyFile,
+    uploadProfileBanner: AWS.uploadProfileBanner,
     // Notifications
     clearNotification: Notifications.clearNotification,
     clearAllNotifications: Notifications.clearAllNotifications,

@@ -392,4 +392,16 @@ async function finalizeAuthorization(root: undefined, args: IFinalizeAuthorizati
   }
 }
 
-export default {fieldResolvers, finalizeAuthorization, disableTFA, confirmTFA, generateTOTPSecret, resetPassword, activateEmail, resendVerificationEmail, loginUser, currentUser, insertUser, user, adminUser, banUser, adminUsers, sendResetPasswordEmail};
+interface IUpdateProfileBioArgs {
+  bio: string
+}
+
+async function updateProfileBio(root: undefined, args: IUpdateProfileBioArgs, context: Context): Promise<IUser> {
+  if(!context.user) {
+    throw new Error("Not logged in.");
+  }
+
+  return Users.findOneAndUpdate({_id: context.user.id}, {$set: {profileBio: args.bio}}, {new: true});
+}
+
+export default {fieldResolvers, updateProfileBio, finalizeAuthorization, disableTFA, confirmTFA, generateTOTPSecret, resetPassword, activateEmail, resendVerificationEmail, loginUser, currentUser, insertUser, user, adminUser, banUser, adminUsers, sendResetPasswordEmail};
