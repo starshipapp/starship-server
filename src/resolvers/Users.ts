@@ -251,7 +251,7 @@ interface IUserArgs {
 }
 
 async function user(root: undefined, args: IUserArgs): Promise<IUser> {
-  const user = await Users.findOne({_id: args.id}, {fields: safeUserFields});
+  const user = await Users.findOne({_id: args.id}).select(safeUserFields);
 
   if(user == undefined) {
     throw new Error('That user does not exist.');
@@ -264,7 +264,7 @@ async function adminUser(root: undefined, args: IUserArgs, context: Context): Pr
   const userCheck = context.user && await permissions.checkAdminPermission(context.user.id);
 
   if(userCheck) {
-    const user = await Users.findOne({_id: args.id}, {fields: safeUserFields});
+    const user = await Users.findOne({_id: args.id}).select(safeUserFields);
 
     if(user == undefined) {
       throw new Error('That user does not exist.');
