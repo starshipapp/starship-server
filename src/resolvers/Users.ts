@@ -1,4 +1,4 @@
-import Users, { IUser } from "../database/Users";
+import Users, { IUser, safeUserFields } from "../database/Users";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import permissions from "../util/permissions";
@@ -251,41 +251,26 @@ interface IUserArgs {
 }
 
 async function user(root: undefined, args: IUserArgs): Promise<IUser> {
-  const user = await Users.findOne({_id: args.id});
+  const user = await Users.findOne({_id: args.id}, {fields: safeUserFields});
 
   if(user == undefined) {
     throw new Error('That user does not exist.');
   }
 
-  return {
-    id: user._id,
-    username: user.username,
-    admin: user.admin,
-    createdAt: user.createdAt,
-    banned: user.banned,
-    profilePicture: user.profilePicture
-  } as IUser;
+  return user;
 }
 
 async function adminUser(root: undefined, args: IUserArgs, context: Context): Promise<IUser> {
   const userCheck = context.user && await permissions.checkAdminPermission(context.user.id);
 
   if(userCheck) {
-    const user = await Users.findOne({_id: args.id});
+    const user = await Users.findOne({_id: args.id}, {fields: safeUserFields});
 
     if(user == undefined) {
       throw new Error('That user does not exist.');
     }
 
-    return {
-      _id: user._id,
-      username: user.username,
-      admin: user.admin,
-      createdAt: user.createdAt,
-      banned: user.banned,
-      profilePicture: user.profilePicture,
-      following: user.following
-    } as IUser;
+    return user;
   } else {
     throw new Error('You don\'t have permission to do that.');
   }
