@@ -7,6 +7,8 @@ export const safeUserFields = {
   username: true,
   createdAt: true,
   profilePicture: true,
+  profileBanner: true,
+  profileBio: true,
   banned: true,
   admin: true,
 };
