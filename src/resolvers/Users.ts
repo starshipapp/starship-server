@@ -401,6 +401,10 @@ async function updateProfileBio(root: undefined, args: IUpdateProfileBioArgs, co
     throw new Error("Not logged in.");
   }
 
+  if(args.bio.length > 2000) {
+    throw new Error("Your bio is too long, it must be at most 2000 characters.");
+  }
+
   return Users.findOneAndUpdate({_id: context.user.id}, {$set: {profileBio: args.bio}}, {new: true});
 }
 
