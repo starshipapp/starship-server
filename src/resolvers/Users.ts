@@ -30,6 +30,11 @@ const fieldResolvers = {
       return loaded;
     }
     throw new Error("You can only get the member planets of the active user.");
+  },
+  online: (root: IUser): boolean => {
+    if(root._id) {
+      return root.sessions.length > 0;
+    }
   }
 };
 

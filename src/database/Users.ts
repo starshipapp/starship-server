@@ -11,6 +11,7 @@ export const safeUserFields = {
   profileBio: true,
   banned: true,
   admin: true,
+  sessions: true
 };
 
 export interface IUser extends Document {
@@ -30,6 +31,7 @@ export interface IUser extends Document {
   backupCodes: [number],
   profileBanner: string,
   profileBio: string,
+  sessions: [string]
 }
 
 const userSchema: Schema = new Schema({
@@ -49,6 +51,7 @@ const userSchema: Schema = new Schema({
   backupCodes: [Number],
   profileBanner: String,
   profileBio: String,
+  sessions: {type: [String], default: []}
 });
 
 userSchema.plugin(nanoIdPlugin, 16);
