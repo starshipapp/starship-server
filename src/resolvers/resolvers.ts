@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/unbound-method */
 /* eslint-disable @typescript-eslint/naming-convention */
 import Users from "./Users";
 import Reports from "./Reports";
@@ -13,6 +14,7 @@ import Files from "./components/files/Files";
 import FileObjects from "./components/files/FileObjects";
 import AWS from "./AWS";
 import Notifications from "./Notifications";
+import SysInfo from "../util/SysInfo";
 
 const resolvers = {
   User: Users.fieldResolvers,
@@ -67,7 +69,9 @@ const resolvers = {
     getObjectPreview: AWS.getObjectPreview,
     // Notifications
     notifications: Notifications.notifications,
-    notification: Notifications.notification
+    notification: Notifications.notification,
+    // SysInfo
+    sysInfo: SysInfo.querySysInfo
   },
   Subscription: {
     notificationRecieved: Notifications.notificationRecieved

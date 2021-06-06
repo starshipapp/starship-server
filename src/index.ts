@@ -21,40 +21,9 @@ import fs from "fs";
 import PubSubContainer from "./util/PubSubContainer";
 import Users from "./database/Users";
 import { v4 as uuidv4 } from 'uuid';
+import SysInfo from "./util/SysInfo";
 
-const sysInfo = {
-  serverName: "starship-server",
-  version: "alpha (0.9-wip)",
-  schemaVersion: "0.9-wip",
-  supportedFeatures: ["users", "reports", "planets", "invites"],
-  supportedComponents: ["pages", "wikis", "forums", "files"],
-  clientFlags: []
-};
-
-// update client flags
-if(!process.env.BUCKET_ENDPOINT) {
-  sysInfo.clientFlags.push("-upload");
-}
-
-if(!process.env.RECAPTCHA_SECRET) {
-  sysInfo.clientFlags.push("-recaptcha");
-}
-
-if(!process.env.REDIS_SERVER) {
-  sysInfo.clientFlags.push("+lowcapacity");
-}
-
-if(!process.env.SMTP_HOST) {
-  sysInfo.clientFlags.push("-emailverify");
-}
-
-if(!process.env.DEVELOPMENT) {
-  sysInfo.clientFlags.push("+development");
-}
-
-if(!process.env.SSL_PRIVATE_PATH) {
-  sysInfo.clientFlags.push("-secure");
-}
+SysInfo.generateSysInfo();
 
 let url = process.env.MONGO_URL;
 
@@ -92,9 +61,9 @@ connect(url, {
       Loggers.mainLogger.fatal("Exiting...");
       process.exit(3);
     }
-    if(!schema.startsWith("# starship-schema " + sysInfo.schemaVersion)) {
+    if(!schema.startsWith("# starship-schema " + SysInfo.sysInfo.schemaVersion)) {
       Loggers.apolloLogger.fatal("Server schema version mismatch. Verify that schema.graphql is the correct version.");
-      Loggers.apolloLogger.fatal("sysInfo.schemaVersion: " + sysInfo.schemaVersion);
+      Loggers.apolloLogger.fatal("sysInfo.schemaVersion: " + SysInfo.sysInfo.schemaVersion);
       Loggers.apolloLogger.fatal("schema.graphql version: " + schema.split("\n")[0].split("starship-schema ")[1]);
       Loggers.mainLogger.fatal("Exiting...");
       process.exit(2);
@@ -201,7 +170,7 @@ connect(url, {
     server.applyMiddleware({ app });
 
     app.get('/', (req, res) => {
-      res.json(sysInfo);
+      res.json(SysInfo.sysInfo);
     });
 
     const httpServer = http.createServer(app);
