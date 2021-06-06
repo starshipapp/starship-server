@@ -410,6 +410,12 @@ async function uploadCustomEmoji(root: undefined, args: IUploadCustomEmojiArgs, 
     throw new Error("Planet not found.");
   }
 
+  if(args.planetId && await CustomEmojis.count({planet: args.planetId}) > 50) {
+    throw new Error("You have reached the maximum amount of emojis.");
+  } else if(await CustomEmojis.count({user: context.user.id}) > 50) {
+    throw new Error("You have reached the maximum amount of emojis.");
+  }
+
   const emoji = new CustomEmojis({
     name: args.name,
     owner: context.user,
