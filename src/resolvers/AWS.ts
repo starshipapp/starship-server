@@ -410,17 +410,23 @@ async function uploadCustomEmoji(root: undefined, args: IUploadCustomEmojiArgs, 
     throw new Error("Planet not found.");
   }
 
-  if(args.planetId && await CustomEmojis.count({planet: args.planetId}) > 50) {
+  if(args.planetId && await CustomEmojis.countDocuments({planet: args.planetId}) > 50) {
     throw new Error("You have reached the maximum amount of emojis.");
-  } else if(await CustomEmojis.count({user: context.user.id}) > 50) {
+  } else if(await CustomEmojis.countDocuments({user: context.user.id}) > 50) {
     throw new Error("You have reached the maximum amount of emojis.");
+  }
+
+  if(args.planetId && await CustomEmojis.findOne({planet: args.planetId, name: args.name})) {
+    throw new Error("That emoji already exists.");
+  } else if(await CustomEmojis.findOne({user: context.user.id, name: args.name})) {
+    throw new Error("That emoji already exists.");
   }
 
   const emoji = new CustomEmojis({
     name: args.name,
-    owner: context.user,
+    owner: context.user.id,
     planet: args.planetId ? args.planetId : null,
-    user: args.planetId ? null : context.user
+    user: args.planetId ? null : context.user.id
   });
 
   await emoji.save();
