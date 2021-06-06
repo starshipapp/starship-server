@@ -53,14 +53,14 @@ async function deleteCustomEmoji(root: undefined, args: IDeleteCustomEmojiArgs, 
   if(emoji) {
     if(emoji.planet) {
       if(await permissions.checkFullWritePermission(context.user.id, emoji.planet)) {
-        await CustomEmojis.remove({_id: emoji._id});
+        await CustomEmojis.deleteOne({_id: emoji._id});
         return true;
       } else {
         throw new Error("Not found.");
       }
     } else {
       if(context.user.id && emoji.user === context.user.id) {
-        await CustomEmojis.remove({_id: emoji._id});
+        await CustomEmojis.deleteOne({_id: emoji._id});
         return true;
       } else {
         throw new Error("You can only delete your own emojis.");
