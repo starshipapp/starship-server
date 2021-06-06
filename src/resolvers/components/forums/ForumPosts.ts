@@ -7,6 +7,7 @@ import Context from "../../../util/Context";
 import permissions from "../../../util/permissions";
 import emoji from "node-emoji";
 import IForumReplyFeed from "../../../util/feeds/IForumReplyFeed";
+import CustomEmojis from "../../../database/CustomEmojis";
 
 interface IReplyResolverArgs {
   limit?: number,
@@ -164,25 +165,33 @@ async function forumPostReact(root: undefined, args: IForumPostReactArgs, contex
   const post = await ForumPosts.findOne({_id: args.postId});
   if(post && context.user) {
     if(await permissions.checkPublicWritePermission(context.user.id, post.planet)) {
-      if(emoji.hasEmoji(args.emojiId)) {
+      if(emoji.hasEmoji(args.emojiId) || args.emojiId.startsWith("ceid:")) {
         const reaction = post.reactions.find(value => value.emoji === args.emojiId);
         if(reaction) {
           if(reaction.reactors.includes(context.user.id)) {
             if(reaction.reactors.length === 1) {
               return ForumPosts.findOneAndUpdate({_id: args.postId}, {$pull: {reactions: reaction}}, {new: true});
             } else {
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
               // eslint-disable-next-line @typescript-eslint/ban-ts-comment
               // @ts-ignore
               return ForumPosts.findOneAndUpdate({_id: args.postId, reactions: {$elemMatch: {emoji: args.emojiId}}}, {$pull: {"reactions.$.reactors": context.user.id}}, {new: true});
             }
           } else {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             return ForumPosts.findOneAndUpdate({_id: args.postId, reactions: {$elemMatch: {emoji: args.emojiId}}}, {$push: {"reactions.$.reactors": context.user.id}}, {new: true});
           }
         } else {
+          // format for custom emojis is ceid:id
+          if(args.emojiId.startsWith("ceid:")) {
+            const emoji = args.emojiId.split(":");
+            const emojiObject = await CustomEmojis.findOne({_id: emoji[1]});
+            if(!emojiObject) {
+              throw new Error("Invalid custom emoji.");
+            }
+          }
           return ForumPosts.findOneAndUpdate({_id: args.postId}, {$push: {reactions: {emoji: args.emojiId, reactors: [context.user.id]}}}, {new: true});
         }
+      } else {
+        throw new Error("Invalid emoji.");
       }
     } else {
       throw new Error("Not found.");

@@ -6,6 +6,7 @@ import { IUser } from "../../../database/Users";
 import Context from "../../../util/Context";
 import permissions from "../../../util/permissions";
 import emoji from "node-emoji";
+import CustomEmojis from "../../../database/CustomEmojis";
 
 const fieldResolvers = {
   component: async (root: IForumReply, args: undefined, context: Context): Promise<IForum> => {
@@ -111,7 +112,7 @@ async function forumReplyReact(root: undefined, args: IForumReplyReactArgs, cont
   const post = await ForumReplies.findOne({_id: args.replyId});
   if(post && context.user) {
     if(await permissions.checkPublicWritePermission(context.user.id, post.planet)) {
-      if(emoji.hasEmoji(args.emojiId)) {
+      if(emoji.hasEmoji(args.emojiId) || args.emojiId.startsWith("ceid:")) {
         const reaction = post.reactions.find(value => value.emoji === args.emojiId);
         if(reaction) {
           if(reaction.reactors.includes(context.user.id)) {
@@ -128,6 +129,14 @@ async function forumReplyReact(root: undefined, args: IForumReplyReactArgs, cont
             return ForumReplies.findOneAndUpdate({_id: args.replyId, reactions: {$elemMatch: {emoji: args.emojiId}}}, {$push: {"reactions.$.reactors": context.user.id}}, {new: true});
           }
         } else {
+          // format for custom emojis is ceid:id
+          if(args.emojiId.startsWith("ceid:")) {
+            const emoji = args.emojiId.split(":");
+            const emojiObject = await CustomEmojis.findOne({_id: emoji[1]});
+            if(!emojiObject) {
+              throw new Error("Invalid custom emoji.");
+            }
+          }
           return ForumReplies.findOneAndUpdate({_id: args.replyId}, {$push: {reactions: {emoji: args.emojiId, reactors: [context.user.id]}}}, {new: true});
         }
       }
