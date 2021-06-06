@@ -12,6 +12,7 @@ import mimeTypes from "../util/mimeTypes";
 import Users from "../database/Users";
 import canUpload from "../util/canUpload";
 import createNotification from "../util/createNotification";
+import CustomEmojis from "../database/CustomEmojis";
 
 Loggers.awsLogger.info("Connecting to AWS");
 const s3 = new AWS.S3({
@@ -381,4 +382,55 @@ async function copyFile(root: undefined, args: ICopyFileArgs, context: Context):
   }
 }
 
-export default {uploadProfileBanner, copyFile, completeUpload, uploadProfilePicture, uploadMarkdownImage, downloadFileObject, downloadFolderObject, getObjectPreview, uploadFileObject, deleteFileObject};
+interface IUploadCustomEmojiArgs {
+  name: string
+  type: string
+  size: number
+  planetId?: string
+}
+
+async function uploadCustomEmoji(root: undefined, args: IUploadCustomEmojiArgs, context: Context): Promise<string> {
+  if(args.size > 8000000) {
+    throw new Error("Image too big.");
+  }
+
+  if(!context.user) {
+    throw new Error("Not logged in.");
+  }
+
+  if(!mimeTypes.imageTypes.includes(args.type)) {
+    throw new Error("Invalid file type.");
+  }
+
+  if(!/^\w+$/.test(args.name)) {
+    throw new Error("Invalid emoji name.");
+  }  
+
+  if(args.planetId && !(await permissions.checkFullWritePermission(context.user.id, args.planetId))) {
+    throw new Error("Planet not found.");
+  }
+
+  const emoji = new CustomEmojis({
+    name: args.name,
+    owner: context.user,
+    planet: args.planetId ? args.planetId : null,
+    user: args.planetId ? null : context.user
+  });
+
+  await emoji.save();
+
+  const url = s3.getSignedUrl("putObject", {
+    Bucket: process.env.BUCKET_NAME,
+    Key: "customemojis/" + emoji._id,
+    Expires: 120,
+    ContentType: args.type,
+    ACL: "public-read"
+  });
+  
+  await CustomEmojis.findOneAndUpdate({_id: emoji._id}, {$set: {url: process.env.BUCKET_ENDPOINT + "/" + process.env.BUCKET_NAME + "/customemojis/" + emoji._id}});
+
+  return url;
+}
+
+
+export default {uploadCustomEmoji, uploadProfileBanner, copyFile, completeUpload, uploadProfilePicture, uploadMarkdownImage, downloadFileObject, downloadFolderObject, getObjectPreview, uploadFileObject, deleteFileObject};

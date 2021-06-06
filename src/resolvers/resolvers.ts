@@ -31,6 +31,7 @@ const resolvers = {
   FileComponent: Files.fieldResolvers,
   FileObject: FileObjects.fieldResolvers,
   Notification: Notifications.fieldResolvers,
+  CustomEmoji: CustomEmojis.fieldResolvers,
   Query: {
     // Users
     user: Users.user,
@@ -147,10 +148,13 @@ const resolvers = {
     completeUpload: AWS.completeUpload,
     copyFile: AWS.copyFile,
     uploadProfileBanner: AWS.uploadProfileBanner,
+    uploadCustomEmoji: AWS.uploadCustomEmoji,
     // Notifications
     clearNotification: Notifications.clearNotification,
     clearAllNotifications: Notifications.clearAllNotifications,
-    markAllRead: Notifications.markAllRead
+    markAllRead: Notifications.markAllRead,
+    // Custom Emojis
+    deleteCustomEmoji: CustomEmojis.deleteCustomEmoji
   }
 };
 
