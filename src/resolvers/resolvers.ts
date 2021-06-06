@@ -15,6 +15,7 @@ import FileObjects from "./components/files/FileObjects";
 import AWS from "./AWS";
 import Notifications from "./Notifications";
 import SysInfo from "../util/SysInfo";
+import CustomEmojis from "./CustomEmojis";
 
 const resolvers = {
   User: Users.fieldResolvers,
@@ -70,6 +71,8 @@ const resolvers = {
     // Notifications
     notifications: Notifications.notifications,
     notification: Notifications.notification,
+    // Custom Emojis
+    customEmoji: CustomEmojis.customEmoji,
     // SysInfo
     sysInfo: SysInfo.querySysInfo
   },

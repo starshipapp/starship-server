@@ -4,9 +4,8 @@ import permissions from "../util/permissions";
 import Context from "../util/Context";
 import Invites, { IInvite } from "../database/Invites";
 import ComponentIndex from "../util/ComponentIndex";
-import Notifications from "../database/Notifications";
-import PubSubContainer from "../util/PubSubContainer";
 import createNotification from "../util/createNotification";
+import CustomEmojis, { ICustomEmoji } from "../database/CustomEmojis";
 
 const fieldResolvers = {
   owner: async (root: IPlanet, args: undefined, context: Context): Promise<IUser> => {
@@ -23,7 +22,12 @@ const fieldResolvers = {
     } else {
       return [];
     }
-  }
+  },
+  customEmojis: async (root: IPlanet): Promise<ICustomEmoji[]> => {
+    if(root._id) {
+      return CustomEmojis.find({planet: root._id});
+    }
+  },
 };
 
 // QUERIES

@@ -10,6 +10,7 @@ import { v4 } from "uuid";
 import axios from "axios";
 import { authenticator, totp } from "otplib";
 import Crypto from "crypto";
+import CustomEmojis, { ICustomEmoji } from "../database/CustomEmojis";
 
 const fieldResolvers = {
   following: async (root: IUser, args: undefined, context: Context): Promise<IPlanet[]> => {
@@ -34,6 +35,11 @@ const fieldResolvers = {
   online: (root: IUser): boolean => {
     if(root._id) {
       return root.sessions.length > 0;
+    }
+  },
+  customEmojis: async (root: IUser): Promise<ICustomEmoji[]> => {
+    if(root._id) {
+      return CustomEmojis.find({user: root._id});
     }
   }
 };
