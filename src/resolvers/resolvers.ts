@@ -93,6 +93,7 @@ const resolvers = {
     confirmTFA: Users.confirmTFA,
     disableTFA: Users.disableTFA,
     finalizeAuthorization: Users.finalizeAuthorization,
+    toggleBlockUser: Users.toggleBlockUser,
     updateProfileBio: Users.updateProfileBio,
     // Reports
     insertReport: Reports.insertReport,

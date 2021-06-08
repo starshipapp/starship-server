@@ -18,7 +18,7 @@ const fieldResolvers = {
       const loaded = await context.loaders.planetLoader.loadMany(root.following);
       return loaded as IPlanet[];
     }
-    throw new Error("You can only get the followed planets on the active user.");
+    throw new Error("You can only get the followed planets of the active user.");
   },
   memberOf: async (root: IUser, args: undefined, context: Context): Promise<IPlanet[]> => {
     if(root._id == context.user.id) {
@@ -31,6 +31,16 @@ const fieldResolvers = {
       return loaded;
     }
     throw new Error("You can only get the member planets of the active user.");
+  },
+  blockedUsers: async (root: IUser, args: undefined, context: Context): Promise<IUser[]> => {
+    if(root._id == context.user.id) {
+      if(root.blocked && root.blocked.length > 0) {
+        const loaded = await context.loaders.userLoader.loadMany(root.blocked);
+        return loaded as IUser[];
+      }
+      return [];
+    }
+    throw new Error("You can only get the blocked users of the active user.");
   },
   online: (root: IUser): boolean => {
     if(root._id) {
@@ -404,4 +414,29 @@ async function updateProfileBio(root: undefined, args: IUpdateProfileBioArgs, co
   return Users.findOneAndUpdate({_id: context.user.id}, {$set: {profileBio: args.bio}}, {new: true});
 }
 
-export default {fieldResolvers, updateProfileBio, finalizeAuthorization, disableTFA, confirmTFA, generateTOTPSecret, resetPassword, activateEmail, resendVerificationEmail, loginUser, currentUser, insertUser, user, adminUser, banUser, adminUsers, sendResetPasswordEmail};
+interface IToggleBlockUserArgs {
+  id: string
+}
+
+async function toggleBlockUser(root: undefined, args: IToggleBlockUserArgs, context: Context): Promise<IUser> {
+  if(context.user) {
+    if(context.user.id != args.id) {
+      const user = await Users.findOne({_id: args.id}); 
+      if(user) {
+        if(user.blocked && user.blocked.includes(args.id)) {
+          return Users.findOneAndUpdate({_id: args.id}, {$pull: {blocked: args.id}}, {new: true});
+        } else {
+          return Users.findOneAndUpdate({_id: args.id}, {$push: {blocked: args.id}}, {new: true});
+        }
+      } else {
+        throw new Error ("Not logged in");
+      }
+    } else {
+      throw new Error("You can't block yourself.");
+    }
+  } else {
+    throw new Error("Not logged in.");
+  }
+}
+
+export default {fieldResolvers, toggleBlockUser, updateProfileBio, finalizeAuthorization, disableTFA, confirmTFA, generateTOTPSecret, resetPassword, activateEmail, resendVerificationEmail, loginUser, currentUser, insertUser, user, adminUser, banUser, adminUsers, sendResetPasswordEmail};
