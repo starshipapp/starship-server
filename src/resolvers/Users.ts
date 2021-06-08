@@ -415,18 +415,18 @@ async function updateProfileBio(root: undefined, args: IUpdateProfileBioArgs, co
 }
 
 interface IToggleBlockUserArgs {
-  id: string
+  userId: string
 }
 
 async function toggleBlockUser(root: undefined, args: IToggleBlockUserArgs, context: Context): Promise<IUser> {
   if(context.user) {
-    if(context.user.id != args.id) {
-      const user = await Users.findOne({_id: args.id}); 
+    if(context.user.id != args.userId) {
+      const user = await Users.findOne({_id: args.userId}); 
       if(user) {
-        if(user.blocked && user.blocked.includes(args.id)) {
-          return Users.findOneAndUpdate({_id: args.id}, {$pull: {blocked: args.id}}, {new: true});
+        if(user.blocked && user.blocked.includes(args.userId)) {
+          return Users.findOneAndUpdate({_id: args.userId}, {$pull: {blocked: args.userId}}, {new: true});
         } else {
-          return Users.findOneAndUpdate({_id: args.id}, {$push: {blocked: args.id}}, {new: true});
+          return Users.findOneAndUpdate({_id: args.userId}, {$push: {blocked: args.userId}}, {new: true});
         }
       } else {
         throw new Error ("Not logged in");
