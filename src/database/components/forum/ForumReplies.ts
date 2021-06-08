@@ -11,7 +11,8 @@ export interface IForumReply extends Document {
   reactions: [{emoji: string, reactors: string[]}],
   stickied: boolean,
   createdAt: Date,
-  updatedAt: Date
+  updatedAt: Date,
+  mentions: [string]
 }
 
 const forumRepliesSchema: Schema = new Schema({
@@ -24,7 +25,8 @@ const forumRepliesSchema: Schema = new Schema({
   reactions: [{emoji: String, reactors: [String]}],
   stickied: Boolean,
   createdAt: Date,
-  updatedAt: Date
+  updatedAt: Date,
+  mentions: {type: [String], default: []}
 });
 
 forumRepliesSchema.plugin(nanoIdPlugin, 16);

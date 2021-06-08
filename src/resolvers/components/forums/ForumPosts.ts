@@ -37,6 +37,10 @@ const fieldResolvers = {
       forumReplies: documents,
       cursor: String(Number(args.cursor ?? 0) + documents.length)
     };
+  },
+  mentions: async (root: IForumPost, args: undefined, context: Context): Promise<IUser[]> => {
+    const loaded = await context.loaders.userLoader.loadMany(root.mentions);
+    return loaded as IUser[];
   }
 };
 

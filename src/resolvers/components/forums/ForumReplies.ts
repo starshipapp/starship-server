@@ -20,6 +20,10 @@ const fieldResolvers = {
   },
   post: async (root: IForumReply, args: undefined, context: Context): Promise<IForumPost> => {
     return context.loaders.forumPostLoader.load(root.postId);
+  },
+  mentions: async (root: IForumReply, args: undefined, context: Context): Promise<IUser[]> => {
+    const loaded = await context.loaders.userLoader.loadMany(root.mentions);
+    return loaded as IUser[];
   }
 };
 

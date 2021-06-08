@@ -15,6 +15,7 @@ export interface IForumPost extends Document {
   createdAt: Date,
   updatedAt: Date,
   locked: boolean,
+  mentions: [string]
 }
 
 const forumPostSchema: Schema = new Schema({
@@ -30,7 +31,8 @@ const forumPostSchema: Schema = new Schema({
   stickied: Boolean,
   locked: Boolean,
   createdAt: Date,
-  updatedAt: Date
+  updatedAt: Date,
+  mentions: {type: [String], default: []}
 });
 
 forumPostSchema.plugin(nanoIdPlugin, 16);
