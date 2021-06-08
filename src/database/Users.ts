@@ -53,7 +53,7 @@ const userSchema: Schema = new Schema({
   profileBanner: String,
   profileBio: String,
   sessions: {type: [String], default: []},
-  blocked: String
+  blocked: {type: [String], default: []}
 });
 
 userSchema.plugin(nanoIdPlugin, 16);
