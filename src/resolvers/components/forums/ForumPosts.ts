@@ -1,13 +1,14 @@
 import ForumPosts, { IForumPost } from "../../../database/components/forum/ForumPosts";
 import ForumReplies from "../../../database/components/forum/ForumReplies";
 import Forums, { IForum } from "../../../database/components/forum/Forums";
-import { IPlanet } from "../../../database/Planets";
-import { IUser } from "../../../database/Users";
+import Planets, { IPlanet } from "../../../database/Planets";
+import Users, { IUser } from "../../../database/Users";
 import Context from "../../../util/Context";
 import permissions from "../../../util/permissions";
 import emoji from "node-emoji";
 import IForumReplyFeed from "../../../util/feeds/IForumReplyFeed";
 import CustomEmojis from "../../../database/CustomEmojis";
+import getMentions from "../../../util/getMentions";
 
 interface IReplyResolverArgs {
   limit?: number,
@@ -91,7 +92,12 @@ async function insertForumPost(root: undefined, args: IInsertForumPostArgs, cont
       updatedAt: new Date()
     });
 
-    return forumPost.save();
+    await forumPost.save();
+
+    const user = await Users.findOne({_id: context.user.id});
+    const planet = await Planets.findOne({_id: forum.planet});
+
+    return ForumPosts.findOneAndUpdate({_id: forumPost._id}, {$set: {mentions: await getMentions(args.content, user, `the forum thread [${forumPost.name}](${process.env.SITE_URL}/planet/${forum.planet}/${forum._id}/${forumPost._id})`, planet)}}, {new: true});
   } else {
     throw new Error("Not found.");
   }

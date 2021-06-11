@@ -77,6 +77,10 @@ async function insertUser(root: undefined, args: IInsertUserArgs): Promise<IUser
     throw new Error('Your password needs to be at least 8 characters long.');
   }
 
+  if(!/^\b[.-\w]+\b$/.test(args.username)) {
+    throw new Error("Invalid username.");
+  }  
+
   const secret = process.env.RECAPTCHA_SECRET;
   const response = args.recaptcha;
 

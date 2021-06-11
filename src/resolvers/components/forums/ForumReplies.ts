@@ -1,12 +1,13 @@
 import ForumPosts, { IForumPost } from "../../../database/components/forum/ForumPosts";
 import ForumReplies, { IForumReply } from "../../../database/components/forum/ForumReplies";
 import { IForum } from "../../../database/components/forum/Forums";
-import { IPlanet } from "../../../database/Planets";
-import { IUser } from "../../../database/Users";
+import Planets, { IPlanet } from "../../../database/Planets";
+import Users, { IUser } from "../../../database/Users";
 import Context from "../../../util/Context";
 import permissions from "../../../util/permissions";
 import emoji from "node-emoji";
 import CustomEmojis from "../../../database/CustomEmojis";
+import getMentions from "../../../util/getMentions";
 
 const fieldResolvers = {
   component: async (root: IForumReply, args: undefined, context: Context): Promise<IForum> => {
@@ -52,6 +53,8 @@ interface IInsertForumReplyArgs {
 async function insertForumReply(root: undefined, args: IInsertForumReplyArgs, context: Context): Promise<IForumReply> {
   const post = await ForumPosts.findOne({_id: args.postId});
   if(post && context.user && await permissions.checkPublicWritePermission(context.user.id, post.planet)) {
+    const user = await Users.findOne({_id: context.user.id});
+    const planet = await Planets.findOne({_id: post.planet});
     const reply = new ForumReplies({
       postId: post._id,
       componentId: post.componentId,
@@ -61,7 +64,8 @@ async function insertForumReply(root: undefined, args: IInsertForumReplyArgs, co
       reactions: [],
       stickied: false,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
+      mentions: await getMentions(args.content, user, `the forum thread [${post.name}](${process.env.SITE_URL}/planet/${post.planet}/${post.componentId}/${post._id})`, planet)
     });
     await ForumPosts.findOneAndUpdate({_id: args.postId}, {$set: {updatedAt: new Date()}, $inc: {replyCount: 1}});
     return reply.save();

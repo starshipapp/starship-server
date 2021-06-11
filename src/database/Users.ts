@@ -32,7 +32,8 @@ export interface IUser extends Document {
   profileBanner: string,
   profileBio: string,
   sessions: [string],
-  blocked: [string]
+  blocked: [string],
+  notificationSetting: number
 }
 
 const userSchema: Schema = new Schema({
@@ -53,7 +54,8 @@ const userSchema: Schema = new Schema({
   profileBanner: String,
   profileBio: String,
   sessions: {type: [String], default: []},
-  blocked: {type: [String], default: []}
+  blocked: {type: [String], default: []},
+  notificationSetting: {type: Number, default: 1}
 });
 
 userSchema.plugin(nanoIdPlugin, 16);
