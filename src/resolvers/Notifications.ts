@@ -21,7 +21,7 @@ const notificationRecieved = {
 
 async function notifications(root: undefined, args: undefined, context: Context): Promise<INotification[]> {
   if(context.user) {
-    return await Notifications.find({user: context.user.id}).sort({createdAt: 1});
+    return await Notifications.find({user: context.user.id}).sort({createdAt: -1});
   } else {
     throw new Error("Not logged in.");
   }

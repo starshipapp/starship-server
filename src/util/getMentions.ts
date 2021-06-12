@@ -4,13 +4,20 @@ import createNotification from "./createNotification";
 import MentionSettings from "./MentionSettings";
 
 async function getMentions(text: string, itemUser: IUser, itemDescriptor: string, planet?: IPlanet): Promise<string[]> {
-  const matches = /@\b[.-\w]+\b/gu.exec(text);
+  const matches = /(?:@)\b[-.\w]+\b/gu.exec(text);
+  const originalUsers: string[] = [];
+
+  matches.map((value) => originalUsers.push(value.replace("@", "")));
+
+  const usersRetrieved = await Users.find({username: {$in: originalUsers}});
   const users: string[] = [];
-  const usersRetrieved = await Users.find({username: {$in: matches}});
+
+  console.log(usersRetrieved);
+  console.log(originalUsers);
 
   for(const user of usersRetrieved) {
     const isFollowing = planet && user.following.includes(planet._id);
-    const isMember = planet && planet.members.includes(user.id);
+    const isMember = planet && planet.members.includes(user._id);
     const isDM = itemUser && !planet;
 
     users.push(user._id);
@@ -20,10 +27,10 @@ async function getMentions(text: string, itemUser: IUser, itemDescriptor: string
        user.notificationSetting == MentionSettings.membersOnly && (isMember || isDM) ||
        user.notificationSetting == MentionSettings.messagesOnly && isDM
       ) {
-        if(!user.blocked.includes(itemUser._id)) {
-          void createNotification(`You've been mentioned by ${itemUser.username} in ${itemDescriptor}`, "comment", user._id);
+        if(user.blocked && !user.blocked.includes(itemUser._id)) {
+          void createNotification(`${itemUser.username} mentioned you in ${itemDescriptor}.`, "comment", user._id);
         }
-    }
+      }
   }
 
   return users;
