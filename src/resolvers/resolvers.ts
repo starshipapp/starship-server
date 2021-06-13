@@ -95,6 +95,7 @@ const resolvers = {
     finalizeAuthorization: Users.finalizeAuthorization,
     toggleBlockUser: Users.toggleBlockUser,
     updateProfileBio: Users.updateProfileBio,
+    setNotificationSetting: Users.setNotificationSetting,
     // Reports
     insertReport: Reports.insertReport,
     solveReport: Reports.solveReport,

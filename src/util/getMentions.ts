@@ -17,7 +17,7 @@ async function getMentions(text: string, itemUser: IUser, itemDescriptor: string
 
   for(const user of usersRetrieved) {
     const isFollowing = planet && user.following.includes(planet._id);
-    const isMember = planet && planet.members.includes(user._id);
+    const isMember = planet && (planet.members.includes(user._id) || planet.owner == user._id);
     const isDM = itemUser && !planet;
 
     users.push(user._id);

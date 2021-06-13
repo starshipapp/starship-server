@@ -11,6 +11,7 @@ import axios from "axios";
 import { authenticator, totp } from "otplib";
 import Crypto from "crypto";
 import CustomEmojis, { ICustomEmoji } from "../database/CustomEmojis";
+import MentionSettings from "../util/MentionSettings";
 
 const fieldResolvers = {
   following: async (root: IUser, args: undefined, context: Context): Promise<IPlanet[]> => {
@@ -446,4 +447,21 @@ async function toggleBlockUser(root: undefined, args: IToggleBlockUserArgs, cont
   }
 }
 
-export default {fieldResolvers, toggleBlockUser, updateProfileBio, finalizeAuthorization, disableTFA, confirmTFA, generateTOTPSecret, resetPassword, activateEmail, resendVerificationEmail, loginUser, currentUser, insertUser, user, adminUser, banUser, adminUsers, sendResetPasswordEmail};
+interface ISetNotificationSettingArgs {
+  option: number
+}
+
+async function setNotificationSetting(root: undefined, args: ISetNotificationSettingArgs, context: Context): Promise<IUser> {
+  if(context.user) {
+    if(Object.values(MentionSettings).includes(args.option)) {
+      console.log(args.option);
+      return Users.findOneAndUpdate({_id: context.user.id}, {notificationSetting: args.option});
+    } else {
+      throw new Error("Invalid mention setting.");
+    }
+  } else {
+    throw new Error("Not logged in.");
+  }
+}
+
+export default {fieldResolvers, setNotificationSetting, toggleBlockUser, updateProfileBio, finalizeAuthorization, disableTFA, confirmTFA, generateTOTPSecret, resetPassword, activateEmail, resendVerificationEmail, loginUser, currentUser, insertUser, user, adminUser, banUser, adminUsers, sendResetPasswordEmail};
