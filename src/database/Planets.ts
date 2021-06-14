@@ -17,7 +17,8 @@ export interface IPlanet extends Document {
   banned: [string],
   members: [string],
   css: string,
-  description: string
+  description: string,
+  lastRead: [{channelId: string, date: Date}]
 }
 
 const planetSchema: Schema = new Schema({
@@ -36,7 +37,8 @@ const planetSchema: Schema = new Schema({
   banned: [String],
   members: [String],
   css: String,
-  description: String
+  description: String,
+  lastRead: [{channelId: String, date: Date}]
 });
 
 planetSchema.plugin(nanoIdPlugin, 16);
