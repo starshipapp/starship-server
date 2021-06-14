@@ -12,9 +12,6 @@ async function getMentions(text: string, itemUser: IUser, itemDescriptor: string
   const usersRetrieved = await Users.find({username: {$in: originalUsers}});
   const users: string[] = [];
 
-  console.log(usersRetrieved);
-  console.log(originalUsers);
-
   for(const user of usersRetrieved) {
     const isFollowing = planet && user.following.includes(planet._id);
     const isMember = planet && (planet.members.includes(user._id) || planet.owner == user._id);

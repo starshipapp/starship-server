@@ -428,12 +428,9 @@ async function toggleBlockUser(root: undefined, args: IToggleBlockUserArgs, cont
     if(context.user.id != args.userId) {
       const user = await Users.findOne({_id: context.user.id}); 
       if(user) {
-        console.log("a");
         if(user.blocked && user.blocked.includes(args.userId)) {
-          console.log("b");
           return Users.findOneAndUpdate({_id: context.user.id}, {$pull: {blocked: args.userId}}, {new: true});
         } else {
-          console.log("c");
           return Users.findOneAndUpdate({_id: context.user.id}, {$push: {blocked: args.userId}}, {new: true});
         }
       } else {
@@ -454,7 +451,6 @@ interface ISetNotificationSettingArgs {
 async function setNotificationSetting(root: undefined, args: ISetNotificationSettingArgs, context: Context): Promise<IUser> {
   if(context.user) {
     if(Object.values(MentionSettings).includes(args.option)) {
-      console.log(args.option);
       return Users.findOneAndUpdate({_id: context.user.id}, {notificationSetting: args.option});
     } else {
       throw new Error("Invalid mention setting.");
