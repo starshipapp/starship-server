@@ -281,7 +281,7 @@ async function deletePlanet(root: undefined, args: IDeletePlanetArgs, context: C
       for(const component of planet.components) {
         void ComponentIndex.deleteComponent(component.type, component.componentId);
       }
-      await CustomEmojis.remove({planet: planet._id});
+      await CustomEmojis.deleteMany({planet: planet._id});
       return true;
     } else {
       throw new Error("Not found.");

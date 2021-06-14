@@ -7,7 +7,7 @@ export interface IChannel extends Document {
   type: number,
   topic: string,
   createdAt: Date,
-  component: string,
+  componentId: string,
   planet: string,
   owner: string,
   users: [string]
@@ -19,7 +19,7 @@ const channelSchema: Schema = new Schema({
   type: Number,
   topic: String,
   createdAt: Date,
-  component: String,
+  componentId: String,
   planet: String,
   owner: String,
   users: [String]

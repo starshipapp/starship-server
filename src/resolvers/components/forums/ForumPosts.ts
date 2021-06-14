@@ -129,8 +129,8 @@ async function deleteForumPost(root: undefined, args: IGenericForumPostArgs, con
   const post = await ForumPosts.findOne({_id: args.postId});
   if(post && context.user) {
     if(await permissions.checkFullWritePermission(context.user.id, post.planet) || post.owner == context.user.id) {
-      await ForumPosts.findOneAndRemove({_id: args.postId});
-      await ForumReplies.remove({postId: args.postId});
+      await ForumPosts.deleteOne({_id: args.postId});
+      await ForumReplies.deleteMany({postId: args.postId});
       return true;
     } else {
       throw new Error("Not found.");
