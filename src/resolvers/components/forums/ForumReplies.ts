@@ -100,7 +100,7 @@ async function deleteForumReply(root: undefined, args: IDeleteForumReplyArgs, co
   const post = await ForumReplies.findOne({_id: args.replyId});
   if(post && context.user) {
     if(await permissions.checkFullWritePermission(context.user.id, post.planet) || post.owner == context.user.id) {
-      await ForumReplies.remove({_id: args.replyId});
+      await ForumReplies.deleteOne({_id: args.replyId});
       await ForumPosts.findOneAndUpdate({_id: post.postId}, {$inc: {replyCount: -1}});
       return true;
     } else {
