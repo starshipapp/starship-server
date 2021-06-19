@@ -36,8 +36,8 @@ const resolvers = {
   Notification: Notifications.fieldResolvers,
   CustomEmoji: CustomEmojis.fieldResolvers,
   Chat: Chats.fieldResolvers,
-  Channels: Channels.fieldResolvers,
-  Messages: Messages.fieldResolvers,
+  Channel: Channels.fieldResolvers,
+  Message: Messages.fieldResolvers,
   Query: {
     // Users
     user: Users.user,
@@ -166,7 +166,12 @@ const resolvers = {
     clearAllNotifications: Notifications.clearAllNotifications,
     markAllRead: Notifications.markAllRead,
     // Custom Emojis
-    deleteCustomEmoji: CustomEmojis.deleteCustomEmoji
+    deleteCustomEmoji: CustomEmojis.deleteCustomEmoji,
+    // Chat
+    createChannel: Channels.createChannel,
+    renameChannel: Channels.renameChannel,
+    setChannelTopic: Channels.setChannelTopic,
+    deleteChannel: Channels.deleteChannel,
   }
 };
 

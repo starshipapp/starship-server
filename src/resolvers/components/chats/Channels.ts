@@ -1,9 +1,10 @@
 import { FilterQuery } from "mongoose";
 import Channels, { IChannel } from "../../../database/components/chat/Channels";
-import { IChat } from "../../../database/components/chat/Chats";
+import Chats, { IChat } from "../../../database/components/chat/Chats";
 import Messages, { IMessage } from "../../../database/components/chat/Messages";
 import { IPlanet } from "../../../database/Planets";
 import { IUser } from "../../../database/Users";
+import ChannelTypes from "../../../util/ChannelTypes";
 import Context from "../../../util/Context";
 import IMessageFeed from "../../../util/feeds/IMessageFeed";
 import permissions from "../../../util/permissions";
@@ -22,7 +23,7 @@ const fieldResolvers = {
       return context.loaders.planetLoader.load(root.planet);
     }
   },
-  chat: async (root: IChannel, args: undefined, context: Context): Promise<IChat | null> => {
+  component: async (root: IChannel, args: undefined, context: Context): Promise<IChat | null> => {
     if(root.componentId) {
       return context.loaders.chatLoader.load(root.componentId);
     }
@@ -66,7 +67,8 @@ const fieldResolvers = {
   },
   // TODO: implement unread support
   unread: () => false,
-  mentioned: () => false
+  mentioned: () => false,
+  lastRead: () => ""
 };
 
 interface IChannelArgs {
@@ -86,4 +88,86 @@ async function channel(root: undefined, args: IChannelArgs, context: Context): P
   }
 }
 
-export default {fieldResolvers, channel};
+interface ICreateChannelArgs {
+  chatId: string,
+  name: string
+}
+
+async function createChannel(root: undefined, args: ICreateChannelArgs, context: Context): Promise<IChannel> {
+  const chat = await Chats.findOne({_id: args.chatId});
+  if(chat != undefined) {
+    if(await permissions.checkFullWritePermission(context.user.id, chat.planet)) {
+      const channel = new Channels({
+        name: args.name,
+        type: ChannelTypes.textChannel,
+        topic: "",
+        createdAt: new Date(),
+        componentId: args.chatId,
+        planet: chat.planet,
+        owner: context.user.id,
+      });
+
+      return channel.save();
+    } else {
+      throw new Error("Not found.");
+    }
+  } else {
+    throw new Error("Chat not found.");
+  }
+}
+
+interface IRenameChannelArgs {
+  channelId: string,
+  name: string
+}
+
+async function renameChannel(root: undefined, args: IRenameChannelArgs, context: Context): Promise<IChannel> {
+  const channel = await Channels.findOne({_id: args.channelId});
+  if(channel != undefined) {
+    if(await permissions.checkFullWritePermission(context.user.id, channel.planet)) {
+      return Channels.findOneAndUpdate({_id: args.channelId}, {$set: {name: args.name}}, {new: true});
+    } else {
+      throw new Error("Not found.");
+    }
+  } else {
+    throw new Error("Not found.");
+  }
+}
+
+interface ISetChannelTopicArgs {
+  channelId: string,
+  topic: string
+}
+
+async function setChannelTopic(root: undefined, args: ISetChannelTopicArgs, context: Context): Promise<IChannel> {
+  const channel = await Channels.findOne({_id: args.channelId});
+  if(channel != undefined) {
+    if(await permissions.checkFullWritePermission(context.user.id, channel.planet)) {
+      return Channels.findOneAndUpdate({_id: args.channelId}, {$set: {name: args.topic}}, {new: true});
+    } else {
+      throw new Error("Not found.");
+    }
+  } else {
+    throw new Error("Not found.");
+  }
+}
+
+interface IDeleteChannelArgs {
+  channelId: string
+}
+
+async function deleteChannel(root: undefined, args: IDeleteChannelArgs, context: Context): Promise<boolean> {
+  const channel = await Channels.findOne({_id: args.channelId});
+  if(channel != undefined) {
+    if(await permissions.checkFullWritePermission(context.user.id, channel.planet)) {
+      await Channels.deleteOne({_id: args.channelId});
+      return true;
+    } else {
+      throw new Error("Not found.");
+    }
+  } else {
+    throw new Error("Not found.");
+  }
+}
+
+export default {fieldResolvers, deleteChannel, setChannelTopic, renameChannel, createChannel, channel};
