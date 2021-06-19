@@ -16,6 +16,9 @@ import AWS from "./AWS";
 import Notifications from "./Notifications";
 import SysInfo from "../util/SysInfo";
 import CustomEmojis from "./CustomEmojis";
+import Chats from "./components/chats/Chats";
+import Channels from "./components/chats/Channels";
+import Messages from "./components/chats/Messages";
 
 const resolvers = {
   User: Users.fieldResolvers,
@@ -32,6 +35,9 @@ const resolvers = {
   FileObject: FileObjects.fieldResolvers,
   Notification: Notifications.fieldResolvers,
   CustomEmoji: CustomEmojis.fieldResolvers,
+  Chat: Chats.fieldResolvers,
+  Channels: Channels.fieldResolvers,
+  Messages: Messages.fieldResolvers,
   Query: {
     // Users
     user: Users.user,
@@ -75,7 +81,11 @@ const resolvers = {
     // Custom Emojis
     customEmoji: CustomEmojis.customEmoji,
     // SysInfo
-    sysInfo: SysInfo.querySysInfo
+    sysInfo: SysInfo.querySysInfo,
+    // Chat
+    chat: Chats.chat,
+    channel: Channels.channel,
+    message: Messages.message
   },
   Subscription: {
     notificationRecieved: Notifications.notificationRecieved
