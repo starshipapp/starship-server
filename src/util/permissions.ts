@@ -1,9 +1,9 @@
-import Planets from "../database/Planets";
+import Planets, { IPlanet } from "../database/Planets";
 import Users, { IUser } from "../database/Users";
 
-async function checkReadPermission(userId: string | undefined, planetId: string): Promise<boolean> {
+async function checkReadPermission(userId: string | IUser | undefined, planetId: string | IPlanet): Promise<boolean> {
   if (planetId) {
-    const planet = await Planets.findOne({_id: planetId});
+    const planet = typeof(planetId) == "string" ? await Planets.findOne({_id: planetId}) : planetId;
 
     if(planet == undefined) {
       throw new Error("Not found.");
@@ -17,7 +17,7 @@ async function checkReadPermission(userId: string | undefined, planetId: string)
       return false;
     }
 
-    const user = await Users.findOne({_id: userId});
+    const user = typeof(userId) == "string" ? await Users.findOne({_id: userId}) : userId;
 
     if(user == undefined) {
       throw new Error("Not found.");
@@ -27,7 +27,7 @@ async function checkReadPermission(userId: string | undefined, planetId: string)
       return true;
     }
 
-    if(planet.members && planet.members.includes(userId)) {
+    if(planet.members && planet.members.includes(user._id)) {
       return true;
     }
 
@@ -41,9 +41,9 @@ async function checkReadPermission(userId: string | undefined, planetId: string)
   }
 }
 
-async function checkPublicWritePermission(userId: string, planetId: string): Promise<boolean> {
+async function checkPublicWritePermission(userId: string | IUser, planetId: string | IPlanet): Promise<boolean> {
   if (userId && planetId) {
-    const user = await Users.findOne({_id: userId});
+    const user = typeof(userId) == "string" ? await Users.findOne({_id: userId}) : userId;
 
     if(user == undefined) {
       throw new Error("Not found.");
@@ -57,13 +57,13 @@ async function checkPublicWritePermission(userId: string, planetId: string): Pro
       return true;
     }
 
-    const planet = await Planets.findOne({_id: planetId});
+    const planet = typeof(planetId) == "string" ? await Planets.findOne({_id: planetId}) : planetId;
 
     if(planet == undefined) {
       throw new Error("Not found.");
     }
 
-    if(planet.banned && planet.banned.includes(userId)) {
+    if(planet.banned && planet.banned.includes(user._id)) {
       return false;
     }
 
@@ -71,7 +71,7 @@ async function checkPublicWritePermission(userId: string, planetId: string): Pro
       return true;
     }
 
-    if(planet.members && planet.members.includes(userId)) {
+    if(planet.members && planet.members.includes(user._id)) {
       return true;
     }
 
@@ -85,9 +85,9 @@ async function checkPublicWritePermission(userId: string, planetId: string): Pro
   }
 }
 
-async function checkFullWritePermission(userId: string, planetId: string): Promise<boolean> {
+async function checkFullWritePermission(userId: string | IUser, planetId: string | IPlanet): Promise<boolean> {
   if (userId && planetId) {
-    const user = await Users.findOne({_id: userId});
+    const user = typeof(userId) == "string" ? await Users.findOne({_id: userId}) : userId;
 
     if(user == undefined) {
       throw new Error("Not found.");
@@ -101,17 +101,17 @@ async function checkFullWritePermission(userId: string, planetId: string): Promi
       return true;
     }
 
-    const planet = await Planets.findOne({_id: planetId});
+    const planet = typeof(planetId) == "string" ? await Planets.findOne({_id: planetId}) : planetId;
 
     if(planet == undefined) {
       throw new Error("Not found.");
     }
 
-    if(planet.banned && planet.banned.includes(userId)) {
+    if(planet.banned && planet.banned.includes(user._id)) {
       return false;
     }
 
-    if(planet.members && planet.members.includes(userId)) {
+    if(planet.members && planet.members.includes(user._id)) {
       return true;
     }
 

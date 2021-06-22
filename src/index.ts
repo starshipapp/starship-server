@@ -139,7 +139,7 @@ connect(url, {
               token = token.replace('Bearer ', '');
               const user = jwt.verify(token, process.env.SECRET) as IUserToken;
               if(user.id != undefined) {
-                await Users.findOneAndUpdate({_id: user.id}, {$push: {sessions: uuid}});
+                const userForContext = await Users.findOneAndUpdate({_id: user.id}, {$push: {sessions: uuid}}, {new: true});
                 // this isn't a super great idea, but I couldn't think of
                 // anything better
                 // TODO: if apollo makes an API to do this correctly then we should do it correctly
@@ -158,6 +158,8 @@ connect(url, {
                 const ctx = new Context();
           
                 ctx.user = user;
+                ctx.subscriptionUser = userForContext;
+                // we can't use these but they're here anyways
                 ctx.loaders = new Loaders();
                 return ctx;
               }
