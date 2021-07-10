@@ -88,7 +88,10 @@ const resolvers = {
     message: Messages.message
   },
   Subscription: {
-    notificationRecieved: Notifications.notificationRecieved
+    notificationRecieved: Notifications.notificationRecieved,
+    messageSent: Messages.messageSent,
+    messageRemoved: Messages.messageRemoved,
+    messageUpdated: Messages.messageUpdated
   },
   Mutation: {
     // Users
@@ -172,6 +175,11 @@ const resolvers = {
     renameChannel: Channels.renameChannel,
     setChannelTopic: Channels.setChannelTopic,
     deleteChannel: Channels.deleteChannel,
+    reactToMessage: Messages.reactToMessage,
+    pinMessage: Messages.pinMessage,
+    deleteMessage: Messages.deleteMessage,
+    editMessage: Messages.editMessage,
+    sendMessage: Messages.sendMessage
   }
 };
 

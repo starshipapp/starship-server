@@ -1,12 +1,15 @@
+import { withFilter } from "apollo-server-express";
 import Attachments, { IAttachment } from "../../../database/Attachments";
 import Channels, { IChannel } from "../../../database/components/chat/Channels";
 import Messages, { IMessage } from "../../../database/components/chat/Messages";
-import Planets from "../../../database/Planets";
+import Planets, { IPlanet } from "../../../database/Planets";
 import Users, { IUser } from "../../../database/Users";
 import Context from "../../../util/Context";
 import getMentions from "../../../util/getMentions";
 import permissions from "../../../util/permissions";
+import emoji from "node-emoji";
 import PubSubContainer from "../../../util/PubSubContainer";
+import CustomEmojis from "../../../database/CustomEmojis";
 
 const fieldResolvers = {
   owner: async (root: IMessage, args: undefined, context: Context): Promise<IUser> => {
@@ -30,6 +33,84 @@ const fieldResolvers = {
       return loaded as IAttachment[];
     }
   }
+};
+
+interface IMessageSentPayload {
+  messageSent: IMessage;
+  planet: IPlanet;
+  channel: IChannel;
+}
+
+interface IMessageSentArgs {
+  channelId: string;
+}
+
+const messageSent = {
+  subscribe: withFilter(() => PubSubContainer.pubSub.asyncIterator<IMessageSentPayload>("MESSAGE_SENT"), async (payload: IMessageSentPayload, args: IMessageSentArgs, context: Context) => {
+    if(payload.channel._id == args.channelId) {
+      let permission = false;
+      if((payload.planet && await permissions.checkReadPermission(context.user?.id ?? null, payload.planet)) 
+        || (!payload.planet && payload.channel.owner == context.user?.id)
+        || (payload.channel.users.includes(context.user.id))
+      ) {
+        permission = true;
+      }
+      return permission;
+    }
+    return false;
+  })
+};
+
+interface IMessageRemovedPayload {
+  messageRemoved: IMessage;
+  planet: IPlanet;
+  channel: IChannel;
+}
+
+interface IMessageRemovedArgs {
+  channelId: string;
+}
+
+const messageRemoved = {
+  subscribe: withFilter(() => PubSubContainer.pubSub.asyncIterator<IMessageRemovedPayload>("MESSAGE_REMOVED"), async (payload: IMessageRemovedPayload, args: IMessageRemovedArgs, context: Context) => {
+    if(payload.channel._id == args.channelId) {
+      let permission = false;
+      if((payload.planet && await permissions.checkReadPermission(context.user?.id ?? null, payload.planet)) 
+        || (!payload.planet && payload.channel.owner == context.user?.id)
+        || (payload.channel.users.includes(context.user.id))
+      ) {
+        permission = true;
+      }
+      return permission;
+    }
+    return false;
+  })
+};
+
+interface IMessageUpdatedPayload {
+  messageUpdated: IMessage;
+  planet: IPlanet;
+  channel: IChannel;
+}
+
+interface IMessageUpdatedArgs {
+  channelId: string;
+}
+
+const messageUpdated = {
+  subscribe: withFilter(() => PubSubContainer.pubSub.asyncIterator<IMessageUpdatedPayload>("MESSAGE_UPDATED"), async (payload: IMessageUpdatedPayload, args: IMessageUpdatedArgs, context: Context) => {
+    if(payload.channel._id == args.channelId) {
+      let permission = false;
+      if((payload.planet && await permissions.checkReadPermission(context.user?.id ?? null, payload.planet)) 
+        || (!payload.planet && payload.channel.owner == context.user?.id)
+        || (payload.channel.users.includes(context.user.id))
+      ) {
+        permission = true;
+      }
+      return permission;
+    }
+    return false;
+  })
 };
 
 interface IMessageArgs {
@@ -128,8 +209,8 @@ async function sendMessage(root: undefined, args: ISendMessageArgs, context: Con
 
       await message.save();
 
-      await PubSubContainer.pubSub.publish("MESSAGE_RECIEVED", {
-        messageRecieved: message,
+      await PubSubContainer.pubSub.publish("MESSAGE_SENT", {
+        messageSent: message,
         planet,
         channel
       });
@@ -203,10 +284,66 @@ async function pinMessage(root: undefined, args: ISimpleMessageArgs, context: Co
     } else if(channel.owner != context.user.id && !channel.users.includes(context.user.id)) {
       throw new Error("Not found.");
     }
-    return Messages.findOneAndUpdate({_id: args.messageId}, {$set: {pinned: true}}, {new: true});
+    return Messages.findOneAndUpdate({_id: args.messageId}, {$set: {pinned: !message.pinned}}, {new: true});
   } else {
     throw new Error("Not found.");
   }
 }
 
-export default {fieldResolvers, pinMessage, deleteMessage, editMessage, sendMessage, message};
+// react to a message
+interface IReactToMessageArgs {
+  messageId: string,
+  emojiId: string
+}
+
+async function reactToMessage(root: undefined, args: IReactToMessageArgs, context: Context): Promise<IMessage> {
+  const message = await Messages.findOne({_id: args.messageId});
+  if(message) {
+    const channel = await Channels.findOne({_id: message.channel});
+    const planet = await Planets.findOne({_id: channel.planet});
+    let permission = false;
+    if(planet) {
+      permission = (await permissions.checkPublicWritePermission(context.user.id, planet));
+    } else if ((channel.owner == context.user?.id)|| (channel.users.includes(context.user.id))) {
+      permission = true;
+    }
+  
+    if(permission) {
+      if(emoji.hasEmoji(args.emojiId) || args.emojiId.startsWith("ceid:")) {
+        const reaction = message.reactions.find(r => r.emoji == args.emojiId);
+        if(reaction) {
+          if(reaction.reactors.includes(context.user.id)) {
+            if(reaction.reactors.length === 1) {
+              return Messages.findOneAndUpdate({_id: args.messageId}, {$pull: {reactions: reaction}}, {new: true});
+            } else {
+              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+              // @ts-ignore
+              return Messages.findOneAndUpdate({_id: args.messageId, reactions: {$elemMatch: {emoji: args.emojiId}}}, {$pull: {"reactions.$.reactors": context.user.id}}, {new: true});
+            }
+          } else {
+            return Messages.findOneAndUpdate({_id: args.messageId, reactions: {$elemMatch: {emoji: args.emojiId}}}, {$push: {"reactions.$.reactors": context.user.id}}, {new: true});
+          }
+        } else {
+          // format for custom emojis is ceid:id
+          if(args.emojiId.startsWith("ceid:")) {
+            const emoji = args.emojiId.split(":");
+            const emojiObject = await CustomEmojis.findOne({_id: emoji[1]});
+            if(!emojiObject) {
+              throw new Error("Invalid custom emoji.");
+            }
+          }
+          return Messages.findOneAndUpdate({_id: args.messageId}, {$push: {reactions: {emoji: args.emojiId, reactors: [context.user.id]}}}, {new: true});
+        }
+      } else {
+        throw new Error("Invalid emoji.");
+      }
+    } else {
+      throw new Error("Not found.");
+    }
+  } else {
+    throw new Error("Not found.");
+  }
+}
+              
+
+export default {fieldResolvers, messageSent, messageRemoved, messageUpdated, reactToMessage, pinMessage, deleteMessage, editMessage, sendMessage, message};
