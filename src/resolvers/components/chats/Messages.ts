@@ -232,17 +232,29 @@ interface IEditMessageArgs {
 async function editMessage(root: undefined, args: IEditMessageArgs, context: Context): Promise<IMessage> {
   const message = await Messages.findOne({_id: args.messageId});
   if(message) {
+
+    let planet: (IPlanet | null) = null;
+    const channel = await Channels.findOne({_id: message.channel});
     if(message.owner != context.user.id) {
-      const channel = await Channels.findOne({_id: message.channel});
       if(channel.planet) {
-        if(!(await permissions.checkFullWritePermission(context.user.id, channel.planet))) {
+        planet = await Planets.findOne({_id: channel.planet});
+
+        if(!(await permissions.checkFullWritePermission(context.user.id, planet))) {
           throw new Error("Not found.");
         }
       } else {
         throw new Error("Not found.");
       }
     }
-    return Messages.findOneAndUpdate({_id: args.messageId}, {$set: {content: args.content, edited: true}}, {new: true});
+    const returnMessage = Messages.findOneAndUpdate({_id: args.messageId}, {$set: {content: args.content, edited: true}}, {new: true});
+
+    await PubSubContainer.pubSub.publish("MESSAGE_UPDATED", {
+      messageUpdated: returnMessage,
+      planet,
+      channel
+    });
+
+    return returnMessage;
   } else {
     throw new Error("Not found.");
   }
@@ -258,14 +270,24 @@ async function deleteMessage(root: undefined, args: ISimpleMessageArgs, context:
   if(message) {
     if(message.owner != context.user.id) {
       const channel = await Channels.findOne({_id: message.channel});
+      let planet: (IPlanet | null) = null;
       if(channel.planet) {
-        if(!(await permissions.checkFullWritePermission(context.user.id, channel.planet))) {
+        planet = await Planets.findOne({_id: channel.planet});
+
+        if(!(await permissions.checkFullWritePermission(context.user.id, planet))) {
           throw new Error("Not found.");
         }
       } else {
         throw new Error("Not found.");
       }
       await Messages.deleteOne({_id: args.messageId});
+
+      await PubSubContainer.pubSub.publish("MESSAGE_DELETED", {
+        messageDeleted: message,
+        planet,
+        channel
+      });
+
       return true;
     }
   } else {
@@ -277,14 +299,26 @@ async function pinMessage(root: undefined, args: ISimpleMessageArgs, context: Co
   const message = await Messages.findOne({_id: args.messageId});
   if(message) {
     const channel = await Channels.findOne({_id: message.channel});
+    let planet: (IPlanet | null) = null;
     if(channel.planet) {
-      if(!(await permissions.checkFullWritePermission(context.user.id, channel.planet))) {
+      planet = await Planets.findOne({_id: channel.planet});
+
+      if(!(await permissions.checkFullWritePermission(context.user.id, planet))) {
         throw new Error("Not found.");
       }
     } else if(channel.owner != context.user.id && !channel.users.includes(context.user.id)) {
       throw new Error("Not found.");
     }
-    return Messages.findOneAndUpdate({_id: args.messageId}, {$set: {pinned: !message.pinned}}, {new: true});
+
+    const returnMessage =  Messages.findOneAndUpdate({_id: args.messageId}, {$set: {pinned: !message.pinned}}, {new: true});
+
+    await PubSubContainer.pubSub.publish("MESSAGE_UPDATED", {
+      messageUpdated: returnMessage,
+      planet,
+      channel
+    });
+
+    return returnMessage;
   } else {
     throw new Error("Not found.");
   }
@@ -311,17 +345,19 @@ async function reactToMessage(root: undefined, args: IReactToMessageArgs, contex
     if(permission) {
       if(emoji.hasEmoji(args.emojiId) || args.emojiId.startsWith("ceid:")) {
         const reaction = message.reactions.find(r => r.emoji == args.emojiId);
+        let returnMessage: (IMessage | null) = null;
+
         if(reaction) {
           if(reaction.reactors.includes(context.user.id)) {
             if(reaction.reactors.length === 1) {
-              return Messages.findOneAndUpdate({_id: args.messageId}, {$pull: {reactions: reaction}}, {new: true});
+              returnMessage = await Messages.findOneAndUpdate({_id: args.messageId}, {$pull: {reactions: reaction}}, {new: true});
             } else {
               // eslint-disable-next-line @typescript-eslint/ban-ts-comment
               // @ts-ignore
-              return Messages.findOneAndUpdate({_id: args.messageId, reactions: {$elemMatch: {emoji: args.emojiId}}}, {$pull: {"reactions.$.reactors": context.user.id}}, {new: true});
+              returnMessage = await Messages.findOneAndUpdate({_id: args.messageId, reactions: {$elemMatch: {emoji: args.emojiId}}}, {$pull: {"reactions.$.reactors": context.user.id}}, {new: true});
             }
           } else {
-            return Messages.findOneAndUpdate({_id: args.messageId, reactions: {$elemMatch: {emoji: args.emojiId}}}, {$push: {"reactions.$.reactors": context.user.id}}, {new: true});
+            returnMessage = await Messages.findOneAndUpdate({_id: args.messageId, reactions: {$elemMatch: {emoji: args.emojiId}}}, {$push: {"reactions.$.reactors": context.user.id}}, {new: true});
           }
         } else {
           // format for custom emojis is ceid:id
@@ -332,8 +368,17 @@ async function reactToMessage(root: undefined, args: IReactToMessageArgs, contex
               throw new Error("Invalid custom emoji.");
             }
           }
-          return Messages.findOneAndUpdate({_id: args.messageId}, {$push: {reactions: {emoji: args.emojiId, reactors: [context.user.id]}}}, {new: true});
+          returnMessage = await Messages.findOneAndUpdate({_id: args.messageId}, {$push: {reactions: {emoji: args.emojiId, reactors: [context.user.id]}}}, {new: true});
         }
+
+
+        await PubSubContainer.pubSub.publish("MESSAGE_UPDATED", {
+          messageUpdated: returnMessage,
+          planet,
+          channel
+        });
+
+        return returnMessage;
       } else {
         throw new Error("Invalid emoji.");
       }
