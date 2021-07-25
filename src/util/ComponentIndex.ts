@@ -11,9 +11,13 @@ import WikiPages from "../database/components/wiki/WikiPages";
 import Wikis, { IWiki } from "../database/components/wiki/Wikis";
 import deleteFileComponent from "./deleteFileComponent";
 
+/**
+ * Class providing the index of all components, as well as the ability to delete and create them.
+ */
 export default class ComponentIndex {
   public static availableComponents = ["page", "wiki", "files", "forum", "chat"];
 
+  // Object of functions for creating components
   private static creationFunctions = {
     page: async (planetId: string, userId: string): Promise<IPage> => {
       const page = new Pages({
@@ -73,12 +77,15 @@ export default class ComponentIndex {
     },
   }
 
+  // Object of functions for deleting components
   private static deletionFunctions = {
     wiki: async (componentId: string) => {
       await Wikis.deleteOne({_id: componentId});
       await WikiPages.deleteMany({wikiId: componentId});
     },
     files: async (componentId: string) => {
+      // This is more complex, so the logic for this is
+      // in the deleteFileComponent function in another file.
       await deleteFileComponent(componentId);
     },
     page: async (componentId: string) => {
@@ -98,6 +105,15 @@ export default class ComponentIndex {
     }
   }
 
+  /**
+   * Creates a new component and returns it.
+   * 
+   * @param type - The type of component to create.
+   * @param planetId - The id of the planet to create the component on.
+   * @param userId - The id of the user creating the component.
+   *
+   * @returns A promise that resolves to the created component.
+   */
   public static createComponent(type: string, planetId: string, userId: string): Promise<IComponent> {
     if(this.availableComponents.includes(type)) {
       // we know what the type is even though compiler doesn't, disable no-unsafe-call
@@ -108,6 +124,14 @@ export default class ComponentIndex {
     }
   }
 
+  /**
+   * Deletes a component.
+   * 
+   * @param type - The type of component to delete.
+   * @param componentId - The id of the component to delete.
+   * 
+   * @returns A promise that resolves when the component has been deleted.
+   */
   public static deleteComponent(type: string, componentId: string): Promise<void> {
     if(this.availableComponents.includes(type)) {
       // we know what the type is even though compiler doesn't, disable no-unsafe-call

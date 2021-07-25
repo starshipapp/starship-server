@@ -156,9 +156,6 @@ async function sendMessage(root: undefined, args: ISendMessageArgs, context: Con
         if(!(await permissions.checkPublicWritePermission(channel.planet, context.user.id))) {
           throw new Error("Not found.");
         }
-        if(!user.following.includes(channel.planet)) {
-          throw new Error("You can only send messages in followed planets.");
-        }
       } else {
         if(!(channel.owner == context.user.id || channel.users.includes(context.user.id))) {
           throw new Error("Not found.");

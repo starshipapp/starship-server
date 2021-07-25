@@ -13,7 +13,13 @@ interface ISysInfo {
   }
 }
 
+/**
+ * Class for managing the global SysInfo object.
+ */
 class SysInfo {
+  /**
+   * The system information object.
+   */ 
   public static sysInfo: ISysInfo = {
     serverName: "starship-server",
     version: "alpha (0.9-wip)",
@@ -26,6 +32,9 @@ class SysInfo {
     }
   };
 
+  /**
+   * Generates the system information data based on the current configuration.
+   */
   public static generateSysInfo = function(): void {
     SysInfo.generateSysInfoFlags();
     SysInfo.generateSysInfoData();
@@ -54,6 +63,9 @@ class SysInfo {
     }
   }
 
+  /**
+   * Generates the paths for the system information.
+   */
   public static generateSysInfoData = function(): void {
     if(process.env.BUCKET_ENDPOINT) {
       SysInfo.sysInfo.paths.emojiURL = `${process.env.BUCKET_ENDPOINT}/${process.env.BUCKET_NAME}/customemojis/`;
@@ -62,6 +74,11 @@ class SysInfo {
     }
   }
 
+  /**
+   * Gets the system information.
+   * 
+   * @returns {ISysInfo}
+   */
   public static querySysInfo = function(): ISysInfo {
     return SysInfo.sysInfo;
   }

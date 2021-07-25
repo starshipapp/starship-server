@@ -4,6 +4,9 @@ import { IUser } from "../database/Users";
 import IUserToken from "./IUserToken";
 import Loaders from "./Loaders";
 
+/**
+ * Object representing a user context.
+ */
 export default class Context {
   loaders: Loaders
   user: IUserToken

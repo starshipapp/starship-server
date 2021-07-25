@@ -3,6 +3,16 @@ import Users, { IUser } from "../database/Users";
 import createNotification from "./createNotification";
 import MentionSettings from "./MentionSettings";
 
+/**
+ * Gets all the users mentioned in a given text and sends a notification to them.
+ * 
+ * @param text The text to get the mentions from.
+ * @param itemUser The user who sent the message.
+ * @param itemDescriptor The descriptor of the item, to be used in the notification.
+ * @param planet The planet where the message was sent.
+ * 
+ * @returns A promise that resolves to an array of user ids.
+ */
 async function getMentions(text: string, itemUser: IUser, itemDescriptor: string, planet?: IPlanet): Promise<string[]> {
   const matches = /(?:@)\b[-.\w]+\b/gu.exec(text);
   const originalUsers: string[] = [];

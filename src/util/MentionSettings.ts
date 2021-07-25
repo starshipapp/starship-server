@@ -1,3 +1,6 @@
+/**
+ * Enum of the possible values for the mention settings.
+ */
 enum MentionSettings {
   allMentions = 0,
   following = 1,

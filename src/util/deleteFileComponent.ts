@@ -18,6 +18,13 @@ async function workaroundVoidNoopBug(value: IFileObject) {
   await Users.updateOne({_id: value.owner}, {$inc: {usedBytes: -1 * value.size}}, {new: true});
 }
 
+/**
+ * Function for deleting a file component. Removes all files from AWS and MongoDB.
+ * 
+ * @param componentId The id of the component to delete.
+ * 
+ * @returns A promise that resolves when the component is fully deleted.
+ */
 async function deleteFileComponent(componentId: string): Promise<void> {
   // delete everything from s3
   const filesToCheck = await FileObjects.find({componentId});

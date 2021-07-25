@@ -32,6 +32,13 @@ if(!yn(process.env.DEVELOPMENT)) {
   forgotTemplateText = readFileSync("src/templates/forgot-password/text.txt", "utf8");
 }
 
+/**
+ * Sends a verification email to a user.
+ * 
+ * @param document The user document.
+ * 
+ * @returns A promise that resolves to true if the email was sent successfully.
+ */
 export async function sendVerificationEmail(document: IUser): Promise<boolean> {
   const verificationToken = v4();
   const siteUrl = process.env.SITE_URL + "/verify/" + document._id + ":token:" + verificationToken;
@@ -56,6 +63,13 @@ export async function sendVerificationEmail(document: IUser): Promise<boolean> {
   return true;
 }
 
+/**
+ * Sends a password reset email to a user.
+ * 
+ * @param document The user document.
+ * 
+ * @returns A promise that resolves to true if the email was sent successfully.
+ */
 export async function sendForgotPasswordEmail(document: IUser): Promise<boolean> {
   const verificationToken = v4();
   const resetUrl = process.env.SITE_URL + "/forgot/" + document._id + ":token:" + verificationToken;

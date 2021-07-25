@@ -18,6 +18,9 @@ import planetLoader from "./loaders/PlanetLoader";
 import userLoader from "./loaders/UserLoader";
 import messageLoader from "./loaders/MessageLoader";
 
+/**
+ * Class storing the DataLoaders for a given context.
+ */
 export default class Loaders {
   constructor() {
     this.userLoader = new DataLoader<string, IUser>(userLoader);
