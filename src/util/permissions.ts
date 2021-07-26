@@ -24,6 +24,9 @@ import Users, { IUser } from "../database/Users";
  * @param planet The planet to check. Takes an ID string or planet object.
  * 
  * @returns A promise that resolves to true if the user has read permission, false otherwise.
+ * 
+ * @throws Throws an error if the planet is not found.
+ * @throws Throws an error if the user is not found, and the planet is private.
  */
 async function checkReadPermission(user: string | IUser | undefined, planet: string | IPlanet): Promise<boolean> {
   if (planet) {
@@ -72,6 +75,9 @@ async function checkReadPermission(user: string | IUser | undefined, planet: str
  * @param planet The planet to check. Takes an ID string or planet object.
  * 
  * @returns A promise that resolves to true if the user has public write permission, false otherwise.
+ * 
+ * @throws Throws an error if the planet is not found.
+ * @throws Throws an error if the user is not found.
  */
 async function checkPublicWritePermission(user: string | IUser, planet: string | IPlanet): Promise<boolean> {
   if (user && planet) {
@@ -124,6 +130,9 @@ async function checkPublicWritePermission(user: string | IUser, planet: string |
  * @param planet The planet to check. Takes an ID string or planet object.
  * 
  * @returns A promise that resolves to true if the user has full write permission, false otherwise.
+ * 
+ * @throws Throws an error if the planet is not found.
+ * @throws Throws an error if the user is not found.
  */
 async function checkFullWritePermission(user: string | IUser, planet: string | IPlanet): Promise<boolean> {
   if (user && planet) {
@@ -171,6 +180,8 @@ async function checkFullWritePermission(user: string | IUser, planet: string | I
  * @param user The user to check. Takes an ID string.
  * 
  * @returns A promise that resolves to true if the user has global admin permissions, false otherwise.
+ * 
+ * @throws Throws an error if the user is not found.
  */
 async function checkAdminPermission(userId: string): Promise<boolean> {
   let user: IUser = null;

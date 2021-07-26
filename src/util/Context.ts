@@ -5,10 +5,13 @@ import IUserToken from "./IUserToken";
 import Loaders from "./Loaders";
 
 /**
- * Object representing a user context.
+ * Object representing a request context.
  */
 export default class Context {
+  /** The data loaders for the current request. */
   loaders: Loaders
+  /** The user token associated with the current request. */
   user: IUserToken
+  /** The user object at the time of the subscription start. */
   subscriptionUser?: IUser
 }

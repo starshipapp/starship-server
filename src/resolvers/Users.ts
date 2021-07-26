@@ -13,6 +13,9 @@ import Crypto from "crypto";
 import CustomEmojis, { ICustomEmoji } from "../database/CustomEmojis";
 import MentionSettings from "../util/MentionSettings";
 
+/**
+ * Resolvers for the fields of the GraphQL type.
+ */
 const fieldResolvers = {
   following: async (root: IUser, args: undefined, context: Context): Promise<IPlanet[]> => {
     if(root._id == context.user.id) {
@@ -55,10 +58,17 @@ const fieldResolvers = {
   }
 };
 
+/**
+ * Arguments for {@link insertUser}.
+ */
 interface IInsertUserArgs {
+  /** The email of the user. */
   email: string,
+  /** The password of the user. */
   password: string,
+  /** The username of the user. */
   username: string,
+  /** The reCAPTCHA response. */
   recaptcha: string
 }
 
@@ -66,9 +76,15 @@ interface IInsertUserArgs {
  * Handles user registration.
  * 
  * @param root Unused.
- * @param args The arguments for the registration.
+ * @param args The arguments for the registration. See {@link IRegisterUserArgs}.
  * 
  * @returns A promise that resolves to the user.
+ * 
+ * @throws Throws an error if the username is already taken.
+ * @throws Throws an error if the email is already taken.
+ * @throws Throws an error if the password is too short.
+ * @throws Throws an error if the username does not match the filter.
+ * @throws Throws an error if the reCAPTCHA is incorrect.
  */
 async function insertUser(root: undefined, args: IInsertUserArgs): Promise<IUser> {
   const usernameCheck = await Users.findOne({username: args.username});
@@ -150,8 +166,13 @@ async function insertUser(root: undefined, args: IInsertUserArgs): Promise<IUser
   }
 }
 
+/**
+ * Arguments for {@link loginUser}.
+ */
 interface ILoginUserArgs {
+  /** The user's user name. */
   username: string,
+  /** The user's password. */
   password: string,
 }
 
@@ -159,9 +180,13 @@ interface ILoginUserArgs {
  * Handles user login.
  * 
  * @param root Unused.
- * @param args The arguments for the login.
+ * @param args The arguments for the login. See {@link ILoginUserArgs}.
  *
  * @returns A promise that resolves to the login information object.
+ * 
+ * @throws An error if the user is not found.
+ * @throws An error if the password is incorrect.
+ * @throws An error if the user has not verified their email.
  */
 async function loginUser(root: undefined, args: ILoginUserArgs): Promise<{token: string, expectingTFA: boolean}> {
   const document = await Users.findOne({username: args.username}).catch((error) => {Loggers.mainLogger.error(error);}) as unknown as IUser;
@@ -186,8 +211,13 @@ async function loginUser(root: undefined, args: ILoginUserArgs): Promise<{token:
   }
 }
 
+/**
+ * Arguments for {@link activateEmail}.
+ */
 interface IActivateEmailArgs {
+  /** The user to activate. */
   userId: string,
+  /** The token to activate the user with. */
   token: string
 }
 
@@ -195,9 +225,12 @@ interface IActivateEmailArgs {
  * Confirms an email activation.
  * 
  * @param root Unused.
- * @param args The arguments for the activation.
+ * @param args The arguments for the activation. See {@link IActivateEmailArgs}.
  * 
  * @returns A promise that resolves to true if the activation was successful.
+ * 
+ * @throws Throws an error if the token is invalid.
+ * @throws Throws an error if the user does not exist.
  */
 async function activateEmail(root: undefined, args: IActivateEmailArgs): Promise<boolean> {
   const document = await Users.findOne({_id: args.userId});
@@ -215,9 +248,15 @@ async function activateEmail(root: undefined, args: IActivateEmailArgs): Promise
   }
 }
 
+/**
+ * Arguments for {@link resetPassword}.
+ */
 interface IResetPasswordArgs {
+  /** The user to reset the password for. */
   userId: string,
+  /** The token to reset the password with. */
   token: string,
+  /** The new password. */
   password: string
 }
 
@@ -225,9 +264,12 @@ interface IResetPasswordArgs {
  * Resets a user's password.
  * 
  * @param root Unused.
- * @param args The arguments for password reset.
+ * @param args The arguments for password reset. See {@link IResetPasswordArgs}.
  * 
  * @returns A promise that resolves to true if the reset was successful.
+ * 
+ * @throws Throws an error if the user does not exist.
+ * @throws Throws an error if the token is invalid.
  */
 async function resetPassword(root: undefined, args: IResetPasswordArgs): Promise<boolean> {
   const document = await Users.findOne({_id: args.userId});
@@ -250,7 +292,11 @@ async function resetPassword(root: undefined, args: IResetPasswordArgs): Promise
   }
 }
 
+/**
+ * Arguments for {@link resendVerificationEmail}.
+ */
 interface IResendVerificationEmailArgs {
+  /** The user to resend the verification email to. */
   username: string
 }
 
@@ -258,9 +304,12 @@ interface IResendVerificationEmailArgs {
  * Resends the verification email.
  * 
  * @param root Unused.
- * @param args The arguments for the resend.
+ * @param args The arguments for the resend. See {@link IResendVerificationEmailArgs}.
  * 
  * @returns A promise that resolves to true if the email was sent.
+ * 
+ * @throws Throws an error if the user does not exist.
+ * @throws Throws an error if the user is already verified.
  */
 async function resendVerificationEmail(root: undefined, args: IResendVerificationEmailArgs): Promise<boolean> {
   const document = await Users.findOne({username: args.username});
@@ -275,7 +324,11 @@ async function resendVerificationEmail(root: undefined, args: IResendVerificatio
   }
 }
 
-interface ISendResetPasswordEmail {
+/**
+ * Arguments for {@link sendResetPasswordEmail}.
+ */
+interface ISendResetPasswordEmailArgs {
+  /** The user to send the reset password email to. */
   username: string
 }
 
@@ -283,11 +336,13 @@ interface ISendResetPasswordEmail {
  * Sends a reset password email.
  * 
  * @param root Unused.
- * @param args The arguments for the reset.
+ * @param args The arguments for the reset. See {@link ISendResetPasswordEmailArgs}.
  * 
  * @returns A promise that resolves to true if the email was sent.
+ * 
+ * @throws Throws an error if the user does not exist.
  */
-async function sendResetPasswordEmail(root: undefined, args: ISendResetPasswordEmail): Promise<boolean> {
+async function sendResetPasswordEmail(root: undefined, args: ISendResetPasswordEmailArgs): Promise<boolean> {
   const document = await Users.findOne({username: args.username});
   if(document == undefined) {
     throw new Error("User not found.");
@@ -296,7 +351,11 @@ async function sendResetPasswordEmail(root: undefined, args: ISendResetPasswordE
   }
 }
 
+/**
+ * Arguments for {@link banUser}.
+ */
 interface IBanUserArgs {
+  /** The user to ban. */
   userId: string
 }
 
@@ -304,9 +363,12 @@ interface IBanUserArgs {
  * Toggles a user's ban status.
  * 
  * @param root Unused.
- * @param args The arguments for the ban.
+ * @param args The arguments for the ban. See {@link IBanUserArgs}.
  * 
  * @returns A promise that resolves to the banned user.
+ * 
+ * @throws Throws an error if the target user does not exist.
+ * @throws Throws an error if the user is not an admin.
  */
 async function banUser(root: undefined, args: IBanUserArgs, context: Context): Promise<IUser> {
   const userCheck = context.user && await permissions.checkAdminPermission(context.user.id);
@@ -334,6 +396,8 @@ async function banUser(root: undefined, args: IBanUserArgs, context: Context): P
  * @param context The current user context for the request.
  * 
  * @returns A promise that resolves to the current user.
+ * 
+ * @throws Throws an error if the user is not logged in.
  */
 async function currentUser(root: undefined, args: undefined, context: Context): Promise<IUser> {
   if(context.user == null) {
@@ -343,7 +407,11 @@ async function currentUser(root: undefined, args: undefined, context: Context): 
   return Users.findOne({_id: context.user.id});
 }
 
+/**
+ * Arguments for {@link user} and {@link adminUser}.
+ */
 interface IUserArgs {
+  /** The user to get. */
   id: string
 }
 
@@ -351,9 +419,11 @@ interface IUserArgs {
  * Gets a user.
  * 
  * @param root Unused.
- * @param args The arguments used to get the user.
+ * @param args The arguments used to get the user. See {@link IUserArgs}.
  * 
  * @returns A promise that resolves to the user.
+ * 
+ * @throws Throws an error if the user doesn't exist.
  */
 async function user(root: undefined, args: IUserArgs): Promise<IUser> {
   const user = await Users.findOne({_id: args.id}).select(safeUserFields);
@@ -375,6 +445,8 @@ async function user(root: undefined, args: IUserArgs): Promise<IUser> {
  * @returns A promise that resolves to the user.
  * 
  * @deprecated This function is deprecated. Use user() instead.
+ * 
+ * @throws Throws an error if the user is not an admin.
  */
 async function adminUser(root: undefined, args: IUserArgs, context: Context): Promise<IUser> {
   const userCheck = context.user && await permissions.checkAdminPermission(context.user.id);
@@ -392,8 +464,13 @@ async function adminUser(root: undefined, args: IUserArgs, context: Context): Pr
   }
 }
 
+/**
+ * Arguments for {@link adminUsers}.
+ */
 interface IAdminUsersArgs {
+  /** The start number of the range of planets to get. */
   startNumber: number,
+  /** The amount of planets to get. */
   count: number,
 }
 
@@ -401,10 +478,12 @@ interface IAdminUsersArgs {
  * Gets a list of users.
  * 
  * @param root Unused.
- * @param args The arguments used to get the users.
+ * @param args The arguments used to get the users. See {@link IAdminUsersArgs}.
  * @param context The current user context for the request.
  * 
  * @returns A promise that resolves to the list of users.
+ * 
+ * @throws Throws an error if the user is not an admin.
  */
 async function adminUsers(root: undefined, args: IAdminUsersArgs, context: Context): Promise<IUser[]> {
   if(context.user && await permissions.checkAdminPermission(context.user.id)) {
@@ -422,6 +501,8 @@ async function adminUsers(root: undefined, args: IAdminUsersArgs, context: Conte
  * @param context The current user context for the request.
  * 
  * @returns A promise that resolves to the user's secret.
+ * 
+ * @throws Throws an error if the user is not logged in.
  */
 async function generateTOTPSecret(root: undefined, args: undefined, context: Context): Promise<string> {
   if(context.user) {
@@ -437,7 +518,11 @@ async function generateTOTPSecret(root: undefined, args: undefined, context: Con
   }
 }
 
+/**
+ * Arguments for {@link confirmTFA} and {@link disableTFA}.
+ */
 interface ITFAArgs {
+  /** The token from the authenticator. */
   token: number
 }
 
@@ -445,10 +530,13 @@ interface ITFAArgs {
  * Confirms the set-up of two-factor authentication.
  * 
  * @param root Unused.
- * @param args The arguments used to confirm the set-up.
+ * @param args The arguments used to confirm the set-up. See {@link ITFAArgs}.
  * @param context The current user context for the request.
  * 
  * @returns A promise that resolves to a set of backup codes.
+ * 
+ * @throws Throws an error if the token is invalid.
+ * @throws Throws an error if the user isn't logged in.
  */
 async function confirmTFA(root: undefined, args: ITFAArgs, context: Context): Promise<number[]> {
   if(context.user) {
@@ -482,15 +570,22 @@ async function confirmTFA(root: undefined, args: ITFAArgs, context: Context): Pr
  * Disables two-factor authentication.
  * 
  * @param root Unused.
- * @param args The arguments used to disable two-factor authentication.
+ * @param args The arguments used to disable two-factor authentication. See {@link ITFAArgs}.
  * @param context The current user context for the request.
  * 
  * @returns A promise that resolves to true if the two-factor authentication was disabled.
+ * 
+ * @throws Throws an error if the user isn't logged in.
+ * @throws Throws an error if two-factor authentication was already disabled.
+ * @throws Throws an error if the token is invalid.
  */
 async function disableTFA(root: undefined, args: ITFAArgs, context: Context): Promise<boolean> {
   if(context.user) {
     const user = await Users.findOne({_id: context.user.id});
     if(user) {
+      if(!user.tfaEnabled) {
+        throw new Error("Two-factor authentication is already disabled.");
+      }
       if(authenticator.check(String(args.token), user.tfaSecret) || user.backupCodes.includes(args.token)) {
         await Users.findOneAndUpdate({_id: context.user.id}, {$set: {tfaEnabled: false}});
         return true;
@@ -505,8 +600,13 @@ async function disableTFA(root: undefined, args: ITFAArgs, context: Context): Pr
   }
 }
 
+/**
+ * Arguments for {@link finalizeAuthorization}.
+ */
 interface IFinalizeAuthorizationArgs {
+  /** The token issued by {@link loginUser}*/
   loginToken: string,
+  /** The authentication token from the authenticator. */
   totpToken: number
 }
 
@@ -514,10 +614,13 @@ interface IFinalizeAuthorizationArgs {
  * Finalizes the authorization process by verifying the two-factor authentication token.
  * 
  * @param root Unused.
- * @param args The arguments used to finalize the authorization process.
+ * @param args The arguments used to finalize the authorization process. See {@link IFinalizeAuthorizationArgs}.
  * @param context The current user context for the request.
  * 
  * @returns A promise that resolves to a finalized token.
+ * 
+ * @throws Throws an error if the two-factor authentication token is invalid.
+ * @throws Throws an error if the unverified login token is invalid.
  */
 async function finalizeAuthorization(root: undefined, args: IFinalizeAuthorizationArgs): Promise<{token: string, expectingTFA: boolean}> {
   const token = jwt.verify(args.loginToken, process.env.SECRET + "tfa") as {unverifiedId: string};
@@ -533,23 +636,30 @@ async function finalizeAuthorization(root: undefined, args: IFinalizeAuthorizati
         throw new Error("Invalid token or backup code.");
       }
     } else {
-      throw new Error("Not logged in.");
+      throw new Error("Invalid unverified token.");
     }
   }
 }
 
+/**
+ * Arguments for {@link updateProfileBio}.
+ */
 interface IUpdateProfileBioArgs {
+  /** The new bio for the current user. */
   bio: string
 }
 
 /**
- * Updates a user's profile bio.
+ * Updates the current user's profile bio.
  * 
  * @param root Unused.
- * @param args The arguments used to update the user's profile bio.
+ * @param args The arguments used to update the user's profile bio. See {@link IUpdateProfileBioArgs}.
  * @param context The current user context for the request.
  * 
  * @returns A promise that resolves to the updated user.
+ * 
+ * @throws Throws an error if the user is not logged in.
+ * @throws Throws an error if the bio is too long.
  */
 async function updateProfileBio(root: undefined, args: IUpdateProfileBioArgs, context: Context): Promise<IUser> {
   if(!context.user) {
@@ -563,7 +673,11 @@ async function updateProfileBio(root: undefined, args: IUpdateProfileBioArgs, co
   return Users.findOneAndUpdate({_id: context.user.id}, {$set: {profileBio: args.bio}}, {new: true});
 }
 
+/**
+ * Arguments for {@link toggleBlockUser}.
+ */
 interface IToggleBlockUserArgs {
+  /** The user to block. */
   userId: string
 }
 
@@ -571,10 +685,14 @@ interface IToggleBlockUserArgs {
  * Toggles whether a user is blocked.
  * 
  * @param root Unused.
- * @param args The arguments used to toggle whether a user is blocked.
+ * @param args The arguments used to toggle whether a user is blocked. See {@link IToggleBlockUserArgs}.
  * @param context The current user context for the request.
  * 
  * @returns A promise that resolves to the updated user.
+ * 
+ * @throws Throws an error if the user is not logged in.
+ * @throws Throws an error if you try to block yourself.
+ * @throws Throws an error if the user is not found.
  */
 async function toggleBlockUser(root: undefined, args: IToggleBlockUserArgs, context: Context): Promise<IUser> {
   if(context.user) {
@@ -587,7 +705,7 @@ async function toggleBlockUser(root: undefined, args: IToggleBlockUserArgs, cont
           return Users.findOneAndUpdate({_id: context.user.id}, {$push: {blocked: args.userId}}, {new: true});
         }
       } else {
-        throw new Error ("Not logged in");
+        throw new Error ("User not found.");
       }
     } else {
       throw new Error("You can't block yourself.");
@@ -597,7 +715,11 @@ async function toggleBlockUser(root: undefined, args: IToggleBlockUserArgs, cont
   }
 }
 
+/**
+ * Arguments for {@link setNotificationSetting}.
+ */
 interface ISetNotificationSettingArgs {
+  /** The notification. See {@link MentionSettings} for the possible values. */
   option: number
 }
 
@@ -605,10 +727,13 @@ interface ISetNotificationSettingArgs {
  * Sets a user's notification setting.
  * 
  * @param root Unused.
- * @param args The arguments used to set the user's notification setting.
+ * @param args The arguments used to set the user's notification setting. See {@link ISetNotificationSettingArgs}.
  * @param context The current user context for the request.
  * 
  * @returns A promise that resolves to the updated user.
+ * 
+ * @throws Throws an error if the user is not logged in.
+ * @throws Throws an error if the mention notification setting is not valid.
  */
 async function setNotificationSetting(root: undefined, args: ISetNotificationSettingArgs, context: Context): Promise<IUser> {
   if(context.user) {
