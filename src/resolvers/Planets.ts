@@ -47,7 +47,7 @@ async function featuredPlanets(): Promise<IPlanet[]> {
  * Arguments for {@link insertPlanet}.
  */
 interface IPlanetArgs {
-  /** The name of the planet. */
+  /** The ID of the planet. */
   id: string
 }
 
