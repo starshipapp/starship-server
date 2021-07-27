@@ -107,7 +107,7 @@ async function useInvite(root: undefined, args: IUseInviteArgs, context: Context
       throw new Error("That invite doesn't exist.");
     }
   } else {
-    throw new Error("You need to be logged in to do that.");
+    throw new Error("Not logged in.");
   }
 }
 
@@ -142,13 +142,13 @@ async function removeInvite(root: undefined, args: IRemoveInviteArgs, context: C
         await Invites.findOneAndDelete({_id: args.inviteId});
         return planet;
       } else {
-        throw new Error("You don't have permission to do that.");
+        throw new Error("Not found.");
       }
     } else {
-      throw new Error("That invite doesn't exist.");
+      throw new Error("Not found.");
     }
   } else {
-    throw new Error("You need to be logged in to do that.");
+    throw new Error("Not logged in.");
   }
 }
 

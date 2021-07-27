@@ -24,10 +24,10 @@ async function wikiPage(root: undefined, args: IWikiPageArgs, context: Context):
     if(await permissions.checkReadPermission(context.user?.id ?? null, wikiPage.planet)) {
       return wikiPage;
     } else {
-      throw new Error("That page doesn't exist.");
+      throw new Error("Not found.");
     }
   } else {
-    throw new Error("That page doesn't exist.");
+    throw new Error("Not found.");
   }
 }
 
@@ -51,10 +51,10 @@ async function insertWikiPage(root: undefined, args: IInsertWikiPageArgs, contex
       await wikiPage.save();
       return wikiPage;
     } else {
-      throw new Error("That page group doesn't exist.");
+      throw new Error("Not found.");
     }
   } else {
-    throw new Error("That page group doesn't exist.");
+    throw new Error("Not found.");
   }
 }
 
@@ -69,10 +69,10 @@ async function updateWikiPage(root: undefined, args: IUpdateWikiPageArgs, contex
     if(context.user && await permissions.checkFullWritePermission(context.user.id, wikiPage.planet)) {
       return WikiPages.findOneAndUpdate({_id: args.pageId}, {content: args.newContent}, {new: true});
     } else {
-      throw new Error("That page doesn't exist.");
+      throw new Error("Not found.");
     }
   } else {
-    throw new Error("That page doesn't exist.");
+    throw new Error("Not found.");
   }
 }
 
@@ -88,10 +88,10 @@ async function removeWikiPage(root: undefined, args: IRemoveWikiPageArgs, contex
       await WikiPages.findOneAndDelete({_id: args.pageId});
       return Wikis.findOne({_id: findId});
     } else {
-      throw new Error("That page doesn't exist.");
+      throw new Error("Not found.");
     }
   } else {
-    throw new Error("That page doesn't exist.");
+    throw new Error("Not found.");
   }
 }
 
@@ -106,10 +106,10 @@ async function renameWikiPage(root: undefined, args: IRenameWikiPageArgs, contex
     if(context.user && await permissions.checkFullWritePermission(context.user.id, wikiPage.planet)) {
       return WikiPages.findOneAndUpdate({_id: args.pageId}, {name: args.newName}, {new: true});
     } else {
-      throw new Error("That page doesn't exist.");
+      throw new Error("Not found.");
     }
   } else {
-    throw new Error("That page doesn't exist.");
+    throw new Error("Not found.");
   }
 }
 
