@@ -4,6 +4,9 @@ import { IPlanet } from "../../../database/Planets";
 import Context from "../../../util/Context";
 import permissions from "../../../util/permissions";
 
+/**
+ * Resolvers for the fields of the GraphQL type.
+ */
 const fieldResolvers = {
   planet: async (root: IWikiPage, args: undefined, context: Context): Promise<IPlanet> => {
     return context.loaders.planetLoader.load(root.planet);
@@ -13,11 +16,26 @@ const fieldResolvers = {
   }
 };
 
-
+/**
+ * Arguments for {@link wikiPage}
+ */
 interface IWikiPageArgs {
+  /** The ID of the wiki page to retrieve. */
   id: string
 }
 
+/**
+ * Gets a wiki page.
+ * 
+ * @param root Unused.
+ * @param args The arguments to be used to get the wiki page. See {@link IWikiPageArgs}.
+ * @param context The current user context for the request.
+ * 
+ * @returns A promise that resolves to the wiki page.
+ * 
+ * @throws Throws an error if the wiki page is not found.
+ * @throws Throws an error if the user does not have read permission on the planet.
+ */
 async function wikiPage(root: undefined, args: IWikiPageArgs, context: Context): Promise<IWikiPage> {
   const wikiPage = await WikiPages.findOne({_id: args.id});
   if(wikiPage) {
@@ -31,12 +49,27 @@ async function wikiPage(root: undefined, args: IWikiPageArgs, context: Context):
   }
 }
 
+/**
+ * Arguments for {@link insertWikiPage}.
+ */
 interface IInsertWikiPageArgs {
   content: string,
   wikiId: string,
   name: string
 }
 
+/**
+ * Creates a new wiki page.
+ * 
+ * @param root Unused.
+ * @param args The arguments to be used to create the wiki page. See {@link IInsertWikiPageArgs}.
+ * @param context The current user context for the request.
+ * 
+ * @returns A promise that resolves to the new wiki page.
+ * 
+ * @throws Throws an error if the user does not have full write permission on the planet.
+ * @throws Throws an error if the wiki does not exist.
+ */
 async function insertWikiPage(root: undefined, args: IInsertWikiPageArgs, context: Context): Promise<IWikiPage> {
   const wiki = await Wikis.findOne({_id: args.wikiId});
   if(wiki) {
@@ -58,11 +91,28 @@ async function insertWikiPage(root: undefined, args: IInsertWikiPageArgs, contex
   }
 }
 
+/**
+ * Arguments for {@link updateWikiPage}.
+ */
 interface IUpdateWikiPageArgs {
+  /** The ID of the wiki page to update. */
   pageId: string,
+  /** The new content of the wiki page. */
   newContent: string
 }
 
+/**
+ * Updates the content of a wiki page.
+ * 
+ * @param root Unused.
+ * @param args The arguments to be used to update the wiki page. See {@link IUpdateWikiPageArgs}.
+ * @param context The current user context for the request.
+ * 
+ * @returns A promise that resolves to the updated wiki page.
+ * 
+ * @throws Throws an error if the user does not have full write permission on the planet.
+ * @throws Throws an error if the wiki page does not exist.
+ */
 async function updateWikiPage(root: undefined, args: IUpdateWikiPageArgs, context: Context): Promise<IWikiPage> {
   const wikiPage = await WikiPages.findOne({_id: args.pageId});
   if(wikiPage) {
@@ -76,10 +126,26 @@ async function updateWikiPage(root: undefined, args: IUpdateWikiPageArgs, contex
   }
 }
 
+/**
+ * Arguments for {@link removeWikiPage}.
+ */
 interface IRemoveWikiPageArgs {
+  /** The ID of the wiki page to remove. */
   pageId: string
 }
 
+/**
+ * Removes a wiki page.
+ * 
+ * @param root Unused.
+ * @param args The arguments to be used to remove the wiki page. See {@link IRemoveWikiPageArgs}.
+ * @param context The current user context for the request.
+ * 
+ * @returns A promise that resolves to the removed wiki page.
+ * 
+ * @throws Throws an error if the user does not have full write permission on the planet.
+ * @throws Throws an error if the wiki page does not exist.
+ */
 async function removeWikiPage(root: undefined, args: IRemoveWikiPageArgs, context: Context): Promise<IWiki> {
   const wikiPage = await WikiPages.findOne({_id: args.pageId});
   if(wikiPage) {
@@ -95,11 +161,28 @@ async function removeWikiPage(root: undefined, args: IRemoveWikiPageArgs, contex
   }
 }
 
+/**
+ * Arguments for {@link renameWikiPage}.
+ */
 interface IRenameWikiPageArgs {
+  /** The ID of the wiki page to rename. */
   pageId: string,
+  /** The new name of the wiki page. */
   newName: string
 }
 
+/**
+ * Renames a wiki page.
+ * 
+ * @param root Unused.
+ * @param args The arguments to be used to rename the wiki page. See {@link IRenameWikiPageArgs}.
+ * @param context The current user context for the request.
+ * 
+ * @returns A promise that resolves to the renamed wiki page.
+ * 
+ * @throws Throws an error if the user does not have full write permission on the planet.
+ * @throws Throws an error if the wiki page does not exist.
+ */
 async function renameWikiPage(root: undefined, args: IRenameWikiPageArgs, context: Context): Promise<IWikiPage> {
   const wikiPage = await WikiPages.findOne({_id: args.pageId});
   if(wikiPage) {
