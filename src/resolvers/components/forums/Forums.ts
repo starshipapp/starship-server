@@ -7,13 +7,23 @@ import IForumPostFeed from "../../../util/feeds/IForumPostFeed";
 import permissions from "../../../util/permissions";
 import { forumSortTypes } from "../../../util/sortTypes";
 
+/**
+ * Arguments for {@link fieldResolvers.posts}.
+ */
 interface IPostResolverArgs {
+  /** The amount of posts to retrieve. */
   limit?: number,
+  /** The offset of the posts to retrieve. */
   cursor?: string,
+  /** The sort type of the posts. */
   sortMethod?: string,
+  /** The required post tag. */
   tag?: string
 }
 
+/**
+ * Type for {@link fieldResolvers.posts}'s find query.
+ */
 interface IForumPostResolverFindObject {
   createdAt?: {
     $lt?: Date,
@@ -32,6 +42,9 @@ interface IForumPostResolverFindObject {
   tags?: string[],
 }
 
+/**
+ * Resolvers for the fields of the GraphQL type.
+ */
 const fieldResolvers = {
   owner: async (root: IForum, args: undefined, context: Context): Promise<IUser> => {
     return context.loaders.userLoader.load(root.owner);
@@ -42,6 +55,14 @@ const fieldResolvers = {
   stickiedPosts: async (root: IForum): Promise<IForumPost[]> => {
     return ForumPosts.find({componentId: root._id, stickied: true});
   },
+  /**
+   * Fetches the posts for a forum.
+   * 
+   * @param root The root forum object of the query.
+   * @param args The arguments for the query. See {@link IPostResolverArgs}.
+   * 
+   * @returns A promise that resolves to a forum post feed.
+   */
   posts: async (root: IForum, args: IPostResolverArgs): Promise<IForumPostFeed> => {
     let limit = args.limit ?? 25;
     let sortMethod = forumSortTypes.recentlyUpdated;
@@ -116,10 +137,27 @@ const fieldResolvers = {
   }
 };
 
+
+/**
+ * Arguments for {@link forum}.
+ */
 interface IForumArgs {
+  /** The ID of the forum to retrieve. */
   id: string
 }
 
+/**
+ * Gets a forum component.
+ * 
+ * @param root Unused.
+ * @param args The arguments to be used to get the forum. See {@link IForumArgs}.
+ * @param context The current user context for the request.
+ * 
+ * @returns A promise that resolves to the forum.
+ * 
+ * @throws Throws an error if the forum is not found.
+ * @throws Throws an error if the user does not have read permission on the planet.
+ */
 async function forum(root: undefined, args: IForumArgs, context: Context): Promise<IForum> {
   const forum = await Forums.findOne({_id: args.id});
   if(forum != undefined) {
@@ -133,11 +171,29 @@ async function forum(root: undefined, args: IForumArgs, context: Context): Promi
   }
 }
 
+/**
+ * Arguments for {@link createForumTag} and {@link removeForumTag}.
+ */
 interface IForumTagArgs {
+  /** The ID of the forum to update. */
   forumId: string,
+  /** The tag to add/remove to the forum. */
   tag: string
 }
 
+/**
+ * Adds a tag to a forum.
+ * 
+ * @param root Unused.
+ * @param args The arguments to be used to add the tag. See {@link IForumTagArgs}.
+ * @param context The current user context for the request.
+ * 
+ * @returns A promise that resolves to the updated forum.
+ * 
+ * @throws Throws an error if the forum is not found.
+ * @throws Throws an error if the user does not have full write permission on the planet.
+ * @throws Throws an error if the tag is already in the forum.
+ */
 async function createForumTag(root: undefined, args: IForumTagArgs, context: Context): Promise<IForum> {
   const forum = await Forums.findOne({_id: args.forumId});
   if(forum != undefined) {
@@ -155,6 +211,18 @@ async function createForumTag(root: undefined, args: IForumTagArgs, context: Con
   }
 }
 
+/**
+ * Removes a tag from a forum.
+ * 
+ * @param root Unused.
+ * @param args The arguments to be used to remove the tag. See {@link IForumTagArgs}.
+ * @param context The current user context for the request.
+ * 
+ * @returns A promise that resolves to the updated forum.
+ * 
+ * @throws Throws an error if the forum is not found.
+ * @throws Throws an error if the user does not have full write permission on the planet.
+ */
 async function removeForumTag(root: undefined, args: IForumTagArgs, context: Context): Promise<IForum> {
   const forum = await Forums.findOne({_id: args.forumId});
   if(forum != undefined) {

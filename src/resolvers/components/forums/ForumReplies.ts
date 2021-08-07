@@ -9,6 +9,9 @@ import emoji from "node-emoji";
 import CustomEmojis from "../../../database/CustomEmojis";
 import getMentions from "../../../util/getMentions";
 
+/**
+ * Resolvers for the fields of the GraphQL type.
+ */
 const fieldResolvers = {
   component: async (root: IForumReply, args: undefined, context: Context): Promise<IForum> => {
     return context.loaders.forumLoader.load(root.componentId);
@@ -28,10 +31,26 @@ const fieldResolvers = {
   }
 };
 
+/**
+ * Arguments for {@link forumReply}.
+ */
 interface IForumReplyArgs {
+  /** The ID of the forum reply to retrieve. */
   id: string
 }
 
+/**
+ * Get a forum reply.
+ * 
+ * @param root Unused.
+ * @param args The arguments to be used to retrieve the forum reply. See {@link IForumReplyArgs}.
+ * @param context The current user context for the request.
+ * 
+ * @return A promise resolving to the forum reply.
+ * 
+ * @throws Throws an error if the reply is not found.
+ * @throws Throws an error if the user does not have read permission on the planet.
+ */
 async function forumReply(root: undefined, args: IForumReplyArgs, context: Context): Promise<IForumReply> {
   const forumReply = await ForumReplies.findOne({_id: args.id});
   if(forumReply) {
@@ -45,11 +64,28 @@ async function forumReply(root: undefined, args: IForumReplyArgs, context: Conte
   }
 }
 
+/**
+ * Arguments for {@link insertForumReply}.
+ */
 interface IInsertForumReplyArgs {
+  /** The ID of the fourm post to reply to. */
   postId: string,
+  /** The content of the forum reply. */
   content: string,
 }
 
+/**
+ * Creates a new forum reply.
+ * 
+ * @param root Unused.
+ * @param args The arguments to be used to insert the forum reply. See {@link IInsertForumReplyArgs}.
+ * @param context The current user context for the request.
+ * 
+ * @return A promise resolving to the new forum reply.
+ * 
+ * @throws Throws an error if the user does not have public write permission on the planet.
+ * @throws Throws an error if the post is not found.
+ */
 async function insertForumReply(root: undefined, args: IInsertForumReplyArgs, context: Context): Promise<IForumReply> {
   const post = await ForumPosts.findOne({_id: args.postId});
   if(post && context.user && await permissions.checkPublicWritePermission(context.user.id, post.planet)) {
@@ -74,11 +110,28 @@ async function insertForumReply(root: undefined, args: IInsertForumReplyArgs, co
   }
 }
 
+/**
+ * Arguments for {@link updateForumReply}.
+ */
 interface IUpdateForumReplyArgs {
+  /** The ID of the forum reply to update. */
   replyId: string,
+  /** The new content of the forum reply. */
   content: string
 }
 
+/**
+ * Updates a forum reply.
+ * 
+ * @param root Unused.
+ * @param args The arguments to be used to update the forum reply. See {@link IUpdateForumReplyArgs}.
+ * @param context The current user context for the request.
+ * 
+ * @return A promise resolving to the updated forum reply.
+ * 
+ * @throws Throws an error if the user does not have full write permission on the planet and does not own the reply.
+ * @throws Throws an error if the reply is not found.
+ */
 async function updateForumReply(root: undefined, args: IUpdateForumReplyArgs, context: Context): Promise<IForumReply> {
   const post = await ForumReplies.findOne({_id: args.replyId});
   if(post && context.user) {
@@ -92,10 +145,25 @@ async function updateForumReply(root: undefined, args: IUpdateForumReplyArgs, co
   }
 }
 
+/**
+ * Arguments for {@link deleteForumReply}.
+ */
 interface IDeleteForumReplyArgs {
   replyId: string
 }
 
+/**
+ * Deletes a forum reply.
+ * 
+ * @param root Unused.
+ * @param args The arguments to be used to delete the forum reply. See {@link IDeleteForumReplyArgs}.
+ * @param context The current user context for the request.
+ * 
+ * @return A promise resolving to the deleted forum reply.
+ * 
+ * @throws Throws an error if the user does not have full write permission on the planet and does not own the reply.
+ * @throws Throws an error if the reply is not found.
+ */
 async function deleteForumReply(root: undefined, args: IDeleteForumReplyArgs, context: Context): Promise<boolean> {
   const post = await ForumReplies.findOne({_id: args.replyId});
   if(post && context.user) {
@@ -111,11 +179,29 @@ async function deleteForumReply(root: undefined, args: IDeleteForumReplyArgs, co
   }
 }
 
+/**
+ * Arguments for {@link forumReplyReact}.
+ */
 interface IForumReplyReactArgs {
+  /** The ID of the forum reply to react to. */
   replyId: string,
+  /** The reaction type. */
   emojiId: string
 }
 
+/**
+ * Reacts to a forum reply.
+ * 
+ * @param root Unused.
+ * @param args The arguments to be used to react to the forum reply. See {@link IForumReplyReactArgs}.
+ * @param context The current user context for the request.
+ * 
+ * @return A promise resolving to the forum reply.
+ * 
+ * @throws Throws an error if the user does not have public write permission on the planet.
+ * @throws Throws an error if the reply is not found.
+ * @throws Throws an error if the custom emoji is not found.
+ */
 async function forumReplyReact(root: undefined, args: IForumReplyReactArgs, context: Context): Promise<IForumReply> {
   const post = await ForumReplies.findOne({_id: args.replyId});
   if(post && context.user) {
