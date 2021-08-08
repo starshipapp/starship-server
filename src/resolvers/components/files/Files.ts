@@ -8,6 +8,9 @@ import Files, { IFiles } from "../../../database/components/files/Files";
 // This is to differentiate the component from the actual files,
 // which are stored in the FileObjects collection (FileObjects.ts)
 
+/**
+ * Resolvers for the fields of the GraphQL type.
+ */
 const fieldResolvers = {
   owner: async (root: IFiles, args: undefined, context: Context): Promise<IUser> => {
     return context.loaders.userLoader.load(root.owner);
@@ -17,10 +20,26 @@ const fieldResolvers = {
   }
 };
 
+/**
+ * Arguments for {@link fileComponent}.
+ */
 interface IFileComponentArgs {
+  /* The ID of the file to retrieve. */
   id: string
 }
 
+/**
+ * Gets a file component.
+ * 
+ * @param root Unused.
+ * @param args The arguments to be used to get the file. See {@link IFileComponentArgs}.
+ * @param context The current user context for the request.
+ * 
+ * @returns A promise that resolves to the file component.
+ * 
+ * @throws Throws an error if the file does not exist.
+ * @throws Throws an error if the user does not have read permission on the planet.
+ */
 async function fileComponent(root: undefined, args: IFileComponentArgs, context: Context): Promise<IFiles> {
   const files = await Files.findOne({_id: args.id});
   if(files) {

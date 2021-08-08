@@ -494,6 +494,8 @@ interface ICopyFileArgs {
 /**
  * Copies an array of file objects to a new parent.
  * 
+ * @alpha This function is unused in the official client and should not be used in production.
+ * 
  * @param root Unused.
  * @param args The arguments to be used to copy the file objects. See {@link ICopyFileArgs}.
  * @param context The current user context for the request.
