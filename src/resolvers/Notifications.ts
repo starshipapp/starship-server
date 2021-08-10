@@ -14,7 +14,7 @@ const fieldResolvers = {
 };
 
 /**
- * Subscription handler for recieving new notifications.
+ * Subscription handler for receiving new notifications.
  */
 const notificationRecieved = {
   subscribe: withFilter(() => PubSubContainer.pubSub.asyncIterator<{notificationRecieved: INotification}>(['NOTIFICATION_RECIEVED']), (payload: {notificationRecieved: INotification}, variables, context: Context) => {

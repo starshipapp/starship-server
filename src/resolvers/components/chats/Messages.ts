@@ -11,6 +11,9 @@ import emoji from "node-emoji";
 import PubSubContainer from "../../../util/PubSubContainer";
 import CustomEmojis from "../../../database/CustomEmojis";
 
+/**
+ * Resolvers for the fields of the GraphQL type.
+ */
 const fieldResolvers = {
   owner: async (root: IMessage, args: undefined, context: Context): Promise<IUser> => {
     return context.loaders.userLoader.load(root.owner);
@@ -35,16 +38,29 @@ const fieldResolvers = {
   }
 };
 
+/**
+ * Payload for {@link messageSent}.
+ */
 interface IMessageSentPayload {
+  /* The message that was sent. */
   messageSent: IMessage;
+  /* The planet the message was sent to. */
   planet: IPlanet;
+  /* The channel the message was sent to. */
   channel: IChannel;
 }
 
+/**
+ * Arguments for {@link messageSent}.
+ */
 interface IMessageSentArgs {
+  /* The ID of the channel to subscribe to. */
   channelId: string;
 }
 
+/**
+ * Subscription handler for receiving sent messages.
+ */
 const messageSent = {
   subscribe: withFilter(() => PubSubContainer.pubSub.asyncIterator<IMessageSentPayload>("MESSAGE_SENT"), async (payload: IMessageSentPayload, args: IMessageSentArgs, context: Context) => {
     if(payload.channel._id == args.channelId) {
@@ -61,16 +77,29 @@ const messageSent = {
   })
 };
 
+/**
+ * Payload for {@link messageRemoved}.
+ */
 interface IMessageRemovedPayload {
+  /* The message that was removed. */
   messageRemoved: IMessage;
+  /* The planet the message was removed from. */
   planet: IPlanet;
+  /* The channel the message was removed from. */
   channel: IChannel;
 }
 
+/**
+ * Arguments for {@link messageRemoved}.
+ */
 interface IMessageRemovedArgs {
+  /* The ID of the channel to subscribe to. */
   channelId: string;
 }
 
+/**
+ * Subscription handler for receiving deleted messages.
+ */
 const messageRemoved = {
   subscribe: withFilter(() => PubSubContainer.pubSub.asyncIterator<IMessageRemovedPayload>("MESSAGE_REMOVED"), async (payload: IMessageRemovedPayload, args: IMessageRemovedArgs, context: Context) => {
     if(payload.channel._id == args.channelId) {
@@ -87,16 +116,29 @@ const messageRemoved = {
   })
 };
 
+/**
+ * Payload for {@link messageUpdated}.
+ */
 interface IMessageUpdatedPayload {
+  /* The message that was updated. */
   messageUpdated: IMessage;
+  /* The planet the message was updated on. */
   planet: IPlanet;
+  /* The channel the message was updated on. */
   channel: IChannel;
 }
 
+/**
+ * Arguments for {@link messageUpdated}.
+ */
 interface IMessageUpdatedArgs {
+  /* The ID of the channel to subscribe to. */
   channelId: string;
 }
 
+/**
+ * Subscription handler for receiving updated messages.
+ */
 const messageUpdated = {
   subscribe: withFilter(() => PubSubContainer.pubSub.asyncIterator<IMessageUpdatedPayload>("MESSAGE_UPDATED"), async (payload: IMessageUpdatedPayload, args: IMessageUpdatedArgs, context: Context) => {
     if(payload.channel._id == args.channelId) {
@@ -113,10 +155,27 @@ const messageUpdated = {
   })
 };
 
+/**
+ * Arguments for {@link message}.
+ */
 interface IMessageArgs {
+  /* The ID of the message to retreive. */
   id: string
 }
 
+/**
+ * Gets a message.
+ * 
+ * @param root Unused.
+ * @param args The arguments to be used to get the message. See {@link IMessageArgs}.
+ * @param context The current user context for the request.
+ * 
+ * @returns A promise that resolves to the message.
+ * 
+ * @throws Throws an error if the message could not be found.
+ * @throws Throws an error if the user does not have read permission on the planet.
+ * @throws Throws an error if the user is not a member of the direct message channel.
+ */
 async function message(root: undefined, args: IMessageArgs, context: Context): Promise<IMessage> {
   const message = await Messages.findOne({_id: args.id});
   if(message != undefined) {
@@ -139,13 +198,37 @@ async function message(root: undefined, args: IMessageArgs, context: Context): P
   }
 }
 
+/**
+ * Arguments for {@link sendMessage}.
+ */
 interface ISendMessageArgs {
+  /* The ID of the channel to send the message to. */
   channelId: string,
+  /* The message to send. */
   content: string,
+  /* The IDs of the attachments to send. */
   attachments?: [string],
+  /* The message to reply to. */
   replyTo?: string,
 }
 
+/**
+ * Sends a message.
+ * 
+ * @param root Unused.
+ * @param args The arguments to be used to send the message. See {@link ISendMessageArgs}.
+ * @param context The current user context for the request.
+ * 
+ * @returns A promise that resolves to the message.
+ * 
+ * @throws Throws an error if the user does not have public write permission on the planet.
+ * @throws Throws an error if the user is not a member of the direct message channel.
+ * @throws Throws an error if the message has more than 5 attachments.
+ * @throws Throws an error if the message is longer than 2000 characters.
+ * @throws Throws an error if the replied message is invalid.
+ * @throws Throws an error if the replied message is not in the same channel as the message.
+ * @throws Throws an error if an attachment does not exist.
+ */
 async function sendMessage(root: undefined, args: ISendMessageArgs, context: Context): Promise<IMessage> {
   const channel = await Channels.findOne({_id: args.channelId});
   if(channel != undefined) {
@@ -177,6 +260,9 @@ async function sendMessage(root: undefined, args: ISendMessageArgs, context: Con
         const message = await Messages.findOne({_id: args.replyTo});
         if(!message) {
           throw new Error("The message you are trying to reply to does not exist.");
+        }
+        if(message.channel != channel._id) {
+          throw new Error("The message you are trying to reply to is not in the same channel.");
         }
       }
       
@@ -221,11 +307,28 @@ async function sendMessage(root: undefined, args: ISendMessageArgs, context: Con
   }
 }
 
+/**
+ * Arguments for {@link editMessage}.
+ */
 interface IEditMessageArgs {
+  /* The ID of the message to edit. */
   messageId: string,
+  /* The new content of the message. */
   content: string
 }
 
+/**
+ * Edits a message.
+ * 
+ * @param root Unused.
+ * @param args The arguments to be used to edit the message. See {@link IEditMessageArgs}.
+ * @param context The current user context for the request.
+ * 
+ * @returns A promise that resolves to the message.
+ * 
+ * @throws Throws an error if the user does not have full write permission on the planet and does not own the message.
+ * @throws Throws an error if the message is not found.
+ */
 async function editMessage(root: undefined, args: IEditMessageArgs, context: Context): Promise<IMessage> {
   const message = await Messages.findOne({_id: args.messageId});
   if(message) {
@@ -257,11 +360,26 @@ async function editMessage(root: undefined, args: IEditMessageArgs, context: Con
   }
 }
 
+/**
+ * Arguments for {@link deleteMessage} and {@link pinMessage}.
+ */
 interface ISimpleMessageArgs {
+  /* The ID of the message to pin or delete. */
   messageId: string
 }
 
-
+/**
+ * Deletes a message.
+ * 
+ * @param root Unused.
+ * @param args The arguments to be used to delete the message. See {@link ISimpleMessageArgs}.
+ * @param context The current user context for the request.
+ * 
+ * @returns A promise that resolves to true if the message was deleted.
+ * 
+ * @throws Throws an error if the user does not have full write permission on the planet and does not own the message.
+ * @throws Throws an error if the message is not found.
+ */
 async function deleteMessage(root: undefined, args: ISimpleMessageArgs, context: Context): Promise<boolean> {
   const message = await Messages.findOne({_id: args.messageId});
   if(message) {
@@ -292,6 +410,19 @@ async function deleteMessage(root: undefined, args: ISimpleMessageArgs, context:
   }
 }
 
+/**
+ * Pins a message.
+ * 
+ * @param root Unused.
+ * @param args The arguments to be used to pin the message. See {@link ISimpleMessageArgs}.
+ * @param context The current user context for the request.
+ * 
+ * @returns A promise that resolves to the message.
+ * 
+ * @throws Throws an error if the user does not have full write permission on the planet.
+ * @throws Throws an error if the user is not a member of the direct message channel.
+ * @throws Throws an error if the message is not found.
+ */
 async function pinMessage(root: undefined, args: ISimpleMessageArgs, context: Context): Promise<IMessage> {
   const message = await Messages.findOne({_id: args.messageId});
   if(message) {
@@ -321,12 +452,30 @@ async function pinMessage(root: undefined, args: ISimpleMessageArgs, context: Co
   }
 }
 
-// react to a message
+/**
+ * Arguments for {@link reactToMessage}.
+ */
 interface IReactToMessageArgs {
+  /* The ID of the message to react to. */
   messageId: string,
+  /* The reaction to add. */
   emojiId: string
 }
 
+/**
+ * Reacts to a message.
+ * 
+ * @param root Unused.
+ * @param args The arguments to be used to react to the message. See {@link IReactToMessageArgs}.
+ * @param context The current user context for the request.
+ * 
+ * @returns A promise that resolves to the message.
+ * 
+ * @throws Throws an error if the user does not have public write permission on the planet.
+ * @throws Throws an error if the user is not a member of the direct message channel.
+ * @throws Throws an error if the message is not found.
+ * @throws Throws an error if the emoji is not found.
+ */
 async function reactToMessage(root: undefined, args: IReactToMessageArgs, context: Context): Promise<IMessage> {
   const message = await Messages.findOne({_id: args.messageId});
   if(message) {
