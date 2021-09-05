@@ -1,3 +1,4 @@
+import { FilterQuery } from "mongoose";
 import ForumPosts, { IForumPost } from "../../../database/components/forum/ForumPosts";
 import Forums, { IForum } from "../../../database/components/forum/Forums";
 import { IPlanet } from "../../../database/Planets";
@@ -19,27 +20,6 @@ interface IPostResolverArgs {
   sortMethod?: string,
   /** The required post tag. */
   tag?: string
-}
-
-/**
- * Type for {@link fieldResolvers.posts}'s find query.
- */
-interface IForumPostResolverFindObject {
-  createdAt?: {
-    $lt?: Date,
-    $gt?: Date,
-  },
-  updatedAt?: {
-    $lt?: Date,
-    $gt?: Date,
-  },
-  replyCount?: {
-    $lt?: number,
-    $gt?: number,
-  },
-  componentId: string,
-  stickied: boolean,
-  tags?: string[],
 }
 
 /**
@@ -77,7 +57,7 @@ const fieldResolvers = {
       throw new Error(`Invalid sort method '${args.sortMethod}'`);
     }
 
-    const findObject: IForumPostResolverFindObject = {componentId: root._id, stickied: false};
+    const findObject: FilterQuery<IForumPost> = {componentId: root._id, stickied: false};
 
     if(args.tag) {
       findObject.tags = [args.tag];

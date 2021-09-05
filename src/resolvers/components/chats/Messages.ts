@@ -1,4 +1,4 @@
-import { withFilter } from "apollo-server-express";
+import { withFilter } from "graphql-subscriptions";
 import Attachments, { IAttachment } from "../../../database/Attachments";
 import Channels, { IChannel } from "../../../database/components/chat/Channels";
 import Messages, { IMessage } from "../../../database/components/chat/Messages";

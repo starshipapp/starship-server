@@ -1,4 +1,4 @@
-import { withFilter } from "apollo-server-express";
+import { withFilter } from "graphql-subscriptions";
 import Context from "../util/Context";
 import Notifications, { INotification } from "../database/Notifications";
 import { IUser } from "../database/Users";
