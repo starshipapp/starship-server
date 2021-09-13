@@ -17,6 +17,8 @@ async function getMentions(text: string, itemUser: IUser, itemDescriptor: string
   const matches = /(?:@)\b[-.\w]+\b/gu.exec(text);
   const originalUsers: string[] = [];
 
+  if(!matches || matches.length == 0) return [];
+
   matches.map((value) => originalUsers.push(value.replace("@", "")));
 
   const usersRetrieved = await Users.find({username: {$in: originalUsers}});
