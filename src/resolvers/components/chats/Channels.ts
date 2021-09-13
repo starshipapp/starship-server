@@ -243,7 +243,7 @@ async function setChannelTopic(root: undefined, args: ISetChannelTopicArgs, cont
   const channel = await Channels.findOne({_id: args.channelId});
   if(channel != undefined && channel.type != ChannelTypes.directMessage) {
     if(await permissions.checkFullWritePermission(context.user.id, channel.planet)) {
-      return Channels.findOneAndUpdate({_id: args.channelId}, {$set: {name: args.topic}}, {new: true});
+      return Channels.findOneAndUpdate({_id: args.channelId}, {$set: {topic: args.topic}}, {new: true});
     } else {
       throw new Error("Not found.");
     }
