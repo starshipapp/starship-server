@@ -71,7 +71,8 @@ const messageSent = {
       ) {
         permission = true;
       }
-      return permission;
+      console.log(permission);
+      return true;
     }
     return false;
   })
@@ -236,7 +237,7 @@ async function sendMessage(root: undefined, args: ISendMessageArgs, context: Con
       // permission checks
       const user = await Users.findOne({_id: context.user.id});
       if(channel.planet) {
-        if(!(await permissions.checkPublicWritePermission(channel.planet, context.user.id))) {
+        if(!(await permissions.checkPublicWritePermission(user, channel.planet))) {
           throw new Error("Not found.");
         }
       } else {
@@ -254,6 +255,9 @@ async function sendMessage(root: undefined, args: ISendMessageArgs, context: Con
         if(attachments.length !== args.attachments.length) {
           throw new Error("One or more attachments is missing.");
         }
+      }
+      if(!args.content.replace(/\s/g, '').length) {
+        throw new Error("No content in messsage.");
       }
 
       if(args.replyTo) {
@@ -274,7 +278,7 @@ async function sendMessage(root: undefined, args: ISendMessageArgs, context: Con
       const url = channel.planet ? `/planet/${channel.planet}/${channel.componentId}/${channel._id}` : `/messages/${channel._id}`;
       const mentionString = `[${channel.name}](${process.env.SITE_URL}/${url})`;
       const planet = channel.planet ? await Planets.findOne({_id: channel.planet}) : null; 
-      const mentions = getMentions(args.content, user, mentionString, planet); 
+      const mentions = await getMentions(args.content, user, mentionString, planet); 
 
       // create message
       const message = new Messages({

@@ -59,7 +59,7 @@ const fieldResolvers = {
 
     return {
       messages: documents,
-      cursor: String(documents[0].createdAt)
+      cursor: String(documents[0]?.createdAt ?? 0)
     };
   },
   /**
@@ -83,7 +83,7 @@ const fieldResolvers = {
 
     return {
       messages: documents,
-      cursor: String(documents[documents.length - 1].createdAt)
+      cursor: String(documents.length > 0 ? documents[documents.length - 1].createdAt : Date.now())
     };
   },
   // TODO: implement unread support
