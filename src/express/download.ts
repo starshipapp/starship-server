@@ -46,7 +46,6 @@ async function downloadFolder(req: Request, res: Response) {
     return;
   }
 
-  console.log("made it to download");
   // actually download the files
   const archive = archiver("zip", {store: true});
   
@@ -54,10 +53,6 @@ async function downloadFolder(req: Request, res: Response) {
     res.status(500).send("500 Internal Server Error");
     return;
   }); 
-
-  archive.on('progress', function(entries) {
-    console.log(entries);
-  });
 
   res.type("application/zip");
   res.attachment(ticket.name ? ticket.name + ".zip" : "download.zip");
