@@ -155,6 +155,7 @@ const resolvers = {
     renameObject: FileObjects.renameObject,
     moveObject: FileObjects.moveObject,
     cancelUpload: FileObjects.cancelUpload,
+    createMultiObjectDownloadTicket: FileObjects.createMultiObjectDownloadTicket,
     // AWS
     uploadFileObject: AWS.uploadFileObject,
     deleteFileObject: AWS.deleteFileObject,

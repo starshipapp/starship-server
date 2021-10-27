@@ -307,8 +307,6 @@ async function forumPostReact(root: undefined, args: IForumPostReactArgs, contex
             if(reaction.reactors.length === 1) {
               return ForumPosts.findOneAndUpdate({_id: args.postId}, {$pull: {reactions: reaction}}, {new: true});
             } else {
-              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-              // @ts-ignore
               return ForumPosts.findOneAndUpdate({_id: args.postId, reactions: {$elemMatch: {emoji: args.emojiId}}}, {$pull: {"reactions.$.reactors": context.user.id}}, {new: true});
             }
           } else {

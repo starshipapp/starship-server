@@ -213,13 +213,9 @@ async function forumReplyReact(root: undefined, args: IForumReplyReactArgs, cont
             if(reaction.reactors.length === 1) {
               return ForumReplies.findOneAndUpdate({_id: args.replyId}, {$pull: {reactions: reaction}}, {new: true});
             } else {
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-              // @ts-ignore
               return ForumReplies.findOneAndUpdate({_id: args.replyId, reactions: {$elemMatch: {emoji: args.emojiId}}}, {$pull: {"reactions.$.reactors": context.user.id}}, {new: true});
             }
           } else {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             return ForumReplies.findOneAndUpdate({_id: args.replyId, reactions: {$elemMatch: {emoji: args.emojiId}}}, {$push: {"reactions.$.reactors": context.user.id}}, {new: true});
           }
         } else {

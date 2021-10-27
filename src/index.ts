@@ -26,6 +26,7 @@ import PubSubContainer from "./util/PubSubContainer";
 import Users from "./database/Users";
 import { v4 as uuidv4 } from 'uuid';
 import SysInfo from "./util/SysInfo";
+import download from "./express/download";
 
 SysInfo.generateSysInfo();
 
@@ -70,7 +71,7 @@ connect(url, {
     }
 
     let uuid = uuidv4();
-
+ 
     // setup session stuff
     if(!fs.existsSync("./uuid.txt")) {
       Loggers.mainLogger.info(`First startup, new UUID is ${uuid}`);
@@ -137,9 +138,11 @@ connect(url, {
 
     await server.start();
 
+    app.use('/files', download);
+
     server.applyMiddleware({ app });
 
-    app.get('/', (req, res) => {
+    app.get('/', (_, res) => {
       res.json(SysInfo.sysInfo);
     });
 
@@ -155,7 +158,7 @@ connect(url, {
       // Providing `onConnect` is the `SubscriptionServer` equivalent to the
       // `context` function in `ApolloServer`. Please [see the docs](https://github.com/apollographql/subscriptions-transport-ws#constructoroptions-socketoptions--socketserver)
       // for more information on this hook.
-      onConnect: async (connectionParams, ws) => {
+      onConnect: async (connectionParams: { [x: string]: string; }, ws: { onclose: any; }) => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         const { onclose } = ws;
         
@@ -174,7 +177,7 @@ connect(url, {
               // TODO: if apollo makes an API to do this correctly then we should do it correctly
               // they have disconnected, decrement sessionCount
               // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-              ws.onclose = async (e) => {
+              ws.onclose = async (e: any) => {
                 // eslint-disable-next-line
                 // remove one single element from the array of sessions
                 await Users.findOneAndUpdate({_id: user.id, sessions: uuid}, {"$unset": {"sessions.$": ""}}, {new: true});

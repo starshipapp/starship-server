@@ -502,8 +502,6 @@ async function reactToMessage(root: undefined, args: IReactToMessageArgs, contex
             if(reaction.reactors.length === 1) {
               returnMessage = await Messages.findOneAndUpdate({_id: args.messageId}, {$pull: {reactions: reaction}}, {new: true});
             } else {
-              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-              // @ts-ignore
               returnMessage = await Messages.findOneAndUpdate({_id: args.messageId, reactions: {$elemMatch: {emoji: args.emojiId}}}, {$pull: {"reactions.$.reactors": context.user.id}}, {new: true});
             }
           } else {

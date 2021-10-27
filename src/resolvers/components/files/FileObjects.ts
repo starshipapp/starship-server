@@ -1,5 +1,6 @@
 import FileObjects, { IFileObject } from "../../../database/components/files/FileObjects";
 import Files, { IFiles } from "../../../database/components/files/Files";
+import MultiObjectTickets from "../../../database/components/files/MultiObjectTickets";
 import { IPlanet } from "../../../database/Planets";
 import { IUser } from "../../../database/Users";
 import Context from "../../../util/Context";
@@ -391,4 +392,55 @@ async function cancelUpload(root: undefined, args: ICancelUploadArgs, context: C
   }
 }
 
-export default {fieldResolvers, cancelUpload, searchForFiles, fileObjectArray, fileObject, files, folders, createFolder, renameObject, moveObject};
+/**
+ * Arguments for {@link createMultiObjectDownloadTicket}.
+ */
+interface ICreateMultiObjectDownloadTicketArgs {
+  /** The IDs of the file objects to create a ticket for. */
+  objectIds: string[]
+  /** The name of the ZIP. */
+  zipName: string
+}
+
+/**
+ * Generates a multi-object download ticket to be used with the HTTP endpoint.
+ * 
+ * @param root Unused.
+ * @param args The arguments to be used to create the ticket. See {@link ICreateMultiObjectDownloadTicketArgs}
+ * @param context The current user context for the request.
+ * 
+ * @returns A promise that resolves to the token's ID.
+ */
+async function createMultiObjectDownloadTicket(root: undefined, args: ICreateMultiObjectDownloadTicketArgs, context: Context): Promise<string> {
+  if(context.user) {
+    if(args.objectIds.length > 100) {
+      throw new Error("Cannot retrieve more than 100 objects at once.");
+    }
+
+    const objects = await FileObjects.find({_id: {$in: args.objectIds}});
+    if(objects.length !== args.objectIds.length || !objects[0]) {
+      throw new Error("Not found.");
+    } else {
+      if(objects.filter((file) => file.componentId == objects[0].componentId).length == objects.length) {
+        if(await permissions.checkReadPermission(context.user.id, objects[0].planet)) {
+          const ticket = new MultiObjectTickets({
+            name: args.zipName,
+            objects: args.objectIds
+          });
+
+          await ticket.save();
+
+          return ticket._id;
+        } else {
+          throw new Error("Not found.");
+        }
+      } else {
+        throw new Error("Not found.");
+      }
+    }
+  } else {
+    throw new Error("Not logged in.");
+  }
+}
+
+export default {fieldResolvers, createMultiObjectDownloadTicket, cancelUpload, searchForFiles, fileObjectArray, fileObject, files, folders, createFolder, renameObject, moveObject};
