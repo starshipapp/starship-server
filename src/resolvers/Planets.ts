@@ -565,7 +565,7 @@ interface IDeletePlanetArgs {
 async function deletePlanet(root: undefined, args: IDeletePlanetArgs, context: Context): Promise<boolean> {
   if(context.user && await permissions.checkFullWritePermission(context.user.id, args.planetId)) {
     const planet = await Planets.findOneAndDelete({_id: args.planetId});
-    await Users.findOneAndUpdate({following: args.planetId}, {$pull: {following: args.planetId}});
+    await Users.updateMany({following: args.planetId}, {$pull: {following: args.planetId}});
     if(planet) {
       for(const component of planet.components) {
         void ComponentIndex.deleteComponent(component.type, component.componentId);
