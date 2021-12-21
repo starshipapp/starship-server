@@ -63,7 +63,6 @@ async function downloadFolder(req: Request, res: Response) {
     if(file.key) {
       // eslint-disable-next-line @typescript-eslint/naming-convention
       const stream = s3.getObject({Bucket: process.env.BUCKET_NAME, Key: file.key}).createReadStream();
-      console.log("stream created");
       archive.append(stream, {name: file.name});
     }
   }
@@ -73,7 +72,6 @@ async function downloadFolder(req: Request, res: Response) {
 
 download.get("/download/:ticket", (req, res) => {
   downloadFolder(req, res).catch((e) => {
-    console.log("errored");
     console.log(e);
   });
 });

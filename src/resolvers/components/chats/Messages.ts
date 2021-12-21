@@ -71,7 +71,6 @@ const messageSent = {
       ) {
         permission = true;
       }
-      console.log(permission);
       return true;
     }
     return false;
@@ -337,12 +336,11 @@ async function editMessage(root: undefined, args: IEditMessageArgs, context: Con
   const message = await Messages.findOne({_id: args.messageId});
   if(message) {
 
-    let planet: (IPlanet | null) = null;
     const channel = await Channels.findOne({_id: message.channel});
+    const planet: (IPlanet | null) = channel.planet ? await Planets.findOne({_id: channel.planet}) : null;
+    
     if(message.owner != context.user.id) {
       if(channel.planet) {
-        planet = await Planets.findOne({_id: channel.planet});
-
         if(!(await permissions.checkFullWritePermission(context.user.id, planet))) {
           throw new Error("Not found.");
         }
@@ -387,28 +385,29 @@ interface ISimpleMessageArgs {
 async function deleteMessage(root: undefined, args: ISimpleMessageArgs, context: Context): Promise<boolean> {
   const message = await Messages.findOne({_id: args.messageId});
   if(message) {
-    if(message.owner != context.user.id) {
-      const channel = await Channels.findOne({_id: message.channel});
-      let planet: (IPlanet | null) = null;
-      if(channel.planet) {
-        planet = await Planets.findOne({_id: channel.planet});
+    const channel = await Channels.findOne({_id: message.channel});
+    const planet: (IPlanet | null) = channel.planet ? await Planets.findOne({_id: channel.planet}) : null;
 
+    if(message.owner != context.user.id) {
+      if(channel.planet) {
         if(!(await permissions.checkFullWritePermission(context.user.id, planet))) {
           throw new Error("Not found.");
         }
       } else {
         throw new Error("Not found.");
       }
-      await Messages.deleteOne({_id: args.messageId});
-
-      await PubSubContainer.pubSub.publish("MESSAGE_DELETED", {
-        messageDeleted: message,
-        planet,
-        channel
-      });
-
-      return true;
     }
+
+    await Messages.findOneAndDelete({_id: args.messageId});
+
+    await PubSubContainer.pubSub.publish("MESSAGE_REMOVED", {
+      messageRemoved: message,
+      planet,
+      channel
+    });
+
+    return true;
+
   } else {
     throw new Error("Not found.");
   }
@@ -431,10 +430,9 @@ async function pinMessage(root: undefined, args: ISimpleMessageArgs, context: Co
   const message = await Messages.findOne({_id: args.messageId});
   if(message) {
     const channel = await Channels.findOne({_id: message.channel});
-    let planet: (IPlanet | null) = null;
+    const planet: (IPlanet | null) = channel.planet ? await Planets.findOne({_id: channel.planet}) : null;
+    
     if(channel.planet) {
-      planet = await Planets.findOne({_id: channel.planet});
-
       if(!(await permissions.checkFullWritePermission(context.user.id, planet))) {
         throw new Error("Not found.");
       }

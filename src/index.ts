@@ -138,9 +138,9 @@ connect(url, {
 
     await server.start();
 
-    app.use('/files', download);
-
     server.applyMiddleware({ app });
+
+    app.use('/files', download);
 
     app.get('/', (_, res) => {
       res.json(SysInfo.sysInfo);
@@ -161,7 +161,6 @@ connect(url, {
       onConnect: async (connectionParams: { [x: string]: string; }, ws: { onclose: any; }) => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         const { onclose } = ws;
-        
         // eslint-disable-next-line
         if (connectionParams["Authorization"] !== undefined && connectionParams["Authorization"].includes("Bearer")) {
           // eslint-disable-next-line

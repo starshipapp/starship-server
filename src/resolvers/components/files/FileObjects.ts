@@ -238,22 +238,33 @@ interface IMoveObjectArgs {
 async function moveObject(root: undefined, args: IMoveObjectArgs, context: Context): Promise<IFileObject[]> {
   const objects = await FileObjects.find({_id: {$in: args.objectIds}});
   const newParent = await FileObjects.findOne({_id: args.parent});
-  if(objects && objects[0] && objects.length == objects.length)  {
+
+  // Ensure we have the correct data 
+  if(objects && objects[0] && objects.length == args.objectIds.length) {
+    // Check permissions
     if(context.user && await permissions.checkFullWritePermission(context.user.id, objects[0].planet)) {
+      // Ensure we are moving into a folder
       if((newParent && newParent.type == "folder") || args.parent == "root") {
+        // Make sure we are not moving across file components
         if((objects[0].componentId == newParent?.componentId || args.parent == "root") && objects.filter((file) => file.componentId == objects[0].componentId).length == objects.length) {
-          if(!args.objectIds.includes(newParent._id)) {
+          // Make sure we are not moving into a loop
+          if(args.parent == "root" || !args.objectIds.includes(newParent._id)) {
             const updatedObjects: IFileObject[] = [];
             for(const object of objects) {
               if(object.type == "file") {
+                // Update the file path
                 const newPath = newParent ? newParent.path.concat([newParent._id]) : ["root"];
                 const newObjectParent = newParent ? newParent._id : "root";
                 updatedObjects.push(await FileObjects.findOneAndUpdate({_id: object._id}, {$set: {path: newPath as [string], parent: newObjectParent}}, {new: true}));
               } else if(object.type == "folder") {
+                // Get the new path
                 const newPath = newParent ? newParent.path.concat([newParent._id]) : ["root"];
                 const newObjectParent = newParent ? newParent._id : "root";
+                // Pull the old path objects
                 await FileObjects.updateMany({path: object._id}, {$pull: {path: {$in: object.path}}}, {multi: true});
+                // Push in the new path
                 await FileObjects.updateMany({path: object._id}, {$push: {path: {$each: newPath, $position: 0}}}, {multi: true});
+                // Update the parent
                 updatedObjects.push(await FileObjects.findOneAndUpdate({_id: object._id}, {$set: {path: newPath as [string], parent: newObjectParent}}, {new: true}));
               }
             }
