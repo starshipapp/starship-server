@@ -141,7 +141,6 @@ interface IMessageUpdatedArgs {
  */
 const messageUpdated = {
   subscribe: withFilter(() => PubSubContainer.pubSub.asyncIterator<IMessageUpdatedPayload>("MESSAGE_UPDATED"), async (payload: IMessageUpdatedPayload, args: IMessageUpdatedArgs, context: Context) => {
-    console.log("updated", payload.channel._id, args.channelId);
     if(payload.channel._id == args.channelId) {
       let permission = false;
       if((payload.planet && await permissions.checkReadPermission(context.user?.id ?? null, payload.planet)) 
@@ -150,7 +149,6 @@ const messageUpdated = {
       ) {
         permission = true;
       }
-      console.log("permission", permission, context.user?.id, payload.planet);
       return permission;
     }
     return false;
