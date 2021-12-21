@@ -71,7 +71,7 @@ const messageSent = {
       ) {
         permission = true;
       }
-      return true;
+      return permission;
     }
     return false;
   })
@@ -141,6 +141,7 @@ interface IMessageUpdatedArgs {
  */
 const messageUpdated = {
   subscribe: withFilter(() => PubSubContainer.pubSub.asyncIterator<IMessageUpdatedPayload>("MESSAGE_UPDATED"), async (payload: IMessageUpdatedPayload, args: IMessageUpdatedArgs, context: Context) => {
+    console.log("updated", payload.channel._id, args.channelId);
     if(payload.channel._id == args.channelId) {
       let permission = false;
       if((payload.planet && await permissions.checkReadPermission(context.user?.id ?? null, payload.planet)) 
@@ -149,6 +150,7 @@ const messageUpdated = {
       ) {
         permission = true;
       }
+      console.log("permission", permission, context.user?.id, payload.planet);
       return permission;
     }
     return false;
@@ -348,7 +350,7 @@ async function editMessage(root: undefined, args: IEditMessageArgs, context: Con
         throw new Error("Not found.");
       }
     }
-    const returnMessage = Messages.findOneAndUpdate({_id: args.messageId}, {$set: {content: args.content, edited: true}}, {new: true});
+    const returnMessage = await Messages.findOneAndUpdate({_id: args.messageId}, {$set: {content: args.content, edited: true}}, {new: true});
 
     await PubSubContainer.pubSub.publish("MESSAGE_UPDATED", {
       messageUpdated: returnMessage,
