@@ -1,5 +1,8 @@
 import {Logger, getLogger} from "log4js";
 
+/**
+ * Object storing the loggers for global use.
+ */
 export default class Loggers {
   static mainLogger: Logger = getLogger("main");
   static dbLogger: Logger = getLogger("database");

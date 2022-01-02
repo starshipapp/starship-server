@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/unbound-method */
 /* eslint-disable @typescript-eslint/naming-convention */
 import Users from "./Users";
 import Reports from "./Reports";
@@ -12,6 +13,12 @@ import ForumReplies from "./components/forums/ForumReplies";
 import Files from "./components/files/Files";
 import FileObjects from "./components/files/FileObjects";
 import AWS from "./AWS";
+import Notifications from "./Notifications";
+import SysInfo from "../util/SysInfo";
+import CustomEmojis from "./CustomEmojis";
+import Chats from "./components/chats/Chats";
+import Channels from "./components/chats/Channels";
+import Messages from "./components/chats/Messages";
 
 const resolvers = {
   User: Users.fieldResolvers,
@@ -26,6 +33,11 @@ const resolvers = {
   ForumReply: ForumReplies.fieldResolvers,
   FileComponent: Files.fieldResolvers,
   FileObject: FileObjects.fieldResolvers,
+  Notification: Notifications.fieldResolvers,
+  CustomEmoji: CustomEmojis.fieldResolvers,
+  Chat: Chats.fieldResolvers,
+  Channel: Channels.fieldResolvers,
+  Message: Messages.fieldResolvers,
   Query: {
     // Users
     user: Users.user,
@@ -62,7 +74,24 @@ const resolvers = {
     // AWS
     downloadFileObject: AWS.downloadFileObject,
     downloadFolderObject: AWS.downloadFolderObject,
-    getObjectPreview: AWS.getObjectPreview
+    getObjectPreview: AWS.getObjectPreview,
+    // Notifications
+    notifications: Notifications.notifications,
+    notification: Notifications.notification,
+    // Custom Emojis
+    customEmoji: CustomEmojis.customEmoji,
+    // SysInfo
+    sysInfo: SysInfo.querySysInfo,
+    // Chat
+    chat: Chats.chat,
+    channel: Channels.channel,
+    message: Messages.message
+  },
+  Subscription: {
+    notificationRecieved: Notifications.notificationRecieved,
+    messageSent: Messages.messageSent,
+    messageRemoved: Messages.messageRemoved,
+    messageUpdated: Messages.messageUpdated
   },
   Mutation: {
     // Users
@@ -77,6 +106,9 @@ const resolvers = {
     confirmTFA: Users.confirmTFA,
     disableTFA: Users.disableTFA,
     finalizeAuthorization: Users.finalizeAuthorization,
+    toggleBlockUser: Users.toggleBlockUser,
+    updateProfileBio: Users.updateProfileBio,
+    setNotificationSetting: Users.setNotificationSetting,
     // Reports
     insertReport: Reports.insertReport,
     solveReport: Reports.solveReport,
@@ -123,13 +155,32 @@ const resolvers = {
     renameObject: FileObjects.renameObject,
     moveObject: FileObjects.moveObject,
     cancelUpload: FileObjects.cancelUpload,
+    createMultiObjectDownloadTicket: FileObjects.createMultiObjectDownloadTicket,
     // AWS
     uploadFileObject: AWS.uploadFileObject,
     deleteFileObject: AWS.deleteFileObject,
     uploadProfilePicture: AWS.uploadProfilePicture,
     uploadMarkdownImage: AWS.uploadMarkdownImage,
     completeUpload: AWS.completeUpload,
-    copyFile: AWS.copyFile
+    copyFile: AWS.copyFile,
+    uploadProfileBanner: AWS.uploadProfileBanner,
+    uploadCustomEmoji: AWS.uploadCustomEmoji,
+    // Notifications
+    clearNotification: Notifications.clearNotification,
+    clearAllNotifications: Notifications.clearAllNotifications,
+    markAllRead: Notifications.markAllRead,
+    // Custom Emojis
+    deleteCustomEmoji: CustomEmojis.deleteCustomEmoji,
+    // Chat
+    createChannel: Channels.createChannel,
+    renameChannel: Channels.renameChannel,
+    setChannelTopic: Channels.setChannelTopic,
+    deleteChannel: Channels.deleteChannel,
+    reactToMessage: Messages.reactToMessage,
+    pinMessage: Messages.pinMessage,
+    deleteMessage: Messages.deleteMessage,
+    editMessage: Messages.editMessage,
+    sendMessage: Messages.sendMessage
   }
 };
 

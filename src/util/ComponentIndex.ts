@@ -1,3 +1,6 @@
+import Channels from "../database/components/chat/Channels";
+import Chats, { IChat } from "../database/components/chat/Chats";
+import Messages from "../database/components/chat/Messages";
 import Files, { IFiles } from "../database/components/files/Files";
 import ForumPosts from "../database/components/forum/ForumPosts";
 import ForumReplies from "../database/components/forum/ForumReplies";
@@ -8,9 +11,13 @@ import WikiPages from "../database/components/wiki/WikiPages";
 import Wikis, { IWiki } from "../database/components/wiki/Wikis";
 import deleteFileComponent from "./deleteFileComponent";
 
+/**
+ * Class providing the index of all components, as well as the ability to delete and create them.
+ */
 export default class ComponentIndex {
-  public static availableComponents = ["page", "wiki", "files", "forum"];
+  public static availableComponents = ["page", "wiki", "files", "forum", "chat"];
 
+  // Object of functions for creating components
   private static creationFunctions = {
     page: async (planetId: string, userId: string): Promise<IPage> => {
       const page = new Pages({
@@ -57,27 +64,56 @@ export default class ComponentIndex {
       const result = await forum.save().catch((e) => {console.error(e);}) as unknown as IForum;
       return result;
     },
+    chat: async (planetId: string, userId: string): Promise<IChat> => {
+      const chat = new Chats({
+        createdAt: new Date(),
+        owner: userId,
+        planet: planetId,
+        updatedAt: new Date(),
+      });
+
+      const result = await chat.save().catch((e) => {console.error(e);}) as unknown as IChat;
+      return result;
+    },
   }
 
+  // Object of functions for deleting components
   private static deletionFunctions = {
     wiki: async (componentId: string) => {
-      await Wikis.remove({_id: componentId});
-      await WikiPages.remove({wikiId: componentId});
+      await Wikis.deleteOne({_id: componentId});
+      await WikiPages.deleteMany({wikiId: componentId});
     },
     files: async (componentId: string) => {
-      // await Files.remove({_id: componentId});
+      // This is more complex, so the logic for this is
+      // in the deleteFileComponent function in another file.
       await deleteFileComponent(componentId);
     },
     page: async (componentId: string) => {
-      await Pages.remove({_id: componentId});
+      await Pages.deleteOne({_id: componentId});
     },
     forum: async (componentId: string) => {
-      await Forums.remove({_id: componentId});
-      await ForumPosts.remove({componentId});
-      await ForumReplies.remove({componentId});
+      await Forums.deleteOne({_id: componentId});
+      await ForumPosts.deleteMany({componentId});
+      await ForumReplies.deleteMany({componentId});
+    },
+    chat: async(componentId: string) => {
+      await Chats.deleteOne({_id: componentId});
+      const channels = await Channels.find({componentId});
+      const channelIds = channels.map((value) => value._id);
+      await Messages.deleteMany({channel: {$in: channelIds}});
+      await Channels.deleteMany({componentId});
     }
   }
 
+  /**
+   * Creates a new component and returns it.
+   * 
+   * @param type - The type of component to create.
+   * @param planetId - The id of the planet to create the component on.
+   * @param userId - The id of the user creating the component.
+   *
+   * @returns A promise that resolves to the created component.
+   */
   public static createComponent(type: string, planetId: string, userId: string): Promise<IComponent> {
     if(this.availableComponents.includes(type)) {
       // we know what the type is even though compiler doesn't, disable no-unsafe-call
@@ -88,6 +124,14 @@ export default class ComponentIndex {
     }
   }
 
+  /**
+   * Deletes a component.
+   * 
+   * @param type - The type of component to delete.
+   * @param componentId - The id of the component to delete.
+   * 
+   * @returns A promise that resolves when the component has been deleted.
+   */
   public static deleteComponent(type: string, componentId: string): Promise<void> {
     if(this.availableComponents.includes(type)) {
       // we know what the type is even though compiler doesn't, disable no-unsafe-call

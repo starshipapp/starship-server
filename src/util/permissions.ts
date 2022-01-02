@@ -1,37 +1,64 @@
-import Planets from "../database/Planets";
+import Planets, { IPlanet } from "../database/Planets";
 import Users, { IUser } from "../database/Users";
+/*
+ * Permissions in Starship currently use the following permission system:
+ * read: Allows a user to view the planet.
+ *  - If the planet is private, the user must be a member of the planet or the planet owner.
+ *  - If the planet is public, anyone can view the planet.
+ * 
+ * publicWrite: Allows a user to post in forums & react to, but not send chat messages.
+ *  - If the planet is private, the user must be a member of the planet or the planet owner.
+ *  - If the planet is public, the user must not be banned in any way.
+ * 
+ * fullWrite: Allows a user to edit the planet.
+ *  - The user must be a member of the planet or the planet owner.
+ * 
+ * admin: Allows a user to do anything.
+ *  - The user must be an global administrator.
+ */
 
-async function checkReadPermission(userId: string | undefined, planetId: string): Promise<boolean> {
-  if (planetId) {
-    const planet = await Planets.findOne({_id: planetId});
+/**
+ * Checks if the user has read permission on the foundPlanet.
+ * 
+ * @param user The user to check. Takes an ID string, user object or undefined.
+ * @param planet The planet to check. Takes an ID string or planet object.
+ * 
+ * @returns A promise that resolves to true if the user has read permission, false otherwise.
+ * 
+ * @throws Throws an error if the planet is not found.
+ * @throws Throws an error if the user is not found, and the planet is private.
+ */
+async function checkReadPermission(user: string | IUser | undefined, planet: string | IPlanet): Promise<boolean> {
+  if (planet) {
+    const foundPlanet = typeof(planet) == "string" ? await Planets.findOne({_id: planet}) : planet;
 
-    if(planet == undefined) {
+    if(foundPlanet == undefined) {
       throw new Error("Not found.");
     }
 
-    if(!planet.private) {
+    if(!foundPlanet.private) {
       return true;
     }
 
-    if(!userId) {
+    if(!user) {
       return false;
     }
 
-    const user = await Users.findOne({_id: userId});
+    const foundUser = typeof(user) == "string" ? await Users.findOne({_id: user}) : user;
 
-    if(user == undefined) {
+    if(foundUser == undefined) {
       throw new Error("Not found.");
     }
 
-    if(user && user.admin) {
+    if(foundUser && foundUser.admin) {
       return true;
     }
 
-    if(planet.members && planet.members.includes(userId)) {
+    if(foundPlanet.members && foundPlanet.members.includes(foundUser._id)) {
       return true;
     }
 
-    if(planet.owner == userId) {
+    if(foundPlanet.owner == foundUser._id) {
       return true;
     }
 
@@ -41,41 +68,52 @@ async function checkReadPermission(userId: string | undefined, planetId: string)
   }
 }
 
-async function checkPublicWritePermission(userId: string, planetId: string): Promise<boolean> {
-  if (userId && planetId) {
-    const user = await Users.findOne({_id: userId});
+/**
+ * Checks if the user has public write permission on the planet.
+ * 
+ * @param user The user to check. Takes an ID string or user object.
+ * @param planet The planet to check. Takes an ID string or planet object.
+ * 
+ * @returns A promise that resolves to true if the user has public write permission, false otherwise.
+ * 
+ * @throws Throws an error if the planet is not found.
+ * @throws Throws an error if the user is not found.
+ */
+async function checkPublicWritePermission(user: string | IUser, planet: string | IPlanet): Promise<boolean> {
+  if (user && planet) {
+    const foundUser = typeof(user) == "string" ? await Users.findOne({_id: user}) : user;
 
-    if(user == undefined) {
+    if(foundUser == undefined) {
       throw new Error("Not found.");
     }
 
-    if(user && user.banned) {
+    if(foundUser && foundUser.banned) {
       return false;
     }
 
-    if(user && user.admin) {
+    if(foundUser && foundUser.admin) {
       return true;
     }
 
-    const planet = await Planets.findOne({_id: planetId});
+    const foundPlanet = typeof(planet) == "string" ? await Planets.findOne({_id: planet}) : planet;
 
-    if(planet == undefined) {
+    if(foundPlanet == undefined) {
       throw new Error("Not found.");
     }
 
-    if(planet.banned && planet.banned.includes(userId)) {
+    if(foundPlanet.banned && foundPlanet.banned.includes(foundUser._id)) {
       return false;
     }
 
-    if(!planet.private) {
+    if(!foundPlanet.private) {
       return true;
     }
 
-    if(planet.members && planet.members.includes(userId)) {
+    if(foundPlanet.members && foundPlanet.members.includes(foundUser._id)) {
       return true;
     }
 
-    if(planet.owner == userId) {
+    if(foundPlanet.owner == foundUser._id) {
       return true;
     }
 
@@ -85,37 +123,48 @@ async function checkPublicWritePermission(userId: string, planetId: string): Pro
   }
 }
 
-async function checkFullWritePermission(userId: string, planetId: string): Promise<boolean> {
-  if (userId && planetId) {
-    const user = await Users.findOne({_id: userId});
+/**
+ * Checks if the user has full write permission on the planet.
+ * 
+ * @param user The user to check. Takes an ID string or user object.
+ * @param planet The planet to check. Takes an ID string or planet object.
+ * 
+ * @returns A promise that resolves to true if the user has full write permission, false otherwise.
+ * 
+ * @throws Throws an error if the planet is not found.
+ * @throws Throws an error if the user is not found.
+ */
+async function checkFullWritePermission(user: string | IUser, planet: string | IPlanet): Promise<boolean> {
+  if (user && planet) {
+    const foundUser = typeof(user) == "string" ? await Users.findOne({_id: user}) : user;
 
-    if(user == undefined) {
+    if(foundUser == undefined) {
       throw new Error("Not found.");
     }
 
-    if(user && user.banned) {
+    if(foundUser && foundUser.banned) {
       return false;
     }
 
-    if(user && user.admin) {
+    if(foundUser && foundUser.admin) {
       return true;
     }
 
-    const planet = await Planets.findOne({_id: planetId});
+    const foundPlanet = typeof(planet) == "string" ? await Planets.findOne({_id: planet}) : planet;
 
-    if(planet == undefined) {
+    if(foundPlanet == undefined) {
       throw new Error("Not found.");
     }
 
-    if(planet.banned && planet.banned.includes(userId)) {
+    if(foundPlanet.banned && foundPlanet.banned.includes(foundUser._id)) {
       return false;
     }
 
-    if(planet.members && planet.members.includes(userId)) {
+    if(foundPlanet.members && foundPlanet.members.includes(foundUser._id)) {
       return true;
     }
 
-    if(planet.owner == userId) {
+    if(foundPlanet.owner == foundUser._id) {
       return true;
     }
 
@@ -125,6 +174,15 @@ async function checkFullWritePermission(userId: string, planetId: string): Promi
   }
 }
 
+/**
+ * Checks if the user has global admin permissions.
+ * 
+ * @param user The user to check. Takes an ID string.
+ * 
+ * @returns A promise that resolves to true if the user has global admin permissions, false otherwise.
+ * 
+ * @throws Throws an error if the user is not found.
+ */
 async function checkAdminPermission(userId: string): Promise<boolean> {
   let user: IUser = null;
 
