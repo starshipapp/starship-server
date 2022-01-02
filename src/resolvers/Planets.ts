@@ -18,6 +18,10 @@ const fieldResolvers = {
     const loaded = await context.loaders.userLoader.loadMany(root.members);
     return loaded as IUser[];
   },
+  banned: async (root: IPlanet, args: undefined, context: Context): Promise<IUser[]> => {
+    const loaded = await context.loaders.userLoader.loadMany(root.banned);
+    return loaded as IUser[];
+  },
   invites: async (root: IPlanet, args: undefined, context: Context): Promise<IInvite[]> => {
     if(await permissions.checkFullWritePermission(context.user.id, root.id)) {
       const loaded = await Invites.find({planet: root._id});
