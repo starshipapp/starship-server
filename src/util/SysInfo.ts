@@ -22,8 +22,8 @@ class SysInfo {
    */ 
   public static sysInfo: ISysInfo = {
     serverName: "starship-server",
-    version: "alpha (0.9-wip)",
-    schemaVersion: "0.9-wip",
+    version: "alpha (0.9)",
+    schemaVersion: "0.9",
     supportedFeatures: ["users", "reports", "planets", "invites", "profiles", "notifications"],
     supportedComponents: ["pages", "wikis", "forums", "files"],
     clientFlags: [],
