@@ -19,7 +19,7 @@ export default async function createNotification(text: string, icon: string, use
   });
   await notification.save();
   await PubSubContainer.pubSub.publish("NOTIFICATION_RECIEVED", {
-    notificationRecieved: notification
+    notificationRecieved: notification.toObject()
   });
   return notification;
 }

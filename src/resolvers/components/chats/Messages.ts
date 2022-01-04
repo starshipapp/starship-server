@@ -74,7 +74,14 @@ const messageSent = {
       return permission;
     }
     return false;
-  })
+  }),
+  // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+  resolve: (payload: IMessageSentPayload) => {
+    return {
+      ...payload.messageSent,
+      id: payload.messageSent._id,
+    };
+  }
 };
 
 /**
@@ -113,7 +120,14 @@ const messageRemoved = {
       return permission;
     }
     return false;
-  })
+  }),
+  // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+  resolve: (payload: IMessageRemovedPayload) => {
+    return {
+      ...payload.messageRemoved,
+      id: payload.messageRemoved._id,
+    };
+  }
 };
 
 /**
@@ -152,7 +166,14 @@ const messageUpdated = {
       return permission;
     }
     return false;
-  })
+  }),
+  // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+  resolve: (payload: IMessageUpdatedPayload) => {
+    return {
+      ...payload.messageUpdated,
+      id: payload.messageUpdated._id,
+    };
+  }
 };
 
 /**
@@ -296,7 +317,7 @@ async function sendMessage(root: undefined, args: ISendMessageArgs, context: Con
       await message.save();
 
       await PubSubContainer.pubSub.publish("MESSAGE_SENT", {
-        messageSent: message,
+        messageSent: message.toObject(),
         planet,
         channel
       });
@@ -351,7 +372,7 @@ async function editMessage(root: undefined, args: IEditMessageArgs, context: Con
     const returnMessage = await Messages.findOneAndUpdate({_id: args.messageId}, {$set: {content: args.content, edited: true}}, {new: true});
 
     await PubSubContainer.pubSub.publish("MESSAGE_UPDATED", {
-      messageUpdated: returnMessage,
+      messageUpdated: returnMessage.toObject(),
       planet,
       channel
     });
@@ -401,7 +422,7 @@ async function deleteMessage(root: undefined, args: ISimpleMessageArgs, context:
     await Messages.findOneAndDelete({_id: args.messageId});
 
     await PubSubContainer.pubSub.publish("MESSAGE_REMOVED", {
-      messageRemoved: message,
+      messageRemoved: message.toObject(),
       planet,
       channel
     });
@@ -440,10 +461,10 @@ async function pinMessage(root: undefined, args: ISimpleMessageArgs, context: Co
       throw new Error("Not found.");
     }
 
-    const returnMessage =  Messages.findOneAndUpdate({_id: args.messageId}, {$set: {pinned: !message.pinned}}, {new: true});
+    const returnMessage = await Messages.findOneAndUpdate({_id: args.messageId}, {$set: {pinned: !message.pinned}}, {new: true});
 
     await PubSubContainer.pubSub.publish("MESSAGE_UPDATED", {
-      messageUpdated: returnMessage,
+      messageUpdated: returnMessage.toObject(),
       planet,
       channel
     });
@@ -519,7 +540,7 @@ async function reactToMessage(root: undefined, args: IReactToMessageArgs, contex
 
 
         await PubSubContainer.pubSub.publish("MESSAGE_UPDATED", {
-          messageUpdated: returnMessage,
+          messageUpdated: returnMessage.toObject(),
           planet,
           channel
         });

@@ -22,7 +22,14 @@ const notificationRecieved = {
       return payload.notificationRecieved.user && payload.notificationRecieved.user == context.user.id;
     }
     return false;
-  })
+  }),
+  // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+  resolve: (payload: {notificationRecieved: INotification}) => {
+    return {
+      ...payload.notificationRecieved,
+      id: payload.notificationRecieved._id
+    };
+  }
 };
 
 /**
@@ -149,5 +156,5 @@ async function markAllRead(root: undefined, args: undefined, context: Context): 
     throw new Error("Not logged in.");
   }
 }
-
+ 
 export default {fieldResolvers, notificationRecieved, markAllRead, notifications, notification, clearNotification, clearAllNotifications};
