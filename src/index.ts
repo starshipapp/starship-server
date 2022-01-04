@@ -3,6 +3,8 @@ dotenv.config();
 
 import { ApolloServer, gql } from "apollo-server-express";
 import { PubSub } from "graphql-subscriptions";
+import { RedisPubSub } from 'graphql-redis-subscriptions';
+import Redis from "ioredis";
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import { SubscriptionServer } from 'subscriptions-transport-ws';
 import { execute, subscribe } from 'graphql';
@@ -44,8 +46,30 @@ connect(url, {
     require('./database/database');
     require('./database/indexes');
     Loggers.apolloLogger.info("Starting Apollo");
+
+    // setup pubsub
     Loggers.apolloLogger.info("Setting up PubSub");
-    PubSubContainer.pubSub = new PubSub();
+
+    if(process.env.REDIS_SERVER) {
+      Loggers.apolloLogger.info("Using Redis PubSub");
+      const options : Redis.RedisOptions = {
+        host: process.env.REDIS_SERVER,
+        port: Number(process.env.REDIS_PORT),
+        username: process.env.REDIS_USER,
+        password: process.env.REDIS_PASSWORD,
+        tls: {}
+      };
+      const pubsub = new RedisPubSub({
+        publisher: new Redis(options),
+        subscriber: new Redis(options)
+      });
+      PubSubContainer.pubSub = pubsub;
+    } else {
+      Loggers.apolloLogger.info("Using default PubSub");
+      const pubsub = new PubSub();
+      PubSubContainer.pubSub = pubsub;
+    }
+
     const app = express();
     if(!process.env.REDIS_SERVER) {
       Loggers.mainLogger.warn("RUNNING IN DEVELOPMENT MODE, NOT USING REDIS");

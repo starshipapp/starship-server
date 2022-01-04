@@ -24,6 +24,7 @@
   },
   "homepage": "https://github.com/starshipapp/starship-server#readme",
   "devDependencies": {
+    "@types/ioredis": "^4.28.7",
     "@typescript-eslint/eslint-plugin": "^4.30.0",
     "@typescript-eslint/parser": "^4.30.0",
     "concurrently": "^6.2.1",
@@ -56,6 +57,7 @@
     "graphql": "^15.5.2",
     "graphql-redis-subscriptions": "^2.4.0",
     "graphql-subscriptions": "^1.2.1",
+    "graphql-ws": "^5.5.5",
     "jsonwebtoken": "^8.5.1",
     "log4js": "^6.3.0",
     "mongoose": "^6.0.4",
@@ -68,6 +70,7 @@
     "rebuild": "^0.1.2",
     "subscriptions-transport-ws": "^0.9.19",
     "uuidv4": "^6.2.12",
+    "ws": "^8.4.0",
     "yn": "^4.0.0"
   }
 }
