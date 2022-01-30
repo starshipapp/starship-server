@@ -2,6 +2,7 @@ import WikiPages, { IWikiPage } from "../../../database/components/wiki/WikiPage
 import Wikis, { IWiki } from "../../../database/components/wiki/Wikis";
 import { IPlanet } from "../../../database/Planets";
 import Context from "../../../util/Context";
+import { NotFoundError } from "../../../util/NotFoundError";
 import permissions from "../../../util/permissions";
 
 /**
@@ -38,15 +39,10 @@ interface IWikiPageArgs {
  */
 async function wikiPage(root: undefined, args: IWikiPageArgs, context: Context): Promise<IWikiPage> {
   const wikiPage = await WikiPages.findOne({_id: args.id});
-  if(wikiPage) {
-    if(await permissions.checkReadPermission(context.user?.id ?? null, wikiPage.planet)) {
-      return wikiPage;
-    } else {
-      throw new Error("Not found.");
-    }
-  } else {
-    throw new Error("Not found.");
-  }
+  if (!wikiPage) throw new NotFoundError();
+  if (!await permissions.checkReadPermission(context.user?.id ?? null, wikiPage.planet)) throw new NotFoundError();
+
+  return wikiPage;
 }
 
 /**
@@ -72,23 +68,18 @@ interface IInsertWikiPageArgs {
  */
 async function insertWikiPage(root: undefined, args: IInsertWikiPageArgs, context: Context): Promise<IWikiPage> {
   const wiki = await Wikis.findOne({_id: args.wikiId});
-  if(wiki) {
-    if(context.user && await permissions.checkFullWritePermission(context.user?.id ?? null, wiki.planet)) {
-      const wikiPage = new WikiPages({
-        wikiId: args.wikiId,
-        name: args.name,
-        content: args.content,
-        createdAt: new Date(),
-        planet: wiki.planet
-      });
-      await wikiPage.save();
-      return wikiPage;
-    } else {
-      throw new Error("Not found.");
-    }
-  } else {
-    throw new Error("Not found.");
-  }
+  if (!wiki) throw new NotFoundError();
+  if (!(context.user && await permissions.checkFullWritePermission(context.user?.id ?? null, wiki.planet))) throw new NotFoundError();
+  
+  const wikiPage = new WikiPages({
+    wikiId: args.wikiId,
+    name: args.name,
+    content: args.content,
+    createdAt: new Date(),
+    planet: wiki.planet
+  });
+  await wikiPage.save();
+  return wikiPage;
 }
 
 /**
@@ -115,15 +106,10 @@ interface IUpdateWikiPageArgs {
  */
 async function updateWikiPage(root: undefined, args: IUpdateWikiPageArgs, context: Context): Promise<IWikiPage> {
   const wikiPage = await WikiPages.findOne({_id: args.pageId});
-  if(wikiPage) {
-    if(context.user && await permissions.checkFullWritePermission(context.user.id, wikiPage.planet)) {
-      return WikiPages.findOneAndUpdate({_id: args.pageId}, {content: args.newContent}, {new: true});
-    } else {
-      throw new Error("Not found.");
-    }
-  } else {
-    throw new Error("Not found.");
-  }
+  if (!wikiPage) throw new NotFoundError();
+  if (!(context.user && await permissions.checkFullWritePermission(context.user.id, wikiPage.planet))) throw new NotFoundError();
+  
+  return WikiPages.findOneAndUpdate({_id: args.pageId}, {content: args.newContent}, {new: true});
 }
 
 /**
@@ -148,17 +134,12 @@ interface IRemoveWikiPageArgs {
  */
 async function removeWikiPage(root: undefined, args: IRemoveWikiPageArgs, context: Context): Promise<IWiki> {
   const wikiPage = await WikiPages.findOne({_id: args.pageId});
-  if(wikiPage) {
-    if(context.user && await permissions.checkFullWritePermission(context.user.id, wikiPage.planet)) {
-      const findId = wikiPage.wikiId;
-      await WikiPages.findOneAndDelete({_id: args.pageId});
-      return Wikis.findOne({_id: findId});
-    } else {
-      throw new Error("Not found.");
-    }
-  } else {
-    throw new Error("Not found.");
-  }
+  if (!wikiPage) throw new NotFoundError();
+  if (!(context.user && await permissions.checkFullWritePermission(context.user.id, wikiPage.planet))) throw new NotFoundError();
+
+  const findId = wikiPage.wikiId;
+  await WikiPages.findOneAndDelete({_id: args.pageId});
+  return Wikis.findOne({_id: findId});
 }
 
 /**
@@ -185,15 +166,10 @@ interface IRenameWikiPageArgs {
  */
 async function renameWikiPage(root: undefined, args: IRenameWikiPageArgs, context: Context): Promise<IWikiPage> {
   const wikiPage = await WikiPages.findOne({_id: args.pageId});
-  if(wikiPage) {
-    if(context.user && await permissions.checkFullWritePermission(context.user.id, wikiPage.planet)) {
-      return WikiPages.findOneAndUpdate({_id: args.pageId}, {name: args.newName}, {new: true});
-    } else {
-      throw new Error("Not found.");
-    }
-  } else {
-    throw new Error("Not found.");
-  }
+  if (!wikiPage) throw new NotFoundError();
+  if (!(context.user && await permissions.checkFullWritePermission(context.user.id, wikiPage.planet))) throw new NotFoundError();
+
+  return WikiPages.findOneAndUpdate({_id: args.pageId}, {name: args.newName}, {new: true});
 }
 
 export default {fieldResolvers, wikiPage, insertWikiPage, updateWikiPage, removeWikiPage, renameWikiPage};

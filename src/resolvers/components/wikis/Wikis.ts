@@ -4,6 +4,7 @@ import { IUser } from "../../../database/Users";
 import Wikis, { IWiki } from "../../../database/components/wiki/Wikis";
 import permissions from "../../../util/permissions";
 import WikiPages, { IWikiPage } from "../../../database/components/wiki/WikiPages";
+import { NotFoundError } from "../../../util/NotFoundError";
 
 /**
  * Resolvers for the fields of the GraphQL type.
@@ -42,15 +43,9 @@ interface IWikiArgs {
  */
 async function wiki(root: undefined, args: IWikiArgs, context: Context): Promise<IWiki> {
   const wiki = await Wikis.findOne({_id: args.id});
-  if(wiki) {
-    if(await permissions.checkReadPermission(context.user?.id ?? null, wiki.planet)) {
-      return wiki;
-    } else {
-      throw new Error("Not found.");
-    }
-  } else {
-    throw new Error("Not found.");
-  }
+  if (!wiki) throw new NotFoundError();
+  if (!await permissions.checkReadPermission(context.user?.id ?? null, wiki.planet)) throw new NotFoundError(); 
+  return wiki;
 }
 
 
