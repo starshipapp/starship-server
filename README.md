@@ -5,6 +5,8 @@ Please note that long periods of no/little commits does not mean the project is 
 
 ## Running
 ```
+$ git clone https://github.com/starshipapp/starship-server --recurse-submodules
+$ cd starship-server
 $ npm install
 $ cp example.env .env
 $ npm run dev
