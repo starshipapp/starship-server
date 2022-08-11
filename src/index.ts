@@ -39,7 +39,7 @@ if(process.env.DATABASE_URL) {
 }
 
 connect(url, {
-  sslCA: process.env.MONGO_CA ? fs.readFileSync(process.env.MONGO_CA, "utf8") : null
+  sslCA: process.env.MONGO_CA ? process.env.MONGO_CA : null
 }).then(async () => {
   Loggers.dbLogger.info("Connected to database sucessfully");
     Loggers.dbLogger.info("Setting up DB schema");
