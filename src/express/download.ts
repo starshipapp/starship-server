@@ -49,25 +49,34 @@ async function downloadFolder(req: Request, res: Response) {
   // actually download the files
   const archive = archiver("zip", {store: true});
   
-  archive.on('error', function(e) {
+  archive.on('error', function() {
     res.status(500).send("500 Internal Server Error");
     return;
   }); 
-
+  
   res.type("application/zip");
   res.attachment(ticket.name ? ticket.name + ".zip" : "download.zip");
 
   archive.pipe(res);
 
-  for(const file of files) {
-    if(file.key) {
-      // eslint-disable-next-line @typescript-eslint/naming-convention
+  const file = files.pop();
+
+  if(file && file.key) {
+    const stream = s3.getObject({Bucket: process.env.BUCKET_NAME, Key: file.key}).createReadStream();
+    archive.append(stream, {name: file.name});
+  }
+
+  archive.on('entry', function() {
+    const file = files.pop();
+
+    if(file && file.key) {
       const stream = s3.getObject({Bucket: process.env.BUCKET_NAME, Key: file.key}).createReadStream();
       archive.append(stream, {name: file.name});
+    } else {
+      archive.finalize();
     }
-  }
- 
-  await archive.finalize();
+  })
+
 }
 
 download.get("/download/:ticket", (req, res) => {

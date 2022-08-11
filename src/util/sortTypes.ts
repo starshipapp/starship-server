@@ -2,9 +2,9 @@
  * Object representing the sort value to be passed to mongo's sort() method.
  */
 export type SortType = {
-  createdAt?: number,
-  updatedAt?: number,
-  replyCount?: number
+  createdAt?: 1 | -1,
+  updatedAt?: 1 | -1,
+  replyCount?: 1 | -1;
 }
 
 /**
