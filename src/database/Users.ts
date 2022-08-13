@@ -55,7 +55,13 @@ export interface IUser extends Document {
   /** An array of IDs representing the users the user has blocked. */
   blocked: [string],
   /** The user's current notification settings. */
-  notificationSetting: number
+  notificationSetting: number,
+  /** Whether or not the user has geofenced tokens enabled. */
+  tokenGeofencingEnabled: boolean,
+  /** Whether or not the user's token should expire after 90 days. */
+  tokenExpiryEnabled: boolean,
+  /** Whether or not the user's token should be locked to a specific IP address */
+  tokenLockEnabled: boolean
 }
 
 const userSchema: Schema = new Schema({
@@ -77,7 +83,10 @@ const userSchema: Schema = new Schema({
   profileBio: String,
   sessions: {type: [String], default: []},
   blocked: {type: [String], default: []},
-  notificationSetting: {type: Number, default: 1}
+  notificationSetting: {type: Number, default: 1},
+  tokenGeofencingEnabled: Boolean,
+  tokenExpiryEnabled: Boolean,
+  tokenLockEnabled: Boolean
 });
 
 userSchema.plugin(nanoIdPlugin, 16);

@@ -6,6 +6,11 @@ require('./Invites');
 require('./Planets');
 require('./Reports');
 require('./Users');
+require('./CustomEmojis');
+require('./Attachments');
+require('./ReadReceipts');
+require('./Tokens');
+require('./Notifications');
 require('./components/Pages');
 require('./components/files/FileObjects');
 require('./components/files/Files');
@@ -14,7 +19,9 @@ require('./components/forum/ForumReplies');
 require('./components/forum/Forums');
 require('./components/wiki/WikiPages');
 require('./components/wiki/Wikis');
-require('./Notifications');
+require('./components/chat/Chats');
+require('./components/chat/Channels');
+require('./components/chat/Messages');
 
 import Loggers from '../Loggers';
 
