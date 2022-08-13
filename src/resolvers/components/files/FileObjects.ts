@@ -188,7 +188,7 @@ interface IRenameObjectArgs {
 async function renameObject(root: undefined, args: IRenameObjectArgs, context: Context): Promise<IFileObject> {
   const object = await FileObjects.findOne({_id: args.objectId});
 
-  if (!object || !await permissions.checkFullWritePermission(context.user?.id ?? null, object.planet)) throw new NotFoundError("Not found.");
+  if (!object || !await permissions.checkFullWritePermission(context.user?.id ?? null, object.planet)) throw new NotFoundError();
 
   const name = args.name.replace(/[/\\?%*:|"<>]/g, "-");
   return FileObjects.findOneAndUpdate({_id: args.objectId}, {$set: {name}}, {new: true}); 

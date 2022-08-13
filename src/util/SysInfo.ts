@@ -22,8 +22,8 @@ class SysInfo {
    */ 
   public static sysInfo: ISysInfo = {
     serverName: "starship-server",
-    version: "alpha (0.9)",
-    schemaVersion: "0.9",
+    version: "alpha 0.10",
+    schemaVersion: "0.10",
     supportedFeatures: ["users", "reports", "planets", "invites", "profiles", "notifications"],
     supportedComponents: ["pages", "wikis", "forums", "files"],
     clientFlags: [],
@@ -38,7 +38,7 @@ class SysInfo {
   public static generateSysInfo = function(): void {
     SysInfo.generateSysInfoFlags();
     SysInfo.generateSysInfoData();
-  }
+  };
 
   public static generateSysInfoFlags = function(): void {
     // update client flags

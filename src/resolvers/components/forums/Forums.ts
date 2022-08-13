@@ -1,3 +1,4 @@
+import { UserInputError } from "apollo-server-errors";
 import { FilterQuery } from "mongoose";
 import ForumPosts, { IForumPost } from "../../../database/components/forum/ForumPosts";
 import Forums, { IForum } from "../../../database/components/forum/Forums";
@@ -5,6 +6,7 @@ import { IPlanet } from "../../../database/Planets";
 import { IUser } from "../../../database/Users";
 import Context from "../../../util/Context";
 import IForumPostFeed from "../../../util/feeds/IForumPostFeed";
+import { NotFoundError } from "../../../util/NotFoundError";
 import permissions from "../../../util/permissions";
 import { forumSortTypes } from "../../../util/sortTypes";
 
@@ -140,15 +142,11 @@ interface IForumArgs {
  */
 async function forum(root: undefined, args: IForumArgs, context: Context): Promise<IForum> {
   const forum = await Forums.findOne({_id: args.id});
-  if(forum != undefined) {
-    if(await permissions.checkReadPermission(context.user?.id ?? null, forum.planet)) {
-      return forum;
-    } else {
-      throw new Error("Not found.");
-    }
-  } else {
-    throw new Error("Not found.");
-  }
+
+  if(forum == undefined) throw new NotFoundError();
+  if(!(await permissions.checkReadPermission(context.user?.id ?? null, forum.planet))) throw new NotFoundError();
+
+  return forum; 
 }
 
 /**
@@ -176,19 +174,12 @@ interface IForumTagArgs {
  */
 async function createForumTag(root: undefined, args: IForumTagArgs, context: Context): Promise<IForum> {
   const forum = await Forums.findOne({_id: args.forumId});
-  if(forum != undefined) {
-    if(context.user && context.user.id && await permissions.checkFullWritePermission(context.user.id, forum.planet)) {
-      if((forum.tags && !forum.tags.includes(args.tag)) || !forum.tags) {
-        return Forums.findOneAndUpdate({_id: args.forumId}, {$push: {tags: args.tag}}, {new: true});
-      } else {
-        throw new Error("Tag already exists!");
-      }
-    } else {
-      throw new Error("Not found.");
-    }
-  } else {
-    throw new Error("Not found.");
-  }
+
+  if(forum == undefined) throw new NotFoundError();
+  if(!context.user || !context.user.id || !(await permissions.checkFullWritePermission(context.user.id, forum.planet))) throw new NotFoundError();
+  if(forum.tags && forum.tags.includes(args.tag)) throw new UserInputError("Tag already exists!");
+
+  return Forums.findOneAndUpdate({_id: args.forumId}, {$push: {tags: args.tag}}, {new: true});
 }
 
 /**
@@ -205,15 +196,11 @@ async function createForumTag(root: undefined, args: IForumTagArgs, context: Con
  */
 async function removeForumTag(root: undefined, args: IForumTagArgs, context: Context): Promise<IForum> {
   const forum = await Forums.findOne({_id: args.forumId});
-  if(forum != undefined) {
-    if(context.user && context.user.id && await permissions.checkFullWritePermission(context.user.id, forum.planet)) {
-      return Forums.findOneAndUpdate({_id: args.forumId}, {$pull: {tags: args.tag}}, {new: true});
-    } else {
-      throw new Error("Not found.");
-    }
-  } else {
-    throw new Error("Not found.");
-  }
+
+  if(forum == undefined) throw new NotFoundError();
+  if(!context.user || !context.user.id || !(await permissions.checkFullWritePermission(context.user.id, forum.planet))) throw new NotFoundError();
+
+  return Forums.findOneAndUpdate({_id: args.forumId}, {$pull: {tags: args.tag}}, {new: true});
 }
 
 export default {fieldResolvers, forum, createForumTag, removeForumTag};

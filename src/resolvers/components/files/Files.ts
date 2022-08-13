@@ -3,6 +3,7 @@ import { IPlanet } from "../../../database/Planets";
 import { IUser } from "../../../database/Users";
 import permissions from "../../../util/permissions";
 import Files, { IFiles } from "../../../database/components/files/Files";
+import { NotFoundError } from "../../../util/NotFoundError";
 
 // Files are often refered to as a generic component in this code.
 // This is to differentiate the component from the actual files,
@@ -42,15 +43,11 @@ interface IFileComponentArgs {
  */
 async function fileComponent(root: undefined, args: IFileComponentArgs, context: Context): Promise<IFiles> {
   const files = await Files.findOne({_id: args.id});
-  if(files) {
-    if(await permissions.checkReadPermission(context.user?.id ?? null, files.planet)) {
-      return files;
-    } else {
-      throw new Error("Not found.");
-    }
-  } else {
-    throw new Error("Not found.");
-  }
+
+  if(!files) throw new NotFoundError();
+  if(!(await permissions.checkReadPermission(context.user?.id ?? null, files.planet))) throw new NotFoundError();
+
+  return files; 
 }
 
 

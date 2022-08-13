@@ -9,6 +9,8 @@ import emoji from "node-emoji";
 import IForumReplyFeed from "../../../util/feeds/IForumReplyFeed";
 import CustomEmojis from "../../../database/CustomEmojis";
 import getMentions from "../../../util/getMentions";
+import { NotFoundError } from "../../../util/NotFoundError";
+import { UserInputError } from "apollo-server-errors";
 
 /**
  * Arguments for {@link fieldResolvers.replies}
@@ -83,15 +85,11 @@ interface IForumPostArgs {
  */
 async function forumPost(root: undefined, args: IForumPostArgs, context: Context): Promise<IForumPost> {
   const forumpost = await ForumPosts.findOne({_id: args.id});
-  if(forumpost) {
-    if(await permissions.checkReadPermission(context.user?.id ?? null, forumpost.planet)) {
-      return forumpost;
-    } else {
-      throw new Error("Not found.");
-    }
-  } else {
-    throw new Error("Not found.");
-  }
+  
+  if(!forumpost) throw new NotFoundError();
+  if(!(await permissions.checkReadPermission(context.user?.id ?? null, forumpost.planet))) throw new NotFoundError();
+  
+  return forumpost; 
 }
 
 /**
@@ -121,36 +119,36 @@ interface IInsertForumPostArgs {
  */
 async function insertForumPost(root: undefined, args: IInsertForumPostArgs, context: Context): Promise<IForumPost> {
   const forum = await Forums.findOne({_id: args.forumId});
-  if(forum && context.user && await permissions.checkPublicWritePermission(context.user.id, forum.planet)) {
-    const tags: string[] = [];
 
-    if(args.tag && args.tag != "" && forum.tags && forum.tags.includes(args.tag)) {
-      tags.push(args.tag);
-    }
+  if(!forum) throw new NotFoundError();
+  if(!context.user || !(await permissions.checkPublicWritePermission(context.user.id, forum.planet))) throw new NotFoundError();
 
-    const forumPost = new ForumPosts({
-      name: args.name,
-      componentId: args.forumId,
-      content: args.content,
-      owner: context.user.id,
-      planet: forum.planet,
-      tags,
-      reactions: [],
-      replyCount: 0,
-      stickied: false,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    });
+  const tags: string[] = [];
 
-    await forumPost.save();
-
-    const user = await Users.findOne({_id: context.user.id});
-    const planet = await Planets.findOne({_id: forum.planet});
-
-    return ForumPosts.findOneAndUpdate({_id: forumPost._id}, {$set: {mentions: await getMentions(args.content, user, `the forum thread [${forumPost.name}](${process.env.SITE_URL}/planet/${forum.planet}/${forum._id}/${forumPost._id})`, planet)}}, {new: true});
-  } else {
-    throw new Error("Not found.");
+  if(args.tag && args.tag != "" && forum.tags && forum.tags.includes(args.tag)) {
+    tags.push(args.tag);
   }
+
+  const forumPost = new ForumPosts({
+    name: args.name,
+    componentId: args.forumId,
+    content: args.content,
+    owner: context.user.id,
+    planet: forum.planet,
+    tags,
+    reactions: [],
+    replyCount: 0,
+    stickied: false,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  });
+
+  await forumPost.save();
+
+  const user = await Users.findOne({_id: context.user.id});
+  const planet = await Planets.findOne({_id: forum.planet});
+
+  return ForumPosts.findOneAndUpdate({_id: forumPost._id}, {$set: {mentions: await getMentions(args.content, user, `the forum thread [${forumPost.name}](${process.env.SITE_URL}/planet/${forum.planet}/${forum._id}/${forumPost._id})`, planet)}}, {new: true});
 }
 
 /**
@@ -177,15 +175,11 @@ interface IUpdateForumPost {
  */
 async function updateForumPost(root: undefined, args: IUpdateForumPost, context: Context): Promise<IForumPost> {
   const post = await ForumPosts.findOne({_id: args.postId});
-  if(post && context.user) {
-    if(await permissions.checkFullWritePermission(context.user.id, post.planet) || post.owner == context.user.id) {
-      return ForumPosts.findOneAndUpdate({_id: args.postId}, {$set: {content: args.content}}, {new: true});
-    } else {
-      throw new Error("Not found.");
-    }
-  } else {
-    throw new Error("Not found.");
-  }
+
+  if(!post) throw new NotFoundError();
+  if(!context.user || (!(await permissions.checkFullWritePermission(context.user.id, post.planet)) && post.owner != context.user.id)) throw new NotFoundError();
+
+  return ForumPosts.findOneAndUpdate({_id: args.postId}, {$set: {content: args.content}}, {new: true}); 
 }
 
 /**
@@ -210,17 +204,13 @@ interface IGenericForumPostArgs {
  */
 async function deleteForumPost(root: undefined, args: IGenericForumPostArgs, context: Context): Promise<boolean> {
   const post = await ForumPosts.findOne({_id: args.postId});
-  if(post && context.user) {
-    if(await permissions.checkFullWritePermission(context.user.id, post.planet) || post.owner == context.user.id) {
-      await ForumPosts.deleteOne({_id: args.postId});
-      await ForumReplies.deleteMany({postId: args.postId});
-      return true;
-    } else {
-      throw new Error("Not found.");
-    }
-  } else {
-    throw new Error("Not found.");
-  }
+
+  if(!post) throw new NotFoundError();
+  if(!context.user || (!(await permissions.checkFullWritePermission(context.user.id, post.planet)) && post.owner != context.user.id)) throw new NotFoundError();
+
+  await ForumPosts.deleteOne({_id: args.postId});
+  await ForumReplies.deleteMany({postId: args.postId});
+  return true;
 }
 
 /**
@@ -237,15 +227,11 @@ async function deleteForumPost(root: undefined, args: IGenericForumPostArgs, con
  */
 async function lockForumPost(root: undefined, args: IGenericForumPostArgs, context: Context): Promise<IForumPost> {
   const post = await ForumPosts.findOne({_id: args.postId});
-  if(post && context.user) {
-    if(await permissions.checkFullWritePermission(context.user.id, post.planet)) {
-      return ForumPosts.findOneAndUpdate({_id: args.postId}, {$set: {locked: !post.locked}}, {new: true});
-    } else {
-      throw new Error("Not found.");
-    }
-  } else {
-    throw new Error("Not found.");
-  }
+
+  if(!post) throw new NotFoundError();
+  if(!context.user || !(await permissions.checkFullWritePermission(context.user.id, post.planet))) throw new NotFoundError();
+
+  return ForumPosts.findOneAndUpdate({_id: args.postId}, {$set: {locked: !post.locked}}, {new: true}); 
 }
 
 /**
@@ -262,15 +248,11 @@ async function lockForumPost(root: undefined, args: IGenericForumPostArgs, conte
  */
 async function stickyForumPost(root: undefined, args: IGenericForumPostArgs, context: Context): Promise<IForumPost> {
   const post = await ForumPosts.findOne({_id: args.postId});
-  if(post && context.user) {
-    if(await permissions.checkFullWritePermission(context.user.id, post.planet)) {
-      return ForumPosts.findOneAndUpdate({_id: args.postId}, {$set: {stickied: !post.stickied}}, {new: true});
-    } else {
-      throw new Error("Not found.");
-    }
-  } else {
-    throw new Error("Not found.");
-  }
+
+  if(!post) throw new NotFoundError();
+  if(!context.user || !(await permissions.checkFullWritePermission(context.user.id, post.planet))) throw new NotFoundError();
+
+  return ForumPosts.findOneAndUpdate({_id: args.postId}, {$set: {stickied: !post.stickied}}, {new: true});
 }
 
 /**
@@ -298,39 +280,32 @@ interface IForumPostReactArgs {
  */
 async function forumPostReact(root: undefined, args: IForumPostReactArgs, context: Context): Promise<IForumPost> {
   const post = await ForumPosts.findOne({_id: args.postId});
-  if(post && context.user) {
-    if(await permissions.checkPublicWritePermission(context.user.id, post.planet)) {
-      if(emoji.hasEmoji(args.emojiId) || args.emojiId.startsWith("ceid:")) {
-        const reaction = post.reactions.find(value => value.emoji === args.emojiId);
-        if(reaction) {
-          if(reaction.reactors.includes(context.user.id)) {
-            if(reaction.reactors.length === 1) {
-              return ForumPosts.findOneAndUpdate({_id: args.postId}, {$pull: {reactions: reaction}}, {new: true});
-            } else {
-              return ForumPosts.findOneAndUpdate({_id: args.postId, reactions: {$elemMatch: {emoji: args.emojiId}}}, {$pull: {"reactions.$.reactors": context.user.id}}, {new: true});
-            }
-          } else {
-            return ForumPosts.findOneAndUpdate({_id: args.postId, reactions: {$elemMatch: {emoji: args.emojiId}}}, {$push: {"reactions.$.reactors": context.user.id}}, {new: true});
-          }
-        } else {
-          // format for custom emojis is ceid:id
-          if(args.emojiId.startsWith("ceid:")) {
-            const emoji = args.emojiId.split(":");
-            const emojiObject = await CustomEmojis.findOne({_id: emoji[1]});
-            if(!emojiObject) {
-              throw new Error("Invalid custom emoji.");
-            }
-          }
-          return ForumPosts.findOneAndUpdate({_id: args.postId}, {$push: {reactions: {emoji: args.emojiId, reactors: [context.user.id]}}}, {new: true});
-        }
+
+  if(!post) throw new NotFoundError();
+  if(!context.user || !(await permissions.checkPublicWritePermission(context.user.id, post.planet))) throw new NotFoundError();
+  if(!emoji.hasEmoji(args.emojiId) && !args.emojiId.startsWith("ceid:")) throw new UserInputError("Invalid emoji.");
+
+  const reaction = post.reactions.find(value => value.emoji === args.emojiId);
+  if(reaction) {
+    if(reaction.reactors.includes(context.user.id)) {
+      if(reaction.reactors.length === 1) {
+        return ForumPosts.findOneAndUpdate({_id: args.postId}, {$pull: {reactions: reaction}}, {new: true});
       } else {
-        throw new Error("Invalid emoji.");
+        return ForumPosts.findOneAndUpdate({_id: args.postId, reactions: {$elemMatch: {emoji: args.emojiId}}}, {$pull: {"reactions.$.reactors": context.user.id}}, {new: true});
       }
     } else {
-      throw new Error("Not found.");
+      return ForumPosts.findOneAndUpdate({_id: args.postId, reactions: {$elemMatch: {emoji: args.emojiId}}}, {$push: {"reactions.$.reactors": context.user.id}}, {new: true});
     }
   } else {
-    throw new Error("Not found.");
+    // format for custom emojis is ceid:id
+    if(args.emojiId.startsWith("ceid:")) {
+      const emoji = args.emojiId.split(":");
+      const emojiObject = await CustomEmojis.findOne({_id: emoji[1]});
+      if(!emojiObject) {
+        throw new UserInputError("Invalid custom emoji.");
+      }
+    }
+    return ForumPosts.findOneAndUpdate({_id: args.postId}, {$push: {reactions: {emoji: args.emojiId, reactors: [context.user.id]}}}, {new: true});
   }
 }
 

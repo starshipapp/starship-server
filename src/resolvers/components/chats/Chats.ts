@@ -3,6 +3,7 @@ import Chats, { IChat } from "../../../database/components/chat/Chats";
 import { IPlanet } from "../../../database/Planets";
 import { IUser } from "../../../database/Users";
 import Context from "../../../util/Context";
+import { NotFoundError } from "../../../util/NotFoundError";
 import permissions from "../../../util/permissions";
 
 /**
@@ -45,15 +46,11 @@ interface IChatArgs {
  */
 async function chat(root: undefined, args: IChatArgs, context: Context): Promise<IChat> {
   const chat = await Chats.findOne({_id: args.id});
-  if(chat != undefined) {
-    if(await permissions.checkReadPermission(context.user?.id ?? null, chat.planet)) {
-      return chat;
-    } else {
-      throw new Error("Not found.");
-    }
-  } else {
-    throw new Error("Not found.");
-  }
+
+  if(!chat) throw new NotFoundError();
+  if(!(await permissions.checkReadPermission(context.user?.id ?? null, chat.planet))) throw new NotFoundError();
+  
+  return chat; 
 }
 
 export default {fieldResolvers, chat};

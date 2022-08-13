@@ -3,6 +3,7 @@ import Pages, {IPage} from "../../database/components/Pages";
 import permissions from "../../util/permissions";
 import { IPlanet } from "../../database/Planets";
 import { IUser } from "../../database/Users";
+import { NotFoundError } from "../../util/NotFoundError";
 
 /**
  * Resolvers for the fields of the GraphQL type.
@@ -38,15 +39,11 @@ interface IPageArgs {
  */
 async function page(root: undefined, args: IPageArgs, context: Context): Promise<IPage> {
   const page = await Pages.findOne({_id: args.id});
-  if(page) {
-    if(await permissions.checkReadPermission(context.user?.id ?? null, page.planet)) {
-      return page;
-    } else {
-      throw new Error("Not found.");
-    }
-  } else {
-    throw new Error("Not found.");
-  }
+
+  if(!page) throw new NotFoundError();
+  if(!(await permissions.checkReadPermission(context.user?.id ?? null, page.planet))) throw new NotFoundError();
+  
+  return page; 
 }
 
 /**
@@ -73,15 +70,11 @@ interface IUpdatePageArgs {
  */
 async function updatePage(root: undefined, args: IUpdatePageArgs, context: Context): Promise<IPage> {
   const page = await Pages.findOne({_id: args.pageId});
-  if(page) {
-    if(context.user && await permissions.checkFullWritePermission(context.user.id, page.planet)) {
-      return Pages.findOneAndUpdate({_id: args.pageId}, {$set: {content: args.content}}, {new: true});
-    } else {
-      throw new Error("Not found.");
-    }
-  } else {
-    throw new Error("Not found.");
-  }
+
+  if(page) throw new NotFoundError();
+  if(context.user && await permissions.checkFullWritePermission(context.user.id, page.planet)) throw new NotFoundError();
+
+  return Pages.findOneAndUpdate({_id: args.pageId}, {$set: {content: args.content}}, {new: true});
 }
 
 export default {fieldResolvers, page, updatePage};
