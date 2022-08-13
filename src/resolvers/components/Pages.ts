@@ -71,8 +71,8 @@ interface IUpdatePageArgs {
 async function updatePage(root: undefined, args: IUpdatePageArgs, context: Context): Promise<IPage> {
   const page = await Pages.findOne({_id: args.pageId});
 
-  if(page) throw new NotFoundError();
-  if(context.user && await permissions.checkFullWritePermission(context.user.id, page.planet)) throw new NotFoundError();
+  if(!page) throw new NotFoundError();
+  if(!context.user || !(await permissions.checkFullWritePermission(context.user.id, page.planet))) throw new NotFoundError();
 
   return Pages.findOneAndUpdate({_id: args.pageId}, {$set: {content: args.content}}, {new: true});
 }

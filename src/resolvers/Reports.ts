@@ -1,5 +1,6 @@
 import Reports, { IReport } from '../database/Reports';
 import { IUser } from '../database/Users';
+import { BadSessionError } from '../util/BadSessionError';
 import Context from '../util/Context';
 import permissions from '../util/permissions';
 
@@ -35,13 +36,9 @@ interface IReportArgs {
  * @throws Throws an error if the user is not an admin.
  */
 async function report(root: undefined, args: IReportArgs, context: Context): Promise<IReport> {
-  const userCheck = context.user && await permissions.checkAdminPermission(context.user.id);
-
-  if(userCheck) {
-    return Reports.findOne({_id: args.id});
-  } else {
-    throw new Error("You are not a global moderator.");
-  }
+  if(!context.user || !(await permissions.checkAdminPermission(context.user.id))) throw new BadSessionError("The current user is not a system administrator.");
+  
+  return Reports.findOne({_id: args.id});
 }
 
 /**

@@ -3,6 +3,8 @@ import Context from "../util/Context";
 import Notifications, { INotification } from "../database/Notifications";
 import { IUser } from "../database/Users";
 import PubSubContainer from "../util/PubSubContainer";
+import { BadSessionError } from "../util/BadSessionError";
+import { NotFoundError } from "../util/NotFoundError";
 
 /**
  * Resolvers for the fields of the GraphQL type.
@@ -18,10 +20,9 @@ const fieldResolvers = {
  */
 const notificationRecieved = {
   subscribe: withFilter(() => PubSubContainer.pubSub.asyncIterator<{notificationRecieved: INotification}>(['NOTIFICATION_RECIEVED']), (payload: {notificationRecieved: INotification}, variables, context: Context) => {
-    if(context.user) {
-      return payload.notificationRecieved.user && payload.notificationRecieved.user == context.user.id;
-    }
-    return false;
+    if(!context.user) return false;
+    
+    return payload.notificationRecieved.user && payload.notificationRecieved.user == context.user.id;
   }),
   // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
   resolve: (payload: {notificationRecieved: INotification}) => {
@@ -44,11 +45,9 @@ const notificationRecieved = {
  * @throws Throws an error if the user is not logged in.
  */
 async function notifications(root: undefined, args: undefined, context: Context): Promise<INotification[]> {
-  if(context.user) {
-    return await Notifications.find({user: context.user.id}).sort({createdAt: -1});
-  } else {
-    throw new Error("Not logged in.");
-  }
+  if(!context.user) throw new BadSessionError();
+  
+  return await Notifications.find({user: context.user.id}).sort({createdAt: -1});
 }
 
 /**
@@ -72,16 +71,12 @@ interface INotificationArgs {
  * @throws Throws an error if the notification is not found.
  */
 async function notification(root: undefined, args: INotificationArgs, context: Context): Promise<INotification> {
-  if(context.user) {
-    const notification = await Notifications.findOne({_id: args.id, user: context.user.id});
-    if(notification) {
-      return notification;
-    } else {
-      throw new Error("Not found.");
-    }
-  } else {
-    throw new Error("Not logged in.");
-  }
+  if(!context.user) throw new BadSessionError();
+  
+  const notification = await Notifications.findOne({_id: args.id, user: context.user.id});
+  if(!notification) throw new NotFoundError();
+  
+  return notification; 
 }
 
 /**
@@ -105,16 +100,12 @@ interface IClearNotificationArgs {
  * @throws Throws an error if the notification is not found.
  */
 async function clearNotification(root: undefined, args: IClearNotificationArgs, context: Context): Promise<boolean> {
-  if(context.user) {
-    const notification = await Notifications.findOneAndDelete({_id: args.notificationId, user: context.user.id});
-    if(notification) {
-      return true;
-    } else {
-      throw new Error("Not found.");
-    }
-  } else {
-    throw new Error("Not logged in.");
-  }
+  if(!context.user) throw new BadSessionError();
+  
+  const notification = await Notifications.findOneAndDelete({_id: args.notificationId, user: context.user.id});
+  if(!notification) throw new NotFoundError();
+
+  return true;
 }
 
 /**
@@ -129,13 +120,11 @@ async function clearNotification(root: undefined, args: IClearNotificationArgs, 
  * @throws Throws an error if the user is not logged in.
  */
 async function clearAllNotifications(root: undefined, args: undefined, context: Context): Promise<boolean> {
-  if(context.user) {
-    await Notifications.deleteMany({user: context.user.id});
-    return true;
-  } else {
-    throw new Error("Not logged in.");
-  }
-}
+  if(!context.user) throw new BadSessionError();
+
+  await Notifications.deleteMany({user: context.user.id});
+  return true;
+ }
 
 /**
  * Marks all notifications as read.
@@ -149,12 +138,10 @@ async function clearAllNotifications(root: undefined, args: undefined, context: 
  * @throws Throws an error if the user is not logged in.
  */
 async function markAllRead(root: undefined, args: undefined, context: Context): Promise<boolean> {
-  if(context.user) {
-    await Notifications.updateMany({user: context.user.id, isRead: false}, {$set: {isRead: true}});
-    return true;
-  } else {
-    throw new Error("Not logged in.");
-  }
+  if(!context.user) throw new BadSessionError();
+  
+  await Notifications.updateMany({user: context.user.id, isRead: false}, {$set: {isRead: true}});
+  return true; 
 }
  
 export default {fieldResolvers, notificationRecieved, markAllRead, notifications, notification, clearNotification, clearAllNotifications};
