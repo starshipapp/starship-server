@@ -1,3 +1,4 @@
+import { UserInputError } from 'apollo-server-errors';
 import Reports, { IReport } from '../database/Reports';
 import { IUser } from '../database/Users';
 import { BadSessionError } from '../util/BadSessionError';
@@ -64,17 +65,10 @@ interface IAllReportsArgs {
  * @throws Throws an error if the count is > 100.
  */
 async function allReports(root: undefined, args: IAllReportsArgs, context: Context): Promise<IReport[]> {
-  const userCheck = context.user && await permissions.checkAdminPermission(context.user.id);
+  if(!context.user || !(await permissions.checkAdminPermission(context.user.id))) throw new BadSessionError("The current user is not a system administrator.");
+  if((args.count) > 101) throw new UserInputError("Count is too large. Maximum is 100.");
 
-  if(userCheck) {
-    if((args.count) < 101) {
-      return Reports.find({}).sort({createdAt: -1}).skip(args.startNumber).limit(args.count);
-    } else {
-      throw new Error("Count is too large. Maximum is 100.");
-    }
-  } else {
-    throw new Error("You are not a global moderator.");
-  }
+  return Reports.find({}).sort({createdAt: -1}).skip(args.startNumber).limit(args.count);
 }
 
 /**
@@ -98,17 +92,10 @@ interface IReportsByUserArgs extends IAllReportsArgs {
  * @throws Throws an error if the count is > 100.
  */
 async function reportsByUser(root: undefined, args: IReportsByUserArgs, context: Context): Promise<IReport[]> {
-  const userCheck = context.user && await permissions.checkAdminPermission(context.user.id);
-
-  if(userCheck) {
-    if((args.count) < 101) {
-      return Reports.find({userId: args.userId,}).sort({createdAt: -1}).skip(args.startNumber).limit(args.count);
-    } else {
-      throw new Error("Count is too large. Maximum is 100.");
-    }
-  } else {
-    throw new Error("You are not a global moderator.");
-  }
+  if(!context.user || !(await permissions.checkAdminPermission(context.user.id))) throw new BadSessionError("The current user is not a system administrator.");
+  if((args.count) > 101) throw new UserInputError("Count is too large. Maximum is 100.");
+  
+  return Reports.find({userId: args.userId,}).sort({createdAt: -1}).skip(args.startNumber).limit(args.count);
 }
 
 /**
@@ -139,23 +126,21 @@ interface IInsertReportArgs {
  * @throws Throws an error if the user is not logged in.
  */
 async function insertReport(root: undefined, args: IInsertReportArgs, context: Context): Promise<IReport> {
-  if(context.user && context.user.id) {
-    const newReport = new Reports({
-      owner: context.user.id,
-      createdAt: new Date(),
-      objectType: args.objectType,
-      objectId: args.objectId,
-      reportType: args.reportType,
-      details: args.details,
-      userId: args.userId,
-      solved: false
-    });
+  if(!context.user || !context.user.id) throw new BadSessionError();
 
-    const result = await newReport.save().catch((e) => {console.error(e);}) as unknown as IReport;
-    return result;
-  } else {
-    throw new Error("Not logged in.");
-  }
+  const newReport = new Reports({
+    owner: context.user.id,
+    createdAt: new Date(),
+    objectType: args.objectType,
+    objectId: args.objectId,
+    reportType: args.reportType,
+    details: args.details,
+    userId: args.userId,
+    solved: false
+  });
+
+  const result = await newReport.save().catch((e) => {console.error(e);}) as unknown as IReport;
+  return result;
 }
 
 /**
@@ -178,13 +163,9 @@ interface ISolveReportArgs {
  * @throws Throws an error if the user is not an admin.
  */
 async function solveReport(root: undefined, args: ISolveReportArgs, context:Context): Promise<IReport> {
-  const userCheck = context.user && await permissions.checkAdminPermission(context.user.id);
+  if(!context.user || !(await permissions.checkAdminPermission(context.user.id))) throw new BadSessionError("The current user is not a system administrator.");
 
-  if(userCheck) {
-    return await Reports.findOneAndUpdate({_id: args.reportId}, {$set: {solved: true}}, {new: true});
-  } else {
-    throw new Error("You are not a global moderator.");
-  }
+  return await Reports.findOneAndUpdate({_id: args.reportId}, {$set: {solved: true}}, {new: true});
 }
 
 export default {fieldResolvers, report, allReports, reportsByUser, insertReport, solveReport};

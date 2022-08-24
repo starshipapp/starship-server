@@ -6,6 +6,8 @@ import Invites, { IInvite } from "../database/Invites";
 import ComponentIndex from "../util/ComponentIndex";
 import createNotification from "../util/createNotification";
 import CustomEmojis, { ICustomEmoji } from "../database/CustomEmojis";
+import { NotFoundError } from "../util/NotFoundError";
+import { BadSessionError } from "../util/BadSessionError";
 
 /**
  * Resolvers for the fields of the GraphQL type.
@@ -23,12 +25,10 @@ const fieldResolvers = {
     return loaded as IUser[];
   },
   invites: async (root: IPlanet, args: undefined, context: Context): Promise<IInvite[]> => {
-    if(await permissions.checkFullWritePermission(context.user.id, root.id)) {
-      const loaded = await Invites.find({planet: root._id});
-      return loaded;
-    } else {
-      return [];
-    }
+    if(!(await permissions.checkFullWritePermission(context.user.id, root.id))) return [];
+    
+    const loaded = await Invites.find({planet: root._id});
+    return loaded; 
   },
   customEmojis: async (root: IPlanet): Promise<ICustomEmoji[]> => {
     if(root._id) {
@@ -68,11 +68,9 @@ interface IPlanetArgs {
  * @throws Throws an error if the user does not have permission to view the planet.
  */
 async function planet(root: undefined, args: IPlanetArgs, context: Context): Promise<IPlanet> {
-  if(await permissions.checkReadPermission(context.user?.id ?? null, args.id)) {
-    return Planets.findOne({_id: args.id});
-  } else {
-    throw new Error("Not found.");
-  }
+  if(!(await permissions.checkReadPermission(context.user?.id ?? null, args.id))) throw new NotFoundError();
+  
+  return Planets.findOne({_id: args.id});
 }
 
 /**
@@ -97,9 +95,9 @@ interface IAdminPlanetsArgs {
  * @throws Throws an error if the user is not an administrator.
  */
 async function adminPlanets(root: undefined, args: IAdminPlanetsArgs, context: Context): Promise<IPlanet[]> {
-  if(await permissions.checkAdminPermission(context.user.id)) {
-    return Planets.find({}).sort({createdAt: -1}).skip(args.startNumber).limit(args.count);
-  }
+  if(!(await permissions.checkAdminPermission(context.user.id))) throw new BadSessionError("The current user is not a system administrator.");
+  
+  return Planets.find({}).sort({createdAt: -1}).skip(args.startNumber).limit(args.count);
 }
 
 // MUTATIONS
@@ -125,22 +123,22 @@ interface IInsertPlanetArgs {
  * @throws Throws an error if the user is not logged in.
  */
 async function insertPlanet(root: undefined, args: IInsertPlanetArgs, context: Context): Promise<IPlanet> {
-  if(context.user && context.user.id) {
-    const planet = new Planets({
-      name: args.name,
-      createdAt: new Date(),
-      owner: context.user.id,
-      private: args.private,
-      followerCount: 0,
-      components: []
-    });
-    await planet.save();
-    const homeComponent = await ComponentIndex.createComponent("page", planet._id, context.user.id);
-    planet.homeComponent = {componentId: homeComponent._id, type: "page"};
-    return planet.save();
-  } else {
-    throw new Error("Not logged in.");
-  }
+  if(!context.user || !context.user.id) throw new BadSessionError(); 
+
+  const planet = new Planets({
+    name: args.name,
+    createdAt: new Date(),
+    owner: context.user.id,
+    private: args.private,
+    followerCount: 0,
+    components: []
+  });
+
+  await planet.save();
+  const homeComponent = await ComponentIndex.createComponent("page", planet._id, context.user.id);
+  planet.homeComponent = {componentId: homeComponent._id, type: "page"};
+
+  return planet.save();
 }
 
 /**
@@ -168,12 +166,10 @@ interface IAddComponentArgs {
  * @throws Throws an error if the planet is not found.
  */
 async function addComponent(root: undefined, args: IAddComponentArgs, context: Context): Promise<IPlanet> {
-  if(context.user && await permissions.checkFullWritePermission(context.user.id, args.planetId)) {
-    const component = await ComponentIndex.createComponent(args.type, args.planetId, context.user.id);
-    return Planets.findOneAndUpdate({_id: args.planetId}, {$push: {components: {name: args.name, componentId: component._id, type: args.type}}}, {new: true});
-  } else {
-    throw new Error("Not found.");
-  }
+  if(!context.user || !(await permissions.checkFullWritePermission(context.user.id, args.planetId))) throw new NotFoundError();
+  
+  const component = await ComponentIndex.createComponent(args.type, args.planetId, context.user.id);
+  return Planets.findOneAndUpdate({_id: args.planetId}, {$push: {components: {name: args.name, componentId: component._id, type: args.type}}}, {new: true});
 }
 
 /**
@@ -198,18 +194,17 @@ interface IFollowPlanetArgs {
  * @throws Throws an error if the planet is not found.
  */
 async function followPlanet(root: undefined, args: IFollowPlanetArgs, context: Context): Promise<IPlanet> {
-  if(context.user && await permissions.checkReadPermission(context.user.id, args.planetId)) {
-    const planet = await Planets.findOne({_id: args.planetId});
-    const user = await Users.findOne({_id: context.user.id});
-    if(user.following && user.following.includes(planet._id)) {
-      await Users.findOneAndUpdate({_id: user._id}, {$pull: {following: planet._id}});
-      return Planets.findByIdAndUpdate({_id: planet._id}, {$inc: {followerCount: -1}}, {new: true});
-    } else {
-      await Users.findOneAndUpdate({_id: user._id}, {$push: {following: planet._id}});
-      return Planets.findByIdAndUpdate({_id: planet._id}, {$inc: {followerCount: 1}}, {new: true});
-    }
+  if(!context.user || !(await permissions.checkReadPermission(context.user.id, args.planetId))) throw new NotFoundError();
+
+  const planet = await Planets.findOne({_id: args.planetId});
+  const user = await Users.findOne({_id: context.user.id});
+  
+  if(user.following && user.following.includes(planet._id)) {
+    await Users.findOneAndUpdate({_id: user._id}, {$pull: {following: planet._id}});
+    return Planets.findByIdAndUpdate({_id: planet._id}, {$inc: {followerCount: -1}}, {new: true});
   } else {
-    throw new Error("Not found.");
+    await Users.findOneAndUpdate({_id: user._id}, {$push: {following: planet._id}});
+    return Planets.findByIdAndUpdate({_id: planet._id}, {$inc: {followerCount: 1}}, {new: true});
   }
 }
 
@@ -237,17 +232,16 @@ interface IRemoveComponentArgs {
  * @throws Throws an error if the component is not found.
  */
 async function removeComponent(root: undefined, args: IRemoveComponentArgs, context: Context): Promise<IPlanet> {
-  if(context.user && await permissions.checkFullWritePermission(context.user.id, args.planetId)) {
-    const planet = await Planets.findOne({_id: args.planetId});
-    const filteredComponents = planet.components.filter(value => value.componentId === args.componentId);
-    if(filteredComponents[0]) {
-      await ComponentIndex.deleteComponent(filteredComponents[0].type, args.componentId);
-      return Planets.findOneAndUpdate({_id: args.planetId}, {$pull: {components: {componentId: args.componentId}}}, {new: true});
-    } else {
-      throw new Error("That component doesn't exist");
-    }
+  if(!context.user || !(await permissions.checkFullWritePermission(context.user.id, args.planetId))) throw new NotFoundError();
+
+  const planet = await Planets.findOne({_id: args.planetId});
+  const filteredComponents = planet.components.filter(value => value.componentId === args.componentId);
+
+  if(filteredComponents[0]) {
+    await ComponentIndex.deleteComponent(filteredComponents[0].type, args.componentId);
+    return Planets.findOneAndUpdate({_id: args.planetId}, {$pull: {components: {componentId: args.componentId}}}, {new: true});
   } else {
-    throw new Error("Not found.");
+    throw new Error("That component doesn't exist");
   }
 }
 
@@ -274,11 +268,9 @@ interface IUpdateNameArgs {
  * @throws Throws an error if the planet is not found.
  */
 async function updateName(root: undefined, args: IUpdateNameArgs, context: Context): Promise<IPlanet> {
-  if(context.user && await permissions.checkFullWritePermission(context.user.id, args.planetId)) {
-    return Planets.findOneAndUpdate({_id: args.planetId}, {$set: {name: args.name}}, {new: true});
-  } else {
-    throw new Error("Not found.");
-  }
+  if(!context.user || !(await permissions.checkFullWritePermission(context.user.id, args.planetId))) throw new NotFoundError();
+  
+  return Planets.findOneAndUpdate({_id: args.planetId}, {$set: {name: args.name}}, {new: true});
 }
 
 /**
@@ -302,12 +294,10 @@ interface ITogglePrivateArgs {
  * @throws Throws an error if the planet is not found.
  */
 async function togglePrivate(root: undefined, args: ITogglePrivateArgs, context: Context): Promise<IPlanet> {
-  if(context.user && await permissions.checkFullWritePermission(context.user.id, args.planetId)) {
-    const planet = await Planets.findOne({_id: args.planetId});
-    return Planets.findOneAndUpdate({_id: args.planetId}, {$set: {private: !planet.private}}, {new: true});
-  } else {
-    throw new Error("Not found.");
-  }
+  if(!context.user || !(await permissions.checkFullWritePermission(context.user.id, args.planetId))) throw new NotFoundError(); 
+
+  const planet = await Planets.findOne({_id: args.planetId});
+  return Planets.findOneAndUpdate({_id: args.planetId}, {$set: {private: !planet.private}}, {new: true});
 }
 
 /**
@@ -335,11 +325,9 @@ interface IRenameComponentArgs {
  * @throws Throws an error if the planet is not found.
  */
 async function renameComponent(root: undefined, args: IRenameComponentArgs, context: Context): Promise<IPlanet> {
-  if(context.user && await permissions.checkFullWritePermission(context.user.id, args.planetId)) {
-    return Planets.findOneAndUpdate({_id: args.planetId, "components.componentId": args.componentId}, {$set: {"components.$.name": args.name}}, {new: true});
-  } else {
-    throw new Error("Not found.");
-  }
+  if(!context.user || !(await permissions.checkFullWritePermission(context.user.id, args.planetId))) throw new NotFoundError(); 
+
+  return Planets.findOneAndUpdate({_id: args.planetId, "components.componentId": args.componentId}, {$set: {"components.$.name": args.name}}, {new: true}); 
 }
 
 /**
@@ -371,27 +359,23 @@ interface IApplyModTools {
  * @throws Throws an error if the planet is not found.
  */
 async function applyModTools(root: undefined, args: IApplyModTools, context: Context): Promise<IPlanet> {
-  if(context.user && await permissions.checkAdminPermission(context.user.id)) {
-    const planet = await Planets.findOne({_id: args.planetId});
-    if(planet) {
-      // send notifications
-      if(args.featured && !planet.featured) {
-        void createNotification(`Your planet ${planet.name} has been featured!`, "star", planet.owner);
-      }
-      if(args.verified && !planet.verified) {
-        void createNotification(`Your planet ${planet.name} has been verified!`, "tick-circle", planet.owner);
-      }
-      if(args.partnered && !planet.partnered) {
-        void createNotification(`Your planet ${planet.name} is now partnered!`, "unresolve", planet.owner);
-      }
+  const planet = await Planets.findOne({_id: args.planetId});
+  
+  if(!context.user || !(await permissions.checkAdminPermission(context.user.id))) throw new NotFoundError();
+  if(!planet) throw new NotFoundError();
 
-      return Planets.findOneAndUpdate({_id: args.planetId}, {$set: {featuredDescription: args.featuredDescription, featured: args.featured, verified: args.verified, partnered: args.partnered}}, {new: true});
-    } else {
-      throw new Error("Not found.");
-    }
-  } else {
-    throw new Error("You are not a global moderator.");
+  // send notifications
+  if(args.featured && !planet.featured) {
+    void createNotification(`Your planet ${planet.name} has been featured!`, "star", planet.owner);
   }
+  if(args.verified && !planet.verified) {
+    void createNotification(`Your planet ${planet.name} has been verified!`, "tick-circle", planet.owner);
+  }
+  if(args.partnered && !planet.partnered) {
+    void createNotification(`Your planet ${planet.name} is now partnered!`, "unresolve", planet.owner);
+  }
+
+  return Planets.findOneAndUpdate({_id: args.planetId}, {$set: {featuredDescription: args.featuredDescription, featured: args.featured, verified: args.verified, partnered: args.partnered}}, {new: true});
 }
 
 /**
@@ -417,16 +401,15 @@ interface IToggleBanArgs {
  * @throws Throws an error if the planet is not found.
  */
 async function toggleBan(root: undefined, args: IToggleBanArgs, context: Context): Promise<IPlanet> {
-  if(context.user && await permissions.checkFullWritePermission(context.user.id, args.planetId) && !await permissions.checkFullWritePermission(args.userId, args.planetId)) {
-    const planet = await Planets.findOne({_id: args.planetId});
-    if(planet.banned && planet.banned.includes(args.userId)) {
-      return Planets.findOneAndUpdate({_id: args.planetId}, {$pull: {banned: args.userId}}, {new: true});
-    } else {
-      return Planets.findOneAndUpdate({_id: args.planetId}, {$push: {banned: args.userId}}, {new: true});
-    }
+  if(!context.user || !(await permissions.checkFullWritePermission(context.user.id, args.planetId)) && !(await permissions.checkFullWritePermission(args.userId, args.planetId))) throw new NotFoundError();
+
+  const planet = await Planets.findOne({_id: args.planetId});
+
+  if(planet.banned && planet.banned.includes(args.userId)) {
+    return Planets.findOneAndUpdate({_id: args.planetId}, {$pull: {banned: args.userId}}, {new: true});
   } else {
-    throw new Error("Not found.");
-  }
+    return Planets.findOneAndUpdate({_id: args.planetId}, {$push: {banned: args.userId}}, {new: true});
+  } 
 }
 
 /**
@@ -452,11 +435,9 @@ interface ISetCSSArgs {
  * @throws Throws an error if the planet is not found.
  */
 async function setCSS(root: undefined, args: ISetCSSArgs, context: Context): Promise<IPlanet> {
-  if(context.user && await permissions.checkFullWritePermission(context.user.id, args.planetId)) {
-    return Planets.findOneAndUpdate({_id: args.planetId}, {$set: {css: args.css}}, {new: true});
-  } else {
-    throw new Error("Not found.");
-  }
+  if(!context.user || !(await permissions.checkFullWritePermission(context.user.id, args.planetId))) throw new NotFoundError();
+
+  return Planets.findOneAndUpdate({_id: args.planetId}, {$set: {css: args.css}}, {new: true}); 
 }
 
 /**
@@ -482,11 +463,9 @@ interface IRemoveMemberArgs {
  * @throws Throws an error if the planet is not found.
  */
 async function removeMember(root: undefined, args: IRemoveMemberArgs, context: Context): Promise<IPlanet> {
-  if(context.user && await permissions.checkFullWritePermission(context.user.id, args.planetId)) {
-    return Planets.findOneAndUpdate({_id: args.planetId}, {$pull: {members: args.userId}}, {new: true});
-  } else {
-    throw new Error("Not found.");
-  }
+  if(!context.user || !(await permissions.checkFullWritePermission(context.user.id, args.planetId))) throw new NotFoundError();
+
+  return Planets.findOneAndUpdate({_id: args.planetId}, {$pull: {members: args.userId}}, {new: true});
 }
 
 /**
@@ -539,11 +518,9 @@ interface ISetDescriptionArgs {
  * @throws Throws an error if the planet is not found.
  */
 async function setDescription(root: undefined, args: ISetDescriptionArgs, context: Context): Promise<IPlanet> {
-  if(context.user && await permissions.checkFullWritePermission(context.user.id, args.planetId)) {
-    return Planets.findOneAndUpdate({_id: args.planetId}, {description: args.description}, {new: true});
-  } else {
-    throw new Error("Not found.");
-  }
+  if(!context.user || !(await permissions.checkFullWritePermission(context.user.id, args.planetId))) throw new NotFoundError();
+
+  return Planets.findOneAndUpdate({_id: args.planetId}, {description: args.description}, {new: true});
 }
 
 /**
@@ -567,21 +544,17 @@ interface IDeletePlanetArgs {
  * @throws Throws an error if the planet is not found.
  */
 async function deletePlanet(root: undefined, args: IDeletePlanetArgs, context: Context): Promise<boolean> {
-  if(context.user && await permissions.checkFullWritePermission(context.user.id, args.planetId)) {
-    const planet = await Planets.findOneAndDelete({_id: args.planetId});
-    await Users.updateMany({following: args.planetId}, {$pull: {following: args.planetId}});
-    if(planet) {
-      for(const component of planet.components) {
-        void ComponentIndex.deleteComponent(component.type, component.componentId);
-      }
-      await CustomEmojis.deleteMany({planet: planet._id});
-      return true;
-    } else {
-      throw new Error("Not found.");
-    }
-  } else {
-    throw new Error("Not found.");
+  if(!context.user || !(await permissions.checkFullWritePermission(context.user.id, args.planetId))) throw new NotFoundError();
+  
+  const planet = await Planets.findOneAndDelete({_id: args.planetId});
+  await Users.updateMany({following: args.planetId}, {$pull: {following: args.planetId}});
+  if(!planet) throw new NotFoundError();
+
+  for(const component of planet.components) {
+    void ComponentIndex.deleteComponent(component.type, component.componentId);
   }
+  await CustomEmojis.deleteMany({planet: planet._id});
+  return true;
 }
 
 export default {fieldResolvers, deletePlanet, setDescription, searchForPlanets, featuredPlanets, planet, adminPlanets, insertPlanet, addComponent, followPlanet, removeComponent, updateName, togglePrivate, renameComponent, applyModTools, toggleBan, setCSS, removeMember};
