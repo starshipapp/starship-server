@@ -1,7 +1,9 @@
 import Invites, { IInvite } from "../database/Invites";
 import Planets, { IPlanet } from "../database/Planets";
 import { IUser } from "../database/Users";
+import { BadSessionError } from "../util/BadSessionError";
 import Context from "../util/Context";
+import { NotFoundError } from "../util/NotFoundError";
 import permissions from "../util/permissions";
 
 /**
@@ -57,16 +59,14 @@ interface IInsertInviteArgs {
  * @throws Throws an error if the planet is not found.
  */
 async function insertInvite(root: undefined, args: IInsertInviteArgs, context: Context): Promise<IInvite> {
-  if(context.user && await permissions.checkFullWritePermission(context.user.id, args.planetId)) {
-    const invite = new Invites({
-      planet: args.planetId,
-      owner: context.user.id,
-      createdAt: new Date()
-    });
-    return invite.save();
-  } else {
-    throw new Error("Not found.");
-  }
+  if(!context.user || !(await permissions.checkFullWritePermission(context.user.id, args.planetId))) throw new NotFoundError();
+
+  const invite = new Invites({
+    planet: args.planetId,
+    owner: context.user.id,
+    createdAt: new Date()
+  });
+  return invite.save();
 }
 
 /**
@@ -91,25 +91,21 @@ interface IUseInviteArgs {
  * @throws Throws an error if the attached planet is not found.
  */
 async function useInvite(root: undefined, args: IUseInviteArgs, context: Context): Promise<IPlanet> {
-  if(context.user && context.user.id) {
-    const invite = await Invites.findOne({_id: args.inviteId});
-    if(invite) {
-      const planet = await Planets.findOne({_id: invite.planet});
-      if(planet && (!planet.members || !planet.members.includes(context.user.id))) {
-        const updatedPlanet = Planets.findOneAndUpdate({_id: invite.planet}, {$push: {members: context.user.id}}, {new: true});
-        await Invites.findOneAndDelete({_id: args.inviteId});
-        return await updatedPlanet;
-      } else {
-        await Invites.findOneAndDelete({_id: args.inviteId});
-        throw new Error("The planet attached to this invite doesn't exist, so the invite has now been deleted.");
-      }
-    } else {
-      throw new Error("That invite doesn't exist.");
-    }
+  const invite = await Invites.findOne({_id: args.inviteId});
+
+  if(context.user && context.user.id) throw new BadSessionError();
+  if(invite) throw new NotFoundError();
+
+  const planet = await Planets.findOne({_id: invite.planet});
+  if(planet && (!planet.members || !planet.members.includes(context.user.id))) {
+    const updatedPlanet = Planets.findOneAndUpdate({_id: invite.planet}, {$push: {members: context.user.id}}, {new: true});
+    await Invites.findOneAndDelete({_id: args.inviteId});
+    return await updatedPlanet;
   } else {
-    throw new Error("Not logged in.");
+    await Invites.findOneAndDelete({_id: args.inviteId});
+    throw new NotFoundError("Invalid invite. This planet no longer exists.");
   }
-}
+ }
 
 /**
  * Arguments for {@link removeInvite}.
@@ -134,22 +130,15 @@ interface IRemoveInviteArgs {
  * @throws Throws an error if the planet is not found.
  */
 async function removeInvite(root: undefined, args: IRemoveInviteArgs, context: Context): Promise<IPlanet> {
-  if(context.user && context.user.id) {
-    const invite = await Invites.findOne({_id: args.inviteId});
-    if(invite) {
-      if(await permissions.checkFullWritePermission(context.user.id, invite.planet)) {
-        const planet = await Planets.findOne({_id: invite.planet});
-        await Invites.findOneAndDelete({_id: args.inviteId});
-        return planet;
-      } else {
-        throw new Error("Not found.");
-      }
-    } else {
-      throw new Error("Not found.");
-    }
-  } else {
-    throw new Error("Not logged in.");
-  }
+  const invite = await Invites.findOne({_id: args.inviteId});
+  
+  if(!context.user || !context.user.id) throw new NotFoundError();
+  if(!invite) throw new NotFoundError();
+  if(!(await permissions.checkFullWritePermission(context.user.id, invite.planet))) throw new NotFoundError();
+
+  const planet = await Planets.findOne({_id: invite.planet});
+  await Invites.findOneAndDelete({_id: args.inviteId});
+  return planet;
 }
 
 export default {fieldResolvers, invite, insertInvite, useInvite, removeInvite};
