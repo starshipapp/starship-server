@@ -1,3 +1,6 @@
+> [!WARNING]  
+> Starship shut down Febuary 16th, 2025. See [the related blog post](https://blogs.mailliw.org/william341/the-end-of-starship) for more information.
+
 # Starship (server)
 This is the Apollo-based server for [Starship](starshipapp.xyz). The client can be found in another repository in this organization.
 
